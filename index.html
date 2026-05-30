@@ -169,21 +169,15 @@
 
         <!-- Top tracker sub-tabs -->
         <div class="tab-buttons tracker-tabs">
-
-          <button onclick="switchTab('combat')">Combat</button>
-          <button onclick="switchTab('stats')">Stats</button>
-          <button onclick="switchTab('stats-editor')">Stats Editor</button>
-          <button onclick="switchTab('character-sheets')">Characters</button>
-          <button onclick="switchTab('summary')">Stats Summary</button>
-
-          <button id="sync-google-btn">
-            Sync Data to Google Sheets
-          </button>
-
-          <button id="edition-toggle-btn" class="tracker-edition-toggle">
-          </button>
-
-        </div>
+  <button id="combat-tab-btn" onclick="switchTab('combat')" style="display:none">Combat</button>
+  <button id="stats-tab-btn" onclick="switchTab('stats')">Stats</button>
+  <button onclick="switchTab('stats-editor')">Stats Editor</button>
+  <button onclick="switchTab('character-sheets')">Characters</button>
+  <button onclick="switchTab('summary')">Stats Summary</button>
+  <button id="sync-google-btn">Sync Data to Google Sheets</button>
+  <button id="combat-toggle-btn" class="tracker-edition-toggle">⚔️ Start Combat</button>
+  <button id="edition-toggle-btn" class="tracker-edition-toggle"></button>
+</div>
 
         <div class="tracker-layout">
 

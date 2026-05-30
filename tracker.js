@@ -111,13 +111,25 @@ function init() {
   trackerStarted = true;
 
   setupTabs();
-  // ... rest of init
 
   // Edition toggle
   const editionToggleBtn = document.getElementById("edition-toggle-btn");
   if (editionToggleBtn) {
     editionToggleBtn.addEventListener("click", toggleEdition);
   }
+
+  const combatToggleBtn = document.getElementById("combat-toggle-btn");
+if (combatToggleBtn) {
+  combatToggleBtn.addEventListener("click", () => {
+    if (combatStarted) {
+      endCombat();
+    } else {
+      startCombat();
+    }
+  });
+}
+
+updateCombatTabVisibility();
 
   // Google sync
   const syncBtn = document.getElementById("sync-google-btn");
@@ -178,8 +190,8 @@ function getCompatibleActiveCharacters() {
   const trackerEdition = gameData.edition || "5e";
   return getActiveCharacters().filter(name => {
     const sheet = gameData.characterSheets?.[name];
-    if (!sheet) return true; // legacy — show always
-    if (!sheet.edition) return true; // no edition set — show always
+    if (!sheet) return true;
+    if (!sheet.edition) return true;
     return sheet.edition === trackerEdition;
   });
 }
@@ -353,7 +365,7 @@ function setupTabs() {
     });
 
   // Open default tab
-  switchTab("combat");
+  switchTab("stats");
 }
 
 window.switchTab = function (tabId) {
@@ -600,17 +612,26 @@ function modStr(mod) {
  * Compute a skill's total modifier for a given sheet.
  * Applies proficiency, expertise, Jack of All Trades, and miscBonus.
  */
-function computeSkillTotal(sheet, skillName, abilityKey) {
+function computeSkillTotal(sheet, skillKey, abilityKey) {
   const abilScore = sheet.abilities?.[abilityKey] ?? 10;
   const abilMod = abilityMod(abilScore);
   const prof = sheet.proficiencyBonus ?? 2;
-  const profType = sheet.skillProficiencies?.[skillName]?.type ?? "none";
-  const miscBonus = sheet.skillProficiencies?.[skillName]?.miscBonus ?? 0;
+
+  const profType =
+    sheet.skillProficiencies?.[skillKey]?.type ?? "none";
+
+  const miscBonus =
+    sheet.skillProficiencies?.[skillKey]?.miscBonus ?? 0;
 
   let profBonus = 0;
-  if (profType === "proficient") profBonus = prof;
-  else if (profType === "expertise") profBonus = prof * 2;
-  else if (sheet.jackOfAllTrades && profType === "none") profBonus = Math.floor(prof / 2);
+
+  if (profType === "proficient") {
+    profBonus = prof;
+  } else if (profType === "expertise") {
+    profBonus = prof * 2;
+  } else if (sheet.jackOfAllTrades) {
+    profBonus = Math.floor(prof / 2);
+  }
 
   return abilMod + profBonus + miscBonus;
 }
@@ -1441,7 +1462,7 @@ align-items:stretch;
       const skillKey = sk.custom ? sk.id : sk.name;
 
       const skData = sheet.skillProficiencies[skillKey];
-      const total = computeSkillTotal(sheet, sk.name, sk.ability);
+      const total = computeSkillTotal(sheet,skillKey,sk.ability);
 
       const card = document.createElement("div");
       card.style.cssText = `
@@ -1761,6 +1782,18 @@ text-align:center;
     }
 
     // Attack rows
+    const grid = document.createElement("div");
+
+grid.className = "attacks-grid";
+
+grid.style.cssText = `
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+`;
+
+section.appendChild(grid);
+
     (sheet.attacks || []).forEach((atk, index) => {
       const row = document.createElement("div");
 
@@ -1804,20 +1837,7 @@ text-align:center;
       row.appendChild(modInput);
       row.appendChild(deleteBtn);
 
-      if (!section.querySelector(".attacks-grid")) {
-        const grid = document.createElement("div");
-        grid.className = "attacks-grid";
-
-        grid.style.cssText = `
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:8px;
-  `;
-      }
-      section.appendChild(grid);
-
-
-      section.querySelector(".attacks-grid").appendChild(row);
+      grid.appendChild(row);
     });
 
     attacksContainer.appendChild(section);
@@ -2422,7 +2442,16 @@ function openUnifiedActionModal(characterName, type, includeDamage = false) {
     modInput.type = "number";
     modInput.style.width = "60px";
     modInput.classList.add("roll-mod-input");
-    modInput.value = "0";
+    let defaultModifier = 0;
+
+if (type.startsWith("Initiative")) {
+  defaultModifier =
+    gameData.characterSheets?.[
+      characterName
+    ]?.initiative ?? 0;
+}
+
+modInput.value = defaultModifier;
     modInput.style.cssText = `margin-left:6px;width:100px;`;
     container.appendChild(document.createElement("br"));
     container.appendChild(modLabel);
@@ -3775,25 +3804,42 @@ function openCastSpellModal(characterName) {
     });
 
     saveTypeSelect.addEventListener(
-      "change",
-      () => {
+  "change",
+  () => {
 
-        spell.saveType =
-          saveTypeSelect.value;
+    spell.saveType = saveTypeSelect.value;
 
-        spell.saves.forEach(
-          save => {
+    spell.saves.forEach(save => {
 
-            save.saveType =
-              spell.saveType;
-          }
-        );
+      save.saveType = spell.saveType;
 
-        syncSaves(
-          spell.saves.length
+      if (save.target) {
+
+        const targetSheet =
+          gameData.characterSheets?.[
+            save.target
+          ];
+
+        if (targetSheet) {
+
+          save.modifier =
+            computeSaveTotal(
+              targetSheet,
+              save.saveType
+            );
+        }
+
+        recalcCharacterStats(
+          save.target
         );
       }
-    );
+    });
+
+    syncSaves(spell.saves.length);
+
+    updateSideStats();
+  }
+);
 
     saveTypeRow.append(
       saveTypeLabel,
@@ -3926,7 +3972,6 @@ function renderInitiativeControls() {
   if (!controlsDiv) return;
 
   controlsDiv.innerHTML = `
-    <button id="start-combat-btn">Start Combat</button>
     <button id="add-init-btn">Add Initiative</button>
     <button id="clear-init-btn">Clear All</button>
     <button id="next-turn-btn" disabled>Next Turn</button>
@@ -3944,8 +3989,6 @@ function renderInitiativeControls() {
     prevBtn.style.display = hasInit ? "inline-block" : "none";
   };
   updateTurnButtons();
-
-  document.getElementById("start-combat-btn").onclick = startCombat;
 
   document.getElementById("add-init-btn").onclick = async () => {
     const name = await openCharacterSelectModal("Select a character for initiative");
@@ -3996,22 +4039,21 @@ function renderInitiativeControls() {
   };
 
   document.getElementById("clear-init-btn").onclick = () => {
-    if (confirm("Clear all initiative entries?")) {
-      initiativeOrder = [];
-      combatStarted = false;
-      Object.values(gameData.characterStats).forEach(stats => {
-        stats.isActiveInCombat = false;
-        if (Array.isArray(stats.initiativeRolls)) {
-          stats.initiativeRolls.forEach(entry => { entry.isVisibleInOrder = false; });
-        }
-      });
-      currentTurnIndex = 0;
-      npcCount = 0;
-      renderInitiative();
-      updateSideStats();
-      updateTurnButtons();
-    }
-  };
+  if (confirm("Clear all initiative entries?")) {
+    initiativeOrder = [];
+    currentTurnIndex = 0;
+    npcCount = 0;
+    Object.values(gameData.characterStats).forEach(stats => {
+      stats.isActiveInCombat = false;
+      if (Array.isArray(stats.initiativeRolls)) {
+        stats.initiativeRolls.forEach(entry => { entry.isVisibleInOrder = false; });
+      }
+    });
+    renderInitiative();
+    updateSideStats();
+    updateTurnButtons();
+  }
+};
 }
 
 function updateTurnButtons() {
@@ -4036,6 +4078,19 @@ function updateTurnButtons() {
   }
 }
 
+function updateCombatTabVisibility() {
+  const combatTabBtn = document.getElementById("combat-tab-btn");
+  const statsTabBtn  = document.getElementById("stats-tab-btn");
+  const combatToggleBtn = document.getElementById("combat-toggle-btn");
+
+  if (combatTabBtn)  combatTabBtn.style.display  = combatStarted ? "inline-block" : "none";
+  if (statsTabBtn)   statsTabBtn.style.display    = combatStarted ? "none" : "inline-block";
+  if (combatToggleBtn) {
+    combatToggleBtn.textContent = combatStarted ? "🏳️ End Combat" : "⚔️ Start Combat";
+    combatToggleBtn.style.background = combatStarted ? "var(--secondary-accent)" : "";
+  }
+}
+
 function addToInitiative(name) {
   const value = parseInt(prompt(`Enter initiative for ${name}:`));
   if (!isNaN(value)) {
@@ -4044,6 +4099,21 @@ function addToInitiative(name) {
     renderInitiative();
     updateTurnButtons();
   }
+}
+
+async function openInitiativeModal(characterName) {
+  const results =
+    await openMultiRollModal(
+      characterName,
+      "Initiative",
+      false
+    );
+
+  if (!results?.length) {
+    return null;
+  }
+
+  return results[0];
 }
 
 function renderInitiative() {
@@ -4134,9 +4204,8 @@ async function startCombat() {
   initiativeOrder = [];
   combatStarted = true;
 
-  for (const pc of gameData.characters) {
-    if (pc === "NPC") continue;
-    const result = await openUnifiedActionModal(pc, "Initiative", false);
+  for (const pc of getCompatibleActiveCharacters().filter(name => name !== "NPC")) {
+  const result = await openInitiativeModal(pc);
     if (!result) continue;
     const { roll, modifier } = result;
     const total = roll + modifier;
@@ -4153,7 +4222,7 @@ async function startCombat() {
   if (npcPool) {
     npcPool.isActiveInCombat = true;
     for (let i = 1; i <= npcCount; i++) {
-      const result = await openUnifiedActionModal("NPC", "Initiative", false);
+      const result = await openUnifiedActionModal("NPC", `Initiative — NPC ${i}`, false);
       if (!result) continue;
       const { roll, modifier } = result;
       const total = roll + modifier;
@@ -4168,6 +4237,36 @@ async function startCombat() {
   updateSideStats();
   updateTurnButtons();
   showTrackerMessage("Combat started!");
+  updateCombatTabVisibility();
+switchTab("combat");
+}
+
+function endCombat() {
+  if (!confirm("End combat? This will clear all initiative and return to the Stats tab.")) return;
+
+  // Reset all combat state
+  initiativeOrder = [];
+  combatStarted = false;
+  currentTurnIndex = 0;
+  npcCount = 0;
+  reactionMode = false;
+  reactionCharacter = null;
+
+  // Clear isActiveInCombat and initiative roll visibility for all characters
+  Object.values(gameData.characterStats).forEach(stats => {
+    stats.isActiveInCombat = false;
+    if (Array.isArray(stats.initiativeRolls)) {
+      stats.initiativeRolls.forEach(entry => { entry.isVisibleInOrder = false; });
+    }
+  });
+
+  saveGameData("combat ended");
+  renderInitiative();
+  updateSideStats();
+  updateTurnButtons();
+  updateCombatTabVisibility();
+  switchTab("stats");
+  showTrackerMessage("Combat ended.");
 }
 
 // -------------------- CHARACTER BUTTONS --------------------
