@@ -11,6 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZvcjT_o93h80haSyjvx5B0O3EtX9pcLRPoIBUQGq3n2oRhX1SDLffZipEyeWOuRdq/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
@@ -226,39 +227,29 @@ function buildBlankStats() {
 }
 
 async function sendGameDataToGoogleSheet() {
-  if (!gameData.scriptUrl) return alert("Apps Script URL not set!");
-  if (!gameData.sheetId) return alert("Please enter a Google Sheet URL before syncing.");
-  if (!gameData.sessionNumber) return alert("Please enter a session number before syncing.");
+  if (!gameData.sheetId) {
+    return alert("Please enter a Google Sheet URL before syncing.");
+  }
 
-  gameData.characters.forEach(name => {
-    const stats = gameData.characterStats[name];
-    if (!stats) return;
-
-    let spellHealing = 0;
-    if (Array.isArray(stats.spellHistory)) {
-      stats.spellHistory.forEach(spell => {
-        if (spell.extra) spellHealing += parseFloat(spell.extra.healing) || 0;
-      });
-    }
-
-    stats.damageDealt = (stats.totalDamage || 0) + (stats.attackDamage || 0);
-    const heal = (stats.healingDone || 0) + spellHealing;
-    if (stats.totalHealing !== heal) stats.totalHealing = heal;
-    stats.sessionNumber = gameData.sessionNumber;
-  });
+  if (!gameData.sessionNumber) {
+    return alert("Please enter a session number before syncing.");
+  }
 
   try {
-    const response = await fetch(gameData.scriptUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "data=" + encodeURIComponent(JSON.stringify(gameData))
-    });
-    const result = await response.json();
-    if (result.status === "success") alert("✅ Data sent to Google Sheet!");
-    else alert("❌ Error: " + result.message);
-  } catch (err) {
-    console.error("❌ Network Error: " + err.message);
-  }
+  await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "data=" + encodeURIComponent(JSON.stringify(gameData))
+  });
+
+  alert("✅ Sync request sent");
+} catch (err) {
+  console.error(err);
+  alert("❌ Failed to send data");
+}
 }
 
 function openSyncModal() {
@@ -280,6 +271,13 @@ function openSyncModal() {
     gameData.sessionNumber = sessionNum;
     modal.classList.add("hidden");
     sendGameDataToGoogleSheet();
+
+    console.log("scriptUrl =", gameData.scriptUrl);
+
+if (!APPS_SCRIPT_URL) {
+  alert("Apps Script URL not set!");
+  return;
+}
   };
 
   cancelBtn.onclick = () => { modal.classList.add("hidden"); };
