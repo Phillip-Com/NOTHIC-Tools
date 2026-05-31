@@ -11,7 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZvcjT_o93h80haSyjvx5B0O3EtX9pcLRPoIBUQGq3n2oRhX1SDLffZipEyeWOuRdq/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTjfUFbi6l3BAKqW-8vEvnqSRHsvlkE0px4JKjMz2J5Q5qJNvGnfarWnaLaEPTMm2G/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
@@ -227,6 +227,13 @@ function buildBlankStats() {
 }
 
 async function sendGameDataToGoogleSheet() {
+const activeCharacters = getCompatibleActiveCharacters();
+
+const syncData = {
+  ...gameData,
+  characters: activeCharacters
+};
+
   if (!gameData.sheetId) {
     return alert("Please enter a Google Sheet URL before syncing.");
   }
@@ -242,7 +249,7 @@ async function sendGameDataToGoogleSheet() {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
     },
-    body: "data=" + encodeURIComponent(JSON.stringify(gameData))
+    body: "data=" + encodeURIComponent(JSON.stringify(syncData))
   });
 
   alert("✅ Sync request sent");
