@@ -577,7 +577,7 @@ function showTrackerMessage(msg, duration = 4000) {
 
 function highlightSelectedButton(name) {
   document.querySelectorAll("#combat-character-buttons button, #stats-character-buttons button, #editor-character-buttons button")
-    .forEach(btn => btn.classList.toggle("selected", btn.textContent === name));
+    .forEach(btn => btn.classList.toggle("active", btn.textContent === name));
 }
 
 function resolveEntryByTag(tag) {
@@ -4120,6 +4120,76 @@ async function openInitiativeModal(characterName) {
   return results[0];
 }
 
+async function openNpcInitiativeModal(count) {
+  return new Promise(resolve => {
+    const container = document.createElement("div");
+
+    const typeLabel = document.createElement("p");
+    typeLabel.textContent = `Enter initiative rolls for ${count} NPC(s):`;
+    container.appendChild(typeLabel);
+
+    const rollsContainer = document.createElement("div");
+    rollsContainer.style.cssText = `display:grid;gap:10px;`;
+    container.appendChild(rollsContainer);
+
+    const maxPerColumn = 10;
+    const rowHeight = 36;
+    const numColumns = Math.ceil(count / maxPerColumn);
+    rollsContainer.style.gridTemplateColumns = `repeat(${numColumns}, auto)`;
+
+    function buildHeaderRow() {
+      const headerRow = document.createElement("div");
+      headerRow.style.cssText = `display:grid;grid-template-columns:60px 60px;font-weight:bold;margin-bottom:4px;height:${rowHeight}px;align-items:center;`;
+      ["D20", "Mod"].forEach(text => {
+        const d = document.createElement("div");
+        d.textContent = text;
+        d.style.textAlign = "center";
+        headerRow.appendChild(d);
+      });
+      return headerRow;
+    }
+
+    for (let col = 0; col < numColumns; col++) {
+      const columnDiv = document.createElement("div");
+      columnDiv.style.cssText = `display:grid;row-gap:6px;align-content:start;`;
+      columnDiv.appendChild(buildHeaderRow());
+
+      for (let i = col * maxPerColumn; i < Math.min((col + 1) * maxPerColumn, count); i++) {
+        const inputRow = document.createElement("div");
+        inputRow.style.cssText = `display:grid;grid-template-columns:60px 60px;gap:6px;height:${rowHeight}px;align-items:center;`;
+
+        const d20Input = document.createElement("input");
+        d20Input.type = "number"; d20Input.min = 1; d20Input.max = 20; d20Input.value = 1;
+        d20Input.style.width = "60px";
+
+        const modInput = document.createElement("input");
+        modInput.type = "number"; modInput.value = 0;
+        modInput.style.width = "60px";
+        modInput.classList.add("roll-mod-input");
+
+        inputRow.append(d20Input, modInput);
+        columnDiv.appendChild(inputRow);
+      }
+      rollsContainer.appendChild(columnDiv);
+    }
+
+    showModal(`NPC Initiative Rolls`, container, () => {
+      const results = [];
+      [...rollsContainer.children].forEach(colDiv => {
+        [...colDiv.children].slice(1).forEach(row => {
+          const inputs = [...row.querySelectorAll("input")];
+          const roll = parseInt(inputs[0].value) || 1;
+          const modifier = parseInt(inputs[1].value) || 0;
+          results.push({ roll, modifier });
+        });
+      });
+      resolve(results);
+    });
+
+    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
+  });
+}
+
 function renderInitiative() {
   const trackerDiv = document.getElementById("combat-tracker");
   if (!trackerDiv) return;
@@ -4207,6 +4277,7 @@ async function startCombat() {
   const npcCount = parseInt(await openNumberModal("Start Combat", "How many NPCs join combat?")) || 0;
   initiativeOrder = [];
   combatStarted = true;
+   updateCombatTabVisibility();
 
   for (const pc of getCompatibleActiveCharacters().filter(name => name !== "NPC")) {
   const result = await openInitiativeModal(pc);
@@ -4222,19 +4293,19 @@ async function startCombat() {
     critChecker(pc, roll);
   }
 
-  const npcPool = gameData.characterStats["NPC"];
-  if (npcPool) {
-    npcPool.isActiveInCombat = true;
-    for (let i = 1; i <= npcCount; i++) {
-      const result = await openUnifiedActionModal("NPC", `Initiative — NPC ${i}`, false);
-      if (!result) continue;
-      const { roll, modifier } = result;
+const npcPool = gameData.characterStats["NPC"];
+if (npcPool && npcCount > 0) {
+  npcPool.isActiveInCombat = true;
+  const npcResults = await openNpcInitiativeModal(npcCount);
+  if (npcResults) {
+    npcResults.forEach(({ roll, modifier }, i) => {
       const total = roll + modifier;
       const tag = crypto.randomUUID();
-      npcPool.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `NPC ${i}`, source: "NPC", npcIndex: i });
-      critChecker(`NPC ${i}`, roll);
-    }
+      npcPool.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `NPC ${i + 1}`, source: "NPC", npcIndex: i + 1 });
+      critChecker(`NPC ${i + 1}`, roll);
+    });
   }
+}
 
   currentTurnIndex = 0;
   renderInitiative();

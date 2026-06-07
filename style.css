@@ -575,6 +575,18 @@ table th {
   background-color: var(--button-hover);
 }
 
+.character-buttons button.active {
+  background-color: var(--primary-accent);
+  color: #fff;
+  border-color: var(--primary-accent);
+}
+
+.tracker-tabs button.active {
+  background-color: var(--primary-accent);
+  color: #fff;
+  border-color: var(--primary-accent);
+}
+
 /* Initiative list */
 #initiative-list {
   list-style: none;
