@@ -2671,7 +2671,7 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
 
           let sheetMod = 0;
           if (type === "Initiative") {
-            sheetMod = gameData.characterSheets[characterName].initiative;
+            sheetMod = gameData.characterSheets?.[characterName]?.initiative ?? 0;
           }
 
           const saved = currentValues[i] || [];
@@ -4105,21 +4105,6 @@ function addToInitiative(name) {
   }
 }
 
-async function openInitiativeModal(characterName) {
-  const results =
-    await openMultiRollModal(
-      characterName,
-      "Initiative",
-      false
-    );
-
-  if (!results?.length) {
-    return null;
-  }
-
-  return results[0];
-}
-
 async function openNpcInitiativeModal(count) {
   return new Promise(resolve => {
     const container = document.createElement("div");
@@ -4274,38 +4259,26 @@ function renderInitiative() {
 
 async function startCombat() {
   playSoundFromUrl("https://cdn.pixabay.com/audio/2024/08/07/audio_b41cb4e0ac.mp3", 0.2);
-  const npcCount = parseInt(await openNumberModal("Start Combat", "How many NPCs join combat?")) || 0;
   initiativeOrder = [];
   combatStarted = true;
-   updateCombatTabVisibility();
+  updateCombatTabVisibility();
 
-  for (const pc of getCompatibleActiveCharacters().filter(name => name !== "NPC")) {
-  const result = await openInitiativeModal(pc);
-    if (!result) continue;
-    const { roll, modifier } = result;
-    const total = roll + modifier;
-    const tag = crypto.randomUUID();
+  for (const pc of getCompatibleActiveCharacters()) {
     const stats = gameData.characterStats[pc];
+    if (!stats) continue;
     stats.isActiveInCombat = true;
-    stats.initiative = total;
     if (!stats.initiativeRolls) stats.initiativeRolls = [];
-    stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: pc, source: pc });
-    critChecker(pc, roll);
-  }
 
-const npcPool = gameData.characterStats["NPC"];
-if (npcPool && npcCount > 0) {
-  npcPool.isActiveInCombat = true;
-  const npcResults = await openNpcInitiativeModal(npcCount);
-  if (npcResults) {
-    npcResults.forEach(({ roll, modifier }, i) => {
-      const total = roll + modifier;
-      const tag = crypto.randomUUID();
-      npcPool.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `NPC ${i + 1}`, source: "NPC", npcIndex: i + 1 });
-      critChecker(`NPC ${i + 1}`, roll);
-    });
+      const results = await openMultiRollModal(pc, "Initiative", false);
+      if (!results?.length) continue;
+      results.forEach(({ roll, modifier }, i) => {
+        const total = roll + modifier;
+        const tag = crypto.randomUUID();
+        const npcNum = stats.initiativeRolls.filter(r => r.isVisibleInOrder).length + 1;
+        stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `${pc} ${npcNum}`, source: `${pc}`, npcIndex: npcNum });
+        critChecker(pc, roll);
+      });
   }
-}
 
   currentTurnIndex = 0;
   renderInitiative();
@@ -4313,7 +4286,7 @@ if (npcPool && npcCount > 0) {
   updateTurnButtons();
   showTrackerMessage("Combat started!");
   updateCombatTabVisibility();
-switchTab("combat");
+  switchTab("combat");
 }
 
 function endCombat() {
