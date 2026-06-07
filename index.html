@@ -89,12 +89,12 @@
             </div>
 
             <div id="tierSelector">
-              <label for="tier">Tier (Level Range):</label>
+              <label for="tier">Tier (Challenge Range):</label>
               <select id="tier">
-                <option value="1">Tier 1 (Levels 1–4)</option>
-                <option value="2">Tier 2 (Levels 5–10)</option>
-                <option value="3">Tier 3 (Levels 11–16)</option>
-                <option value="4">Tier 4 (Levels 17–20)</option>
+                <option value="1">Tier 1 (Challenge 1–4)</option>
+                <option value="2">Tier 2 (Challenge 5–10)</option>
+                <option value="3">Tier 3 (Challenge 11–16)</option>
+                <option value="4">Tier 4 (Challenge 17+)</option>
               </select>
             </div>
           </div>
@@ -110,22 +110,22 @@
           <h2>Encounter Results</h2>
 
           <div class="level-section">
-            <h3>Levels 1–4</h3>
+            <h3>Challenge 1–4</h3>
             <div id="tier-1-results" class="panel"></div>
           </div>
 
           <div class="level-section">
-            <h3>Levels 5–10</h3>
+            <h3>Challenge 5–10</h3>
             <div id="tier-2-results" class="panel"></div>
           </div>
 
           <div class="level-section">
-            <h3>Levels 11–16</h3>
+            <h3>Challenge 11–16</h3>
             <div id="tier-3-results" class="panel"></div>
           </div>
 
           <div class="level-section">
-            <h3>Levels 17–20</h3>
+            <h3>Challenge 17+</h3>
             <div id="tier-4-results" class="panel"></div>
           </div>
         </div>
@@ -149,14 +149,28 @@
             <option value="underdark">Underdark</option>
             <option value="underwater">Underwater</option>
             <option value="urban">Urban</option>
+            <option disabled>----Other Planes----</option>
+            <option value="abyss">Abyss</option>
+            <option value="astralPlane">Astral Plane</option>
+            <option value="elysium">Elysium</option>
+            <option value="feywild">Feywild</option>
+            <option value="mechanus">Mechanus</option>
+            <option value="nineHells">Nine Hells</option>
+            <option value="planeOfAir">Plane of Air</option>
+            <option value="planeOfEarth">Plane of Earth</option>
+            <option value="planeOfFire">Plane of Fire</option>
+            <option value="planeOfWater">Plane of Water</option>
+            <option value="shadowfell">Shadowfell</option>
           </select>
 
           <div>
             <label for="encounter-type-select">Encounter Type:</label>
             <select id="encounter-type-select">
-              <option value="roleplay">Roleplay</option>
-              <option value="monster">Monster</option>
-              <option value="both">Both</option>
+              <option value="camping">Camping</option>
+              <option value="combat">Combat</option>
+              <option value="exploration">Exploration</option>
+              <option value="social">Social</option>
+              <option value="any">Any</option>
             </select>
           </div>
         </div>
@@ -169,15 +183,15 @@
 
         <!-- Top tracker sub-tabs -->
         <div class="tab-buttons tracker-tabs">
-  <button id="combat-tab-btn" onclick="switchTab('combat')" style="display:none">Combat</button>
-  <button id="stats-tab-btn" onclick="switchTab('stats')">Stats</button>
-  <button onclick="switchTab('stats-editor')">Stats Editor</button>
-  <button onclick="switchTab('character-sheets')">Characters</button>
-  <button onclick="switchTab('summary')">Stats Summary</button>
-  <button id="sync-google-btn">Sync Data to Google Sheets</button>
-  <button id="combat-toggle-btn" class="tracker-edition-toggle">⚔️ Start Combat</button>
-  <button id="edition-toggle-btn" class="tracker-edition-toggle"></button>
-</div>
+          <button id="combat-tab-btn" onclick="switchTab('combat')" style="display:none">Combat</button>
+          <button id="stats-tab-btn" onclick="switchTab('stats')">Stats</button>
+          <button onclick="switchTab('stats-editor')">Stats Editor</button>
+          <button onclick="switchTab('character-sheets')">Characters</button>
+          <button onclick="switchTab('summary')">Stats Summary</button>
+          <button id="sync-google-btn">Sync Data to Google Sheets</button>
+          <button id="combat-toggle-btn" class="tracker-edition-toggle">⚔️ Start Combat</button>
+          <button id="edition-toggle-btn" class="tracker-edition-toggle"></button>
+        </div>
 
         <div class="tracker-layout">
 
@@ -277,21 +291,44 @@
 
   <!-- ⭐ TAB 4: NPC GENERATOR -->
   <div id="tab-npc" class="tab-page">
-    <div class="tab-layout">
+    <div class="tri-layout">
       <!-- LEFT SIDE: NPC Display -->
-      <div class="tab-left">
+      <div class="tri-left">
         <div class="panel">
           <h2 id="charName">Generated NPC</h2>
-          <table width="100%">
-            <tr>
-              <td align="center"><strong>STR:</strong> <span id="str"></span></td>
-              <td align="center"><strong>DEX:</strong> <span id="dex"></span></td>
-              <td align="center"><strong>CON:</strong> <span id="con"></span></td>
-              <td align="center"><strong>INT:</strong> <span id="int"></span></td>
-              <td align="center"><strong>WIS:</strong> <span id="wis"></span></td>
-              <td align="center"><strong>CHA:</strong> <span id="cha"></span></td>
-            </tr>
-          </table><br>
+          <div class="ability-grid">
+
+            <div class="ability-card">
+              <strong>STR</strong>
+              <span id="str"></span>
+            </div>
+
+            <div class="ability-card">
+              <strong>DEX</strong>
+              <span id="dex"></span>
+            </div>
+
+            <div class="ability-card">
+              <strong>CON</strong>
+              <span id="con"></span>
+            </div>
+
+            <div class="ability-card">
+              <strong>INT</strong>
+              <span id="int"></span>
+            </div>
+
+            <div class="ability-card">
+              <strong>WIS</strong>
+              <span id="wis"></span>
+            </div>
+
+            <div class="ability-card">
+              <strong>CHA</strong>
+              <span id="cha"></span>
+            </div>
+
+          </div><br>
           <p><strong>Alignment:</strong> <span id="charAlignment"></span></p>
           <p><strong>Background:</strong> <span id="charBackground"></span></p>
           <p><strong>Race:</strong> <span id="charRace"></span></p>
@@ -310,206 +347,919 @@
         </div>
       </div>
 
-      <!-- RIGHT SIDE: Controls (wider flex via data-flex) -->
-      <div class="tab-right" data-flex="wide">
-        <label for="region">Select Region:</label>
-        <select id="region">
-          <option value="Random">Random</option>
-          <option value="Empire">Empire</option>
-          <option value="SummerIsle">Summer Isle</option>
-          <option value="Neshiustein">Neshiustein</option>
-          <option value="CarponIsles">Carpon Isles</option>
-          <option value="Sherus">Sherus</option>
-          <option value="Drustein">Drustein</option>
-          <option value="Whiteberg">Whiteberg</option>
-          <option value="Sundermark">Sundermark</option>
-        </select>
-
+      <!-- CENTER SIDE: Generate Button and Display-->
+      <div class="tri-center">
         <button id="generate">Generate Character</button>
+        <button id="copyDescription" class="copy-desc-btn" style="display:none">Copy Description</button>
 
-        <div id="customRegion">
-          <div id="customNameContainer">
-            <label for="customNameType">Custom Name Type:</label>
-            <select id="customNameType">
-              <option value="Any">Region Default</option>
-              <option value="Empire">English</option>
-              <option value="Sherus">Elvish</option>
-              <option value="Drustein">Gnomish</option>
-              <option value="Whiteberg">Dwarvish</option>
-              <option value="Sundermark">French</option>
+
+        <div class="npc-portrait">
+            <div id="npcDescription" class="portrait-description">
+              <p class="description-placeholder">Generate a character to see their portrait description.</p> 
+            </div>
+          </div>
+      </div>
+
+      <!-- RIGHT SIDE: Controls (wider flex via data-flex) -->
+      <div class="tri-right" data-flex="wide">
+        <div class="top-options">
+          <div>
+            <label for="region">Region:</label>
+            <select id="region">
+              <option value="Random">Random</option>
+              <option value="Empire">Empire</option>
+              <option value="SummerIsle">Summer Isle</option>
+              <option value="Neshiustein">Neshiustein</option>
+              <option value="CarponIsles">Carpon Isles</option>
+              <option value="Sherus">Sherus</option>
+              <option value="Drustein">Drustein</option>
+              <option value="Whiteberg">Whiteberg</option>
+              <option value="Sundermark">Sundermark</option>
             </select>
           </div>
 
-          <details open>
-            <summary> Backgrounds </summary>
-            <div class="check-grid">
-              <label><input type="checkbox" data-bg="Acolyte" checked>Acolyte</label>
-              <label><input type="checkbox" data-bg="Artisan" checked>Artisan</label>
-              <label><input type="checkbox" data-bg="Charlatan" checked>Charlatan</label>
-              <label><input type="checkbox" data-bg="Criminal" checked>Criminal</label>
-              <label><input type="checkbox" data-bg="Entertainer" checked>Entertainer</label>
-              <label><input type="checkbox" data-bg="Farmer" checked>Farmer</label>
-              <label><input type="checkbox" data-bg="Guard" checked>Guard</label>
-              <label><input type="checkbox" data-bg="Guide" checked>Guide</label>
-              <label><input type="checkbox" data-bg="Hermit" checked>Hermit</label>
-              <label><input type="checkbox" data-bg="Merchant" checked>Merchant</label>
-              <label><input type="checkbox" data-bg="Noble" checked>Noble</label>
-              <label><input type="checkbox" data-bg="Sage" checked>Sage</label>
-              <label><input type="checkbox" data-bg="Sailor" checked>Sailor</label>
-              <label><input type="checkbox" data-bg="Scribe" checked>Scribe</label>
-              <label><input type="checkbox" data-bg="Soldier" checked>Soldier</label>
-              <label><input type="checkbox" data-bg="Wayfarer" checked>Wayfarer</label>
+          <div>
+            <div id="customRegion">
+              <div id="customNameContainer">
+                <label for="customNameType">Name Type:</label>
+                <select id="customNameType">
+                  <option value="Any">Region Default</option>
+                  <option value="Empire">English</option>
+                  <option value="Sherus">Elvish</option>
+                  <option value="Drustein">Gnomish</option>
+                  <option value="Whiteberg">Dwarvish</option>
+                  <option value="Sundermark">French</option>
+                </select>
+              </div>
             </div>
-          </details>
-
-          <details open>
-            <summary> Player's Handbook <input type="checkbox" id="PHB" checked> </summary>
-            <div class="check-grid">
-              <label><input type="checkbox" id="booldragonborn" checked>Dragonborn <input type="number" id="dragonborn"
-                  data-race="Dragonborn" data-section="PHB" min="0" max="100" value="0" step="1"
-                  class="chance-input"><span class="chance-display"></span></label>
-              <label><input type="checkbox" id="booldwarf" checked>Dwarf <input type="number" id="dwarf"
-                  data-race="Dwarf" data-section="PHB" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolelf" checked>Elf <input type="number" id="elf" data-race="Elf"
-                  data-section="PHB" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolgnome" checked>Gnome <input type="number" id="gnome"
-                  data-race="Gnome" data-section="PHB" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhalfelf" checked>Half-Elf <input type="number" id="halfElf" min="0"
-                  max="100" value="0" step="1" class="chance-input"><span class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhalfling" checked>Halfling <input type="number" id="halfling"
-                  data-race="Halfling" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhalforc" checked>Half-Orc <input type="number" id="halfOrc"
-                  data-race="Half-Orc" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhuman" checked>Human <input type="number" id="human"
-                  data-race="Human" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="booltiefling" checked>Tiefling <input type="number" id="tiefling"
-                  data-race="Tiefling" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-            </div>
-          </details>
-
-          <details open>
-            <summary> Mordenkainen Presents: Monsters of the Multiverse <input type="checkbox" id="MP:MM" checked>
-            </summary>
-            <div class="check-grid">
-              <label><input type="checkbox" id="boolaarakocra" checked>Aarakocra <input type="number" id="aarakocra"
-                  data-race="Aarakocra" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolaasimar" checked>Aasimar <input type="number" id="aasimar"
-                  data-race="Aasimar" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolbugbear" checked>Bugbear <input type="number" id="bugbear"
-                  data-race="Bugbear" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolcentaur" checked>Centaur <input type="number" id="centaur"
-                  data-race="Centaur" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolfirbolg" checked>Firbolg <input type="number" id="firbolg"
-                  data-race="Firbolg" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolgenasi" checked>Genasi <input type="number" id="genasi"
-                  data-race="Genasi" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolgoblin" checked>Goblin <input type="number" id="goblin"
-                  data-race="Goblin" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolgoliath" checked>Goliath <input type="number" id="goliath"
-                  data-race="Goliath" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhobgoblin" checked>Hobgoblin <input type="number" id="hobgoblin"
-                  data-race="Hobgoblin" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolkenku" checked>Kenku <input type="number" id="kenku"
-                  data-race="Kenku" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolkobold" checked>Kobold <input type="number" id="kobold"
-                  data-race="Kobold" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boollizardfolk" checked>Lizardfolk <input type="number" id="lizardfolk"
-                  data-race="Lizardfolk" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolorc" checked>Orc <input type="number" id="orc" data-race="Orc"
-                  min="0" max="100" value="0" step="1" class="chance-input"><span class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolpixie" checked>Pixie <input type="number" id="pixie"
-                  data-race="Pixie" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolsatyr" checked>Satyr <input type="number" id="satyr"
-                  data-race="Satyr" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolsprite" checked>Sprite <input type="number" id="sprite"
-                  data-race="Sprite" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="booltabaxi" checked>Tabaxi <input type="number" id="tabaxi"
-                  data-race="Tabaxi" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="booltortle" checked>Tortle <input type="number" id="tortle"
-                  data-race="Tortle" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="booltriton" checked>Triton <input type="number" id="triton"
-                  data-race="Triton" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolyuanti" checked>Yuan-ti Pureblood <input type="number" id="yuanti"
-                  data-race="Yuan-ti Pureblood" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-            </div>
-          </details>
-
-          <details open>
-            <summary> MISC <input type="checkbox" id="misc" checked> </summary>
-            <div class="check-grid">
-              <label><input type="checkbox" id="booldrathunine" checked>Drathunine <input type="number" id="drathunine"
-                  data-race="Drathunine" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolgnoll" checked>Gnoll <input type="number" id="gnoll"
-                  data-race="Gnoll" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolhalfcyclops" checked>Half-Cyclops <input type="number"
-                  id="half-cyclops" data-race="Half-Cyclops" min="0" max="100" value="0" step="1"
-                  class="chance-input"><span class="chance-display"></span></label>
-              <label><input type="checkbox" id="boollocodon" checked>Loxodon <input type="number" id="loxodon"
-                  data-race="Loxodon" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolquickling" checked>Quickling <input type="number" id="quickling"
-                  data-race="Quickling" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolwarforged" checked>Warforged <input type="number" id="warforged"
-                  data-race="Warforged" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-            </div>
-          </details>
-
-          <details open>
-            <summary> Undead <input type="checkbox" id="undead" checked> </summary>
-            <div class="check-grid">
-              <label><input type="checkbox" id="boolghost" checked>Ghost <input type="number" id="ghost"
-                  data-race="Ghost" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolghoul" checked>Ghoul <input type="number" id="ghoul"
-                  data-race="Ghoul" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolskeleton" checked>Skeleton <input type="number" id="skeleton"
-                  data-race="Skeleton" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolspecter" checked>Specter <input type="number" id="specter"
-                  data-race="Specter" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolvampire" checked>Vampire <input type="number" id="vampire"
-                  data-race="Vampire" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-              <label><input type="checkbox" id="boolzombie" checked>Zombie <input type="number" id="zombie"
-                  data-race="Zombie" min="0" max="100" value="0" step="1" class="chance-input"><span
-                  class="chance-display"></span></label>
-            </div>
-          </details>
+          </div>
         </div>
+
+        <details open>
+          <summary>Backgrounds</summary>
+
+          <div class="background-grid">
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Acolyte" checked>
+              <span>Acolyte</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Artisan" checked>
+              <span>Artisan</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Charlatan" checked>
+              <span>Charlatan</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Criminal" checked>
+              <span>Criminal</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Entertainer" checked>
+              <span>Entertainer</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Farmer" checked>
+              <span>Farmer</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Guard" checked>
+              <span>Guard</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Guide" checked>
+              <span>Guide</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Hermit" checked>
+              <span>Hermit</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Merchant" checked>
+              <span>Merchant</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Noble" checked>
+              <span>Noble</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Sage" checked>
+              <span>Sage</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Sailor" checked>
+              <span>Sailor</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Scribe" checked>
+              <span>Scribe</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Soldier" checked>
+              <span>Soldier</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" data-bg="Wayfarer" checked>
+              <span>Wayfarer</span>
+            </label>
+
+          </div>
+        </details>
+
+        <details open>
+          <summary>Books</summary>
+
+          <div class="book-grid">
+
+            <label class="pill-toggle">
+              <input type="checkbox" id="PHB" checked>
+              <span>Player's Handbook</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" id="MPMM" checked>
+              <span>Monsters of the Multiverse</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" id="MISC" checked>
+              <span>Miscellaneous</span>
+            </label>
+
+            <label class="pill-toggle">
+              <input type="checkbox" id="UNDEAD" checked>
+              <span>Undead</span>
+            </label>
+
+          </div>
+        </details>
+
+        <details open>
+          <summary> Races </summary>
+
+          <div class="race-grid">
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolaarakocra" checked>
+                <span>Aarakocra</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="aarakocra" 
+              data-race="Aarakocra" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolaasimar" checked>
+                <span>Aasimar</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="aasimar" 
+              data-race="Aasimar" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolbugbear" checked>
+                <span>Bugbear</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="bugbear" 
+              data-race="Bugbear" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolcentaur" checked>
+                <span>Centaur</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="centaur" 
+              data-race="Centaur" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booldragonborn" checked>
+                <span>Dragonborn</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="dragonborn" 
+              data-race="Dragonborn" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booldrathunine" checked>
+                <span>Drathunine</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="drathunine" 
+              data-race="Drathunine" 
+              data-section="MISC" 
+              min="0" 
+              max="100"
+              value="0" 
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booldwarf" checked>
+                <span>Dwarf</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="dwarf" 
+              data-race="Dwarf" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolelf" checked>
+                <span>Elf</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="elf" 
+              data-race="Elf" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolfirbolg" checked>
+                <span>Firbolg</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="firbolg" 
+              data-race="Firbolg" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolgenasi" checked>
+                <span>Genasi</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="genasi" 
+              data-race="Genasi" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolgnoll" checked>
+                <span>Gnoll</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="gnoll" 
+              data-race="Gnoll" 
+              data-section="MISC" 
+              min="0" 
+              max="100" 
+              value="0" 
+              step="1"
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolgnome" checked>
+                <span>Gnome</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="gnome" 
+              data-race="Gnome" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolgoblin" checked>
+                <span>Goblin</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="goblin" 
+              data-race="Goblin" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolgoliath" checked>
+                <span>Goliath</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="goliath" 
+              data-race="Goliath" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhalfcyclops" checked>
+                <span>Half-Cyclops</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="halfcyclops" 
+              data-race="Half-Cyclops" 
+              data-section="MISC" 
+              min="0" 
+              max="100"
+              value="0" 
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhalfelf" checked>
+                <span>Half-Elf</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="halfelf" 
+              data-race="Half-Elf" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhalfling" checked>
+                <span>Halfling</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="halfling" 
+              data-race="Halfling" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhalforc" checked>
+                <span>Half-Orc</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="halforc" 
+              data-race="Half-Orc" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhobgoblin" checked>
+                <span>Hobgoblin</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="hobgoblin" 
+              data-race="Hobgoblin" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolhuman" checked>
+                <span>Human</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="human" 
+              data-race="Human" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolkenku" checked>
+                <span>Kenku</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="kenku" 
+              data-race="Kenku" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolkobold" checked>
+                <span>Kobold</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="kobold" 
+              data-race="Kobold" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boollizardfolk" checked>
+                <span>Lizardfolk</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="lizardfolk" 
+              data-race="Lizardfolk" 
+              data-section="MPMM" 
+              min="0" 
+              max="100"
+              value="0" 
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolloxodon" checked>
+                <span>Loxodon</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="loxodon" 
+              data-race="Loxodon" 
+              data-section="MISC" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolorc" checked>
+                <span>Orc</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="orc" 
+              data-race="Orc" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0" 
+              step="1"
+                class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolpixie" checked>
+                <span>Pixie</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="pixie" 
+              data-race="Pixie" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0" 
+              step="1"
+                class="chance-input">
+            </div>
+            
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolquickling" checked>
+                <span>Quickling</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="quickling" 
+              data-race="Quickling" 
+              data-section="MISC" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolsatyr" checked>
+                <span>Satyr</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="satyr" 
+              data-race="Satyr" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0" 
+              step="1"
+                class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolsprite" checked>
+                <span>Sprite</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="sprite" 
+              data-race="Sprite" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booltabaxi" checked>
+                <span>Tabaxi</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="tabaxi" 
+              data-race="Tabaxi" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booltiefling" checked>
+                <span>Tiefling</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="tiefling" 
+              data-race="Tiefling" 
+              data-section="PHB" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booltortle" checked>
+                <span>Tortle</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="tortle" 
+              data-race="Tortle" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="booltriton" checked>
+                <span>Triton</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="triton" 
+              data-race="Triton" 
+              data-section="MPMM" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolyuanti" checked>
+                <span>Yuan-ti Pureblood</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="yuanti" 
+              data-race="Yuan-ti Pureblood" 
+              data-section="MPMM" 
+              min="0" 
+              max="100"
+              value="0" 
+              step="1" 
+              class="chance-input">
+            </div>
+
+            
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolwarforged" checked>
+                <span>Warforged</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="warforged" 
+              data-race="Warforged" 
+              data-section="MISC" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolghost" checked>
+                <span>Ghost</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="ghost" 
+              data-race="Ghost" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolghoul" checked>
+                <span>Ghoul</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="ghoul" 
+              data-race="Ghoul" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolskeleton" checked>
+                <span>Skeleton</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="skeleton" 
+              data-race="Skeleton" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolspecter" checked>
+                <span>Specter</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="specter" 
+              data-race="Specter" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolvampire" checked>
+                <span>Vampire</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="vampire" 
+              data-race="Vampire" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+
+            <div class="race-item">
+              <label class="pill-toggle">
+                <input type="checkbox" id="boolzombie" checked>
+                <span>Zombie</span>
+              </label>
+              <span class="chance-display">—</span>
+              <input 
+              type="number" 
+              id="zombie" 
+              data-race="Zombie" 
+              data-section="UNDEAD" 
+              min="0" 
+              max="100" 
+              value="0"
+              step="1" 
+              class="chance-input">
+            </div>
+          </div>
+        </details>
       </div>
     </div>
+  </div>
   </div>
 
   </div>

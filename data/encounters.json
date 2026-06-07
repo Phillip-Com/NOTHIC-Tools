@@ -1,21 +1,37 @@
 {
     "artic": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "1d4 + 3 trappers (commoners)",
-                "The partially eaten carcass of a mammoth, from which 1d4 weeks of rations can be harvested",
-                "Single-file tracks in the snow that stop abruptly",
-                "A frozen pond with a jagged hole in the ice that appears recently made",
                 "3d4 refugees (commoners) fleeing from orcs",
                 "A frostbitten traveler collapses in the snow, clutching a strange rune-covered stone.",
                 "A pack of sled dogs approach without their handler, their harnesses cut clean.",
                 "The party finds an ice fishing hole, still warm—someone’s nearby.",
-                "A frozen statue of a humanoid figure... that sheds a single tear of water.",
-                "A glimmer beneath the ice—perhaps treasure, or something watching back.",
-                "A drifting iceberg carries a half-buried longship with ancient markings.",
-                "The howling wind seems to carry whispers of a lost expedition’s final words."
+                "A dwarf prospector searching for a lost mining camp.",
+                "1d4 goliath hunters transporting a freshly slain elk.",
+                "A trapper willing to trade information about nearby dangers.",
+                "A traveling storyteller gathering local legends.",
+                "2d6 commoners relocating to a safer settlement before winter.",
+                "A hunter dragging a sled loaded with valuable furs.",
+                "A nervous messenger carrying an urgent warning to a nearby village.",
+                "A priest of a winter deity performing rites for the dead.",
+                "A pair of rival trappers arguing over territorial claims.",
+                "A halfling merchant whose wagon has become stuck in the snow.",
+                "A scout searching for companions lost during a blizzard.",
+                "An awakened reindeer attempting to communicate through gestures.",
+                "A family seeking shelter after losing their home to raiders.",
+                "A wandering herbalist collecting rare glacier moss.",
+                "A wounded ranger tracking an unknown predator.",
+                "A gnome cartographer mapping the tundra.",
+                "A traveling bard researching local giant legends.",
+                "A prospector carrying fragments of a strange blue crystal.",
+                "A fur trader searching for new routes across the ice.",
+                "A young druid observing migrating wildlife."
             ],
-            "monster": [
+            "combat": [
                 "1 giant owl",
                 "1d6 + 3 kobolds",
                 "1 owl",
@@ -50,22 +66,27 @@
                 "1 mammoth",
                 "1 young white dragon",
                 "1 frost giant"
+            ],
+            "exploration": [
+                "The partially eaten carcass of a mammoth, from which 1d4 weeks of rations can be harvested",
+                "Single-file tracks in the snow that stop abruptly",
+                "A frozen pond with a jagged hole in the ice that appears recently made",
+                "A frozen statue of a humanoid figure... that sheds a single tear of water.",
+                "A glimmer beneath the ice—perhaps treasure, or something watching back.",
+                "A drifting iceberg carries a half-buried longship with ancient markings.",
+                "The howling wind seems to carry whispers of a lost expedition’s final words."
             ]
         },
         "tier2": {
-            "roleplay": [
-                "A half-orc druid tending to an injured polar bear. If the characters assist the druid, she gives them a vial of antitoxin.",
-                "1d4 hours of extreme cold (see chapter 5 of the Dungeon Master’s Guide)",
-                "A howl that echoes over the land for 1d3 minutes",
-                "An isolated cabin burns faintly in the distance—signs of recent habitation.",
-                "An ice druid offers tea brewed from glacier moss and asks about the stars.",
-                "The party finds a circle of stone cairns, each holding offerings of meat and bone.",
-                "A white fox trails the party for hours, watching intently but never approaching.",
-                "Strange northern lights flicker, forming vague shapes that mimic the group.",
-                "A hunter’s journal details sightings of a “mirror beast” that mimics travelers.",
-                "A cracked ice bridge moans and shifts as the party crosses—it’s alive with trapped spirits."
+            "camping": [
+                ""
             ],
-            "monster": [
+            "social": [
+                "A half-orc druid tending to an injured polar bear. If the characters assist the druid, she gives them a vial of antitoxin.",
+                "An isolated cabin burns faintly in the distance—signs of recent habitation.",
+                "An ice druid offers tea brewed from glacier moss and asks about the stars."
+            ],
+            "combat": [
                 "2 saber-toothed tigers",
                 "1d4 half-ogres",
                 "1d3 + 1 brown bears",
@@ -94,23 +115,26 @@
                 "1 remorhaz",
                 "1 roc",
                 "2d4 young remorhazes"
+            ],
+            "exploration": [
+                "1d4 hours of extreme cold (see chapter 5 of the Dungeon Master’s Guide)",
+                "A howl that echoes over the land for 1d3 minutes",
+                "The party finds a circle of stone cairns, each holding offerings of meat and bone.",
+                "A white fox trails the party for hours, watching intently but never approaching.",
+                "Strange northern lights flicker, forming vague shapes that mimic the group.",
+                "A hunter’s journal details sightings of a “mirror beast” that mimics travelers.",
+                "A cracked ice bridge moans and shifts as the party crosses—it’s alive with trapped spirits."
             ]
         },
         "tier3": {
-            "roleplay": [
-                "A blizzard that reduces visibility to 5 feet for 1d6 hours",
-                "A herd of 3d20 + 60 caribou (deer) moving through the snow",
-                "A mile-wide frozen lake in which the preserved corpses of strange creatures can be seen",
-                "A crumbling ice castle littered with the frozen bodies of blue-skinned humanoids",
-                "A tribe of frost giants mourns the loss of one of their kin with haunting songs.",
-                "A wizard’s tower encased in eternal ice still hums with power deep inside.",
-                "A storm reveals the skeletal remains of a colossal creature buried in the snow.",
-                "The aurora aligns with ancient carvings on nearby cliffs—a rare celestial omen.",
-                "A group of mammoth herders invites the party to share fermented milk.",
-                "A frozen battlefield where spectral warriors reenact their final moments.",
-                "A drifting iceberg carries a half-preserved temple to an unknown frost god."
+            "camping": [
+                ""
             ],
-            "monster": [
+            "social": [
+                "A tribe of frost giants mourns the loss of one of their kin with haunting songs.",
+                "A group of mammoth herders invites the party to share fermented milk."
+            ],
+            "combat": [
                 "1 abominable yeti",
                 "1d6 revenants",
                 "1d4 + 1 werebears",
@@ -123,23 +147,31 @@
                 "1d8 + 1 frost giants",
                 "1d4 remorhazes",
                 "1 ancient white dragon"
+            ],
+            "exploration": [
+                "A blizzard that reduces visibility to 5 feet for 1d6 hours",
+                "A herd of 3d20 + 60 caribou (deer) moving through the snow",
+                "A mile-wide frozen lake in which the preserved corpses of strange creatures can be seen",
+                "A crumbling ice castle littered with the frozen bodies of blue-skinned humanoids",
+                "A wizard’s tower encased in eternal ice still hums with power deep inside.",
+                "A storm reveals the skeletal remains of a colossal creature buried in the snow.",
+                "The aurora aligns with ancient carvings on nearby cliffs—a rare celestial omen.",
+                "A frozen battlefield where spectral warriors reenact their final moments.",
+                "A drifting iceberg carries a half-preserved temple to an unknown frost god."
             ]
         },
         "tier4": {
-            "roleplay": [
-                "A circular patch of black ice on the ground. The air temperature around the patch is warmer than in the surrounding area, and characters who inspect the ice find bits of machinery frozen within.",
-                "An adventurer frozen 6 feet under the ice; 50% chance the corpse has a rare magic item of the DM’s choice",
-                "A 500-foot-high wall of ice that is 300 feet thick and spread across 1d4 miles",
-                "The likeness of a stern woman with long, flowing hair, carved into the side of a mountain",
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A frost wyrm’s ancient tracks lead to a ruined city carved into a glacier.",
-                "An elemental rift pulses beneath an ice canyon, warping reality itself.",
                 "A shaman asks for help appeasing a slumbering glacier spirit.",
                 "A lost civilization’s frozen council chamber, where their spirits still debate.",
                 "A hunting expedition of frost trolls offers a trade of rare pelts and knowledge.",
-                "A mirror of ice that shows not reflections, but alternate fates.",
                 "A storm spirit trapped within a snow crystal begs for release."
             ],
-            "monster": [
+            "combat": [
                 "2d10 revenants",
                 "2d8 trolls",
                 "2d10 werebears",
@@ -154,12 +186,23 @@
                 "1d3 adult white dragons",
                 "2d4 abominable yetis",
                 "1 ancient white dragon with 1d3 young white dragons"
+            ],
+            "exploration": [
+                "A circular patch of black ice on the ground. The air temperature around the patch is warmer than in the surrounding area, and characters who inspect the ice find bits of machinery frozen within.",
+                "An adventurer frozen 6 feet under the ice; 50% chance the corpse has a rare magic item of the DM’s choice",
+                "A 500-foot-high wall of ice that is 300 feet thick and spread across 1d4 miles",
+                "The likeness of a stern woman with long, flowing hair, carved into the side of a mountain",
+                "An elemental rift pulses beneath an ice canyon, warping reality itself.",
+                "A mirror of ice that shows not reflections, but alternate fates."
             ]
         }
     },
     "coastal": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "2d6 fishers (commoners)",
                 "1d6 guards protecting a stranded noble",
                 "A few dozen baby turtles struggling to make their way to the sea",
@@ -173,7 +216,7 @@
                 "A weathered lighthouse flickers erratically despite no keeper inside.",
                 "The tide retreats unusually far, revealing ruins beneath the waves."
             ],
-            "monster": [
+            "combat": [
                 "1 pseudodragon",
                 "2d8 crabs",
                 "1d3 poisonous snakes",
@@ -211,10 +254,16 @@
                 "1 water elemental",
                 "1 cyclops",
                 "1 young bronze dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A pseudodragon chasing gulls through the air",
                 "A stoppered bottle containing an illegible note and half buried in the sand",
                 "A battle at sea between two galleons",
@@ -227,7 +276,7 @@
                 "Fisherfolk fear a curse as their nets return filled with bones.",
                 "A beached whale bears runes carved into its hide, still faintly glowing."
             ],
-            "monster": [
+            "combat": [
                 "2d8 giant wolf spiders",
                 "3d6 pteranodons",
                 "2d4 scouts",
@@ -259,10 +308,16 @@
                 "1 roc",
                 "1 marid",
                 "1 storm giant"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A trident partially buried in the sand",
                 "A beached whale, dead and bloated. If it takes any damage, it explodes, and each creature within 30 feet of it must make a DC 15 Dexterity saving throw, taking 5d6 bludgeoning damage on a failed save, or half as much damage on a successful one",
                 "A nest of 1d6 dragon turtle eggs",
@@ -274,7 +329,7 @@
                 "A storm blows in unnaturally fast—its center is perfectly calm.",
                 "A stranded crew pleads for help salvaging their cursed cargo."
             ],
-            "monster": [
+            "combat": [
                 "1d4 banshees (night only)",
                 "1 cyclops",
                 "1d6 + 2 manticores",
@@ -296,10 +351,16 @@
                 "1 dragon turtle",
                 "1 ancient bronze dragon",
                 "1 ancient blue dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "1d6 + 2 waterspouts that dance on the water before stopping abruptly",
                 "The ocean itself parts for a moment, revealing a sunken temple below.",
                 "A kraken’s eye briefly surfaces and studies the ship in silence.",
@@ -309,7 +370,7 @@
                 "A ghostly captain seeks passage to fulfill his final voyage.",
                 "The horizon curves upward—an illusion, or the edge of another realm."
             ],
-            "monster": [
+            "combat": [
                 "1 roc",
                 "1 storm giant",
                 "An adult bronze dragon fighting an adult blue dragon to the death",
@@ -322,12 +383,18 @@
                 "1 ancient bronze dragon",
                 "1 ancient blue dragon",
                 "1d3 + 1 storm giants"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "desert": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "1 abandoned mule",
                 "2d6 commoners with 2d4 camels bound for a distant city",
                 "1d6 guards escorting a noble to the edge of the desert, all of them astride camels",
@@ -343,7 +410,7 @@
                 "Tracks appear beside the group’s—matching their exact steps.",
                 "A dune hums softly, resonating with certain tones."
             ],
-            "monster": [
+            "combat": [
                 "3d8 scorpions",
                 "2d4 vultures",
                 "1d6 flying snakes",
@@ -394,10 +461,16 @@
                 "1 young brass dragon",
                 "1 medusa",
                 "1 yuan-ti abomination"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A stone obelisk partly buried in the sand",
                 "A meteorite resting at the bottom of a glassy crater",
                 "1d6 + 1 empty tents",
@@ -410,7 +483,7 @@
                 "A sandstorm’s eye holds a perfectly still oasis for those who find it.",
                 "The party encounters travelers riding massive tortoises, claiming to follow the stars."
             ],
-            "monster": [
+            "combat": [
                 "1d6 scouts",
                 "2d4 jackalweres",
                 "2d6 hobgoblins",
@@ -453,10 +526,16 @@
                 "1 roc",
                 "1 gynosphinx",
                 "1 adult brass dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A desert caravan consisting of 1d6 merchants (nobles) with 2d6 guards",
                 "1d6 square miles of desert glass",
                 "A plundered pyramid",
@@ -468,7 +547,7 @@
                 "A nomad’s tent holds maps to the “heart of the desert,” written in starlight.",
                 "A shrine to the wind itself offers boons to those who sleep beneath it."
             ],
-            "monster": [
+            "combat": [
                 "1 young brass dragon",
                 "4d6 gnolls",
                 "3d10 giant hyenas",
@@ -502,10 +581,16 @@
                 "1 adult blue dracolich",
                 "1 ancient brass dragon",
                 "1 ancient blue dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "An abandoned city made from white marble, empty during the day. At night, harmless apparitions roam the streets, replaying the final moments of their lives",
                 "1d4 hours of extreme heat (see chapter 5 of the Dungeon Master’s Guide)",
                 "An old signpost identifying a single destination, called Pazar",
@@ -517,7 +602,7 @@
                 "The ghost of a forgotten pharaoh seeks companions for his eternal court.",
                 "The wind itself begins speaking—pleading, not angry."
             ],
-            "monster": [
+            "combat": [
                 "1 adult brass dragon",
                 "1d2 yuan-ti abominations with 2d10 + 5 yuan-ti malisons and 4d6 + 6 yuan-ti purebloods",
                 "1d6 + 2 medusas",
@@ -534,12 +619,18 @@
                 "1 ancient brass dragon",
                 "1 ancient blue dragon",
                 "1d4 adult brass dragons"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "forest": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "2d4 woodcutters (commoners)",
                 "A lost, weeping child. If the characters take the child home, the parents reward them with 1d3 potions of healing.",
                 "A young woodcutter (scout) racing through the forest to rescue a lost friend",
@@ -557,7 +648,7 @@
                 "The sound of chopping echoes nearby, though no axe is seen.",
                 "A forest spirit offers a blessing if the group replants a fallen sapling."
             ],
-            "monster": [
+            "combat": [
                 "1 giant owl",
                 "1d4 cats",
                 "1 badger or 1d4 poisonous snakes",
@@ -636,10 +727,16 @@
                 "1 gorgon or 1 unicorn",
                 "1 shambling mound",
                 "1 yuan-ti abomination"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A small shack almost hidden by the deep forest. The interior is empty aside from a large cast-iron oven.",
                 "An old stone archway of obvious elven design. Any character who passes under it makes Wisdom (Perception) checks with advantage for 1 hour.",
                 "A clear pool of water with 1d6 sleeping animals lying around its edge",
@@ -655,7 +752,7 @@
                 "The scent of honey leads to a hidden grove of awakened bees.",
                 "A druid warns the group that the forest is watching them, literally."
             ],
-            "monster": [
+            "combat": [
                 "2d4 vine blights",
                 "2d6 hobgoblins or 2d6 orcs",
                 "2d4 apes or 2d4 satyrs",
@@ -715,10 +812,16 @@
                 "1d4 giant apes",
                 "1 guardian naga",
                 "1 adult gold dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A pool of clear, still water. Gold coins litter the bottom, but they disappear if removed from the pool.",
                 "A small woodland shrine dedicated to a mysterious cult named the Siswa",
                 "A group of seven people (commoners) wearing animal masks and ambling through the woods",
@@ -734,7 +837,7 @@
                 "A patch of flowers blooms wherever the group steps.",
                 "A storm breaks unnaturally fast, as if the forest itself commanded it."
             ],
-            "monster": [
+            "combat": [
                 "1 werebear",
                 "1d4 druids performing a ritual for the dead (day only) or 1d4 banshees (night only)",
                 "1d3 couatls",
@@ -764,10 +867,16 @@
                 "2d4 oni",
                 "1d3 treants",
                 "1 ancient green dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "For a few hundred feet, wherever the characters step, flowers bloom and emit soft light.",
                 "4d6 + 10 elves living in a small community in the treetops",
                 "A 50-foot-tall stone statue of an elf warrior with hand raised, palm out, as if to forbid travelers from coming this way",
@@ -783,7 +892,7 @@
                 "A legendary beast, older than civilization, watches from afar.",
                 "The air shimmers with ancient power—nature’s heartbeat itself."
             ],
-            "monster": [
+            "combat": [
                 "1 young green dragon",
                 "1 treant",
                 "1 guardian naga",
@@ -804,12 +913,18 @@
                 "1 ancient green dragon",
                 "2d4 + 1 treants",
                 "1 ancient gold dragon"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "grassland": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A circle of standing stones within which the air is utterly still, no matter how hard the wind blows outside",
                 "A herd of wild horses thunders past, their leader wearing a golden bridle.",
                 "A shepherd offers the group milk and bread in exchange for stories.",
@@ -822,7 +937,7 @@
                 "The wind carries laughter from nowhere.",
                 "A child’s lost kite dances through the grass, though no one holds the string."
             ],
-            "monster": [
+            "combat": [
                 "1 hobgoblin captain with 1d4 + 1 hobgoblins",
                 "1 chimera",
                 "1 gorgon",
@@ -864,10 +979,16 @@
                 "1 cyclops or 1 bulette",
                 "1d4 manticores",
                 "1 tyrannosaurus rex"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A tornado that touches down 1d6 miles away, tearing up the land for 1 mile before it dissipates",
                 "A stretch of land littered with rotting war machines, bones, and banners of forgotten armies",
                 "A tribe of 2d20 + 20 nomads (tribal warriors) on riding horses following a herd of antelope (deer). The nomads are willing to trade food, leather, and information for weapons.",
@@ -883,7 +1004,7 @@
                 "The horizon glows gold—fields of magical wheat grow untended.",
                 "A shepherd’s dog leads the group to an old battlefield buried in the grass."
             ],
-            "monster": [
+            "combat": [
                 "1d3 gorgons",
                 "1d4 cyclopes",
                 "1d3 gnoll fangs of Yeenoghu",
@@ -920,10 +1041,16 @@
                 "1 young gold dragon",
                 "1d4 triceratops",
                 "1d3 tyrannosaurus rexes"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "An old road of paved stones, partly reclaimed by wilderness, that travels for 1d8 miles in either direction before ending",
                 "A witch (mage) dwelling in a crude hut. She offers potions of healing, antitoxins, and other consumable items for sale in exchange for food and news.",
                 "A giant hole 50 feet across that descends nearly 500 feet before opening into an empty cave",
@@ -939,7 +1066,7 @@
                 "A nomadic chieftain challenges the party to a contest of skill.",
                 "A giant tortoise crosses the plains, carrying a small settlement on its back."
             ],
-            "monster": [
+            "combat": [
                 "3d6 wereboars",
                 "2d10 gnoll fangs of Yeenoghu",
                 "1d4 bulettes",
@@ -954,10 +1081,16 @@
                 "2d4 tyrannosaurus rexes",
                 "1 adult gold dragon",
                 "1 ancient gold dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A fiery chariot that races across the sky",
                 "A valley where all the grass has died and the ground is littered with stumps and fallen tree trunks, all petrified",
                 "A friendly adventuring party of 1d6 + 1 characters of varying races, classes, and levels (average level 1d6 + 2). They share information about their recent travels.",
@@ -972,7 +1105,7 @@
                 "A legendary warrior rides across the plains on a spectral horse.",
                 "The sky rumbles with laughter—something enormous wakes."
             ],
-            "monster": [
+            "combat": [
                 "2d6 triceratops",
                 "1d10 gorgons",
                 "2d6 hyenas feeding on the carcass of a dead dinosaur",
@@ -984,12 +1117,18 @@
                 "1d6 + 2 tyrannosaurus rexes",
                 "1 adult gold dragon",
                 "1 ancient gold dragon"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "hill": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "An empty cave littered with bones",
                 "An old dwarf sitting on a stump, whittling a piece of wood",
                 "A small cemetery containing 2d6 graves",
@@ -1008,7 +1147,7 @@
                 "The hills echo back voices—but distorted.",
                 "A raven perches atop a cairn, guarding a buried secret."
             ],
-            "monster": [
+            "combat": [
                 "1 eagle",
                 "2d4 baboons",
                 "1d6 bandits",
@@ -1066,10 +1205,16 @@
                 "1d3 trolls",
                 "1 cyclops",
                 "1 stone giant"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A 15-foot-tall stone statue of a dwarf warrior that has been tipped over on its side",
                 "A stone door set into the side of a steep hill, opening onto 15 feet of descending stairs that end at a cave-in",
                 "An abandoned wooden hut",
@@ -1084,7 +1229,7 @@
                 "A sudden landslide reveals an ancient dwarven door.",
                 "The air grows heavy with static—something ancient stirs beneath."
             ],
-            "monster": [
+            "combat": [
                 "1d4 pegasi or 1d3 perytons",
                 "1d6 + 2 giant goats",
                 "1 manticore",
@@ -1128,10 +1273,16 @@
                 "1d4 stone giants",
                 "1d3 young copper dragons",
                 "1 roc"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A stream of smoke emerging from a small chimney in the hillside",
                 "A mild earthquake that shakes the region for 1d20 seconds",
                 "1d3 nobles with 1d4 scouts prospecting for gold",
@@ -1147,7 +1298,7 @@
                 "A burrow leads to a perfectly preserved ancient hall.",
                 "The hilltops tremble, as if breathing in unison."
             ],
-            "monster": [
+            "combat": [
                 "2d8 manticores or 2d8 phase spiders",
                 "1d6 green hags with 1d6 wyverns",
                 "1 hobgoblin captain with 1 hill giant and 4d10 hobgoblins",
@@ -1172,10 +1323,16 @@
                 "1d4 rocs",
                 "1 adult red dragon",
                 "1 ancient copper dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "The white outline of an enormous horse carved into the side of a high hill",
                 "The scorched remains of 2d10 humanoids littering a hillside",
                 "A massive boulder partly buried in the earth as if it fell or was thrown there",
@@ -1191,7 +1348,7 @@
                 "A hill unrolls, revealing itself as a slumbering behemoth.",
                 "Ancient runes glow across the landscape, connecting each hilltop."
             ],
-            "monster": [
+            "combat": [
                 "1d2 rocs",
                 "1 young red dragon",
                 "2d6 ettins",
@@ -1210,12 +1367,18 @@
                 "1 ancient copper dragon",
                 "1 ancient red dragon",
                 "1d2 adult red dragons with 1d3 young red dragons"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "mountain": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "Stairs chiseled into the side of the mountain that climb 3d20 + 40 feet before ending abruptly",
                 "A small shrine dedicated to a lawful neutral god, perched on a stone outcropping",
                 "Enormous footprints left by a giant, which head into the mountain peaks",
@@ -1231,7 +1394,7 @@
                 "A small rockslide narrowly misses the group, revealing an ancient carving beneath.",
                 "A child’s toy lies in the snow beside large humanoid footprints."
             ],
-            "monster": [
+            "combat": [
                 "1 eagle",
                 "1d3 swarms of bats",
                 "1d6 goats",
@@ -1274,10 +1437,16 @@
                 "1 wyvern",
                 "1 stone giant",
                 "1 frost giant"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "1d8 fissures venting steam that partially obscures a 20-foot cube above each fissure",
                 "A ravine blocked by a 100-foot-high wall, which has an opening in the center where a gate used to be",
                 "A distant mountain whose peak resembles a tooth",
@@ -1293,7 +1462,7 @@
                 "Two mountain goats butt heads repeatedly, ignoring the adventurers completely.",
                 "A cave mouth breathes faint warm air, though no sound comes from within."
             ],
-            "monster": [
+            "combat": [
                 "2d8 + 1 aarakocra",
                 "1 lion or 1 saber-toothed tiger",
                 "1d8 + 1 giant goats",
@@ -1324,10 +1493,16 @@
                 "1d4 stone giants",
                 "1 young red dragon",
                 "1d4 frost giants"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "Heavy snowfall that lasts for 1d6 hours",
                 "2 stone giants playing catch with a boulder a few hundred feet away",
                 "A wide crevasse, its depths shrouded in mist",
@@ -1342,7 +1517,7 @@
                 "An ancient dwarven spirit asks for help rebuilding a sacred forge.",
                 "A massive eagle lands nearby, carrying a golden helm in its talons."
             ],
-            "monster": [
+            "combat": [
                 "1d8 + 1 basilisks",
                 "2d4 hell hounds",
                 "1d3 chimeras",
@@ -1365,10 +1540,16 @@
                 "1d4 rocs",
                 "1 ancient silver dragon",
                 "1 ancient red dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A massive boat perched atop a mountain",
                 "A wooded valley haunted by secretive and reclusive elves who tell warily of their master: a mad wizard who lives in the heart of the valley",
                 "A waterfall hundreds of feet high that drops into a clear pool",
@@ -1384,7 +1565,7 @@
                 "The stars above align perfectly with mountaintop runes.",
                 "A massive earthquake reveals the fossilized bones of a god."
             ],
-            "monster": [
+            "combat": [
                 "1d10 bulettes",
                 "1d8 + 1 chimeras",
                 "1 adult silver dragon",
@@ -1401,12 +1582,18 @@
                 "1d4 young red dragons",
                 "1 ancient silver dragon",
                 "1 ancient red dragon"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "swamp": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "1d4 + 1 mud huts partially sunken in murky water",
                 "The corpse of an adventurer tangled in the weeds. Looting the body turns up an explorer’s pack and perhaps (50% chance) a random common magic item.",
                 "A high-pitched shriek that lasts for 1d4 minutes",
@@ -1422,7 +1609,7 @@
                 "A child’s doll floats past, perfectly clean despite the filth.",
                 "A hermit brews a potion, claiming it can cure any venom."
             ],
-            "monster": [
+            "combat": [
                 "1d4 poisonous snakes",
                 "3d6 rats",
                 "2d8 ravens",
@@ -1466,10 +1653,16 @@
                 "1 yuan-ti abomination",
                 "1d4 water elementals",
                 "1 hydra"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "Tainted water that exposes creatures that move through it to sight rot (see “Diseases” in chapter 8 of the Dungeon Master’s Guide)",
                 "A bloated humanoid corpse floating facedown in the water",
                 "An altar partially sunk into the mud, devoted to a god that is part human and part frog",
@@ -1485,7 +1678,7 @@
                 "A hag’s laughter echoes through the mist, though she never appears.",
                 "A swamp spirit demands tribute of fresh water to restore balance."
             ],
-            "monster": [
+            "combat": [
                 "1 green hag",
                 "2d4 giant lizards or 2d4 giant poisonous snakes",
                 "2d8 winged kobolds",
@@ -1519,10 +1712,16 @@
                 "1d10 revenants",
                 "1d8 + 1 water elementals",
                 "1d3 hydras"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A large, spreading tree from which 2d6 armored knights hang by the neck",
                 "Fog that rolls across the terrain, making the area within 1d3 miles heavily obscured for 1d4 hours",
                 "An eerie, bat-headed idol almost completely covered by vines",
@@ -1538,7 +1737,7 @@
                 "A ghostly ferry glides silently across the swamp at midnight.",
                 "A massive serpent skeleton rises briefly, then collapses into the muck."
             ],
-            "monster": [
+            "combat": [
                 "1d4 giant crocodiles",
                 "1d3 yuan-ti abominations",
                 "1d6 + 1 green hags",
@@ -1552,10 +1751,16 @@
                 "1d3 hydras",
                 "1 adult black dragon",
                 "1 ancient black dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A primordial swamp spirit awakens, reshaping the land.",
                 "The air itself turns to mist, revealing visions of the past.",
                 "A black dragon matriarch communes with the group through the fog.",
@@ -1567,14 +1772,20 @@
                 "The water glows with necrotic energy, animating anything submerged.",
                 "A forgotten god of decay reclaims its worshipers in a tide of rot."
             ],
-            "monster": [
+            "combat": [
+                ""
+            ],
+            "exploration": [
                 ""
             ]
         }
     },
     "underdark": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "Orc graffiti on the walls, suggesting something rude about the mother of someone named Krusk",
                 "A rubble-strewn passage that appears to have been recently cleared after a cave-in",
                 "An abandoned miners’ camp spattered with blood and littered with the contents of 1d3 dungeoneer’s packs",
@@ -1593,7 +1804,7 @@
                 "An illusory surface hides a deep pit filled with bones.",
                 "A glowing crystal flickers like a heartbeat when held."
             ],
-            "monster": [
+            "combat": [
                 "1 mind flayer arcanist",
                 "1d3 + 1 giant poisonous snakes",
                 "1d3 giant lizards",
@@ -1667,10 +1878,16 @@
                 "1 chimera",
                 "1 mind flayer",
                 "1 spirit naga"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "Luminescent fungi growing on the walls of a moist cave, filling it with dim light",
                 "A patch of mold that appears yellow when light is directed toward it",
                 "A merchant caravan consisting of 1 drow mage, 2 drow elite warriors, and 2d10 quaggoths",
@@ -1687,7 +1904,7 @@
                 "A lost dwarf hums to himself, chiseling words into stone: ‘Still alive.’",
                 "The party finds a perfectly circular tunnel, smooth as glass."
             ],
-            "monster": [
+            "combat": [
                 "3d6 swarms of bats",
                 "1d4 giant spiders or 1d4 giant toads",
                 "1 mimic",
@@ -1764,10 +1981,16 @@
                 "1 aboleth",
                 "1 dao or 1 stone giant",
                 "1 beholder"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A 100-foot-long ravine, 4d10 feet wide and 5d20 + 200 feet deep",
                 "A large cave containing 2d10 extraordinarily detailed statues of various creatures",
                 "A shrill scream followed by dark laughter",
@@ -1783,7 +2006,7 @@
                 "An oozing tunnel wall shifts slightly, alive and watching.",
                 "The air grows thick with whispers, none belonging to mortal tongues."
             ],
-            "monster": [
+            "combat": [
                 "3d6 carrion crawlers",
                 "1d6 + 1 gelatinous cubes",
                 "1d8 + 2 gibbering mouthers",
@@ -1844,10 +2067,16 @@
                 "1 young red shadow dragon",
                 "1 death tyrant",
                 "1 purple worm"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A 30-foot-tall inverted black pyramid floating 1 inch above the floor in a large cave",
                 "A beautiful obsidian sculpture of a panther lying on the floor",
                 "A large cave in which stands a 50-foot-tall idol of Blibdoolpoolp",
@@ -1862,7 +2091,7 @@
                 "The ground bleeds black ichor that whispers of other worlds.",
                 "The Underdark itself shudders, birthing a new, terrifying realm."
             ],
-            "monster": [
+            "combat": [
                 "1d4 grick alphas",
                 "2d8 spectators",
                 "3d6 minotaurs or 2d8 kuo-toa monitors",
@@ -1902,12 +2131,18 @@
                 "1 death tyrant",
                 "1d3 purple worms",
                 "2d4 aboleths"
+            ],
+            "exploration": [
+                ""
             ]
         }
     },
     "underwater": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A bed of enormous clams",
                 "A school of silvery fish darting through the water",
                 "An eerie statue of a squatting humanoid, with bat wings on its back and tentacles sprouting from its face",
@@ -1924,7 +2159,7 @@
                 "A pearl rolls from a clamshell and cracks open, releasing mist.",
                 "A sunken chest holds nothing but a single silver comb."
             ],
-            "monster": [
+            "combat": [
                 "3d6 quippers",
                 "2d4 steam mephits",
                 "1d4 sahuagin",
@@ -1944,10 +2179,16 @@
                 "1 giant shark",
                 "1 water elemental",
                 "1 sahuagin baron"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A sunken galleon with a 50% chance of a random treasure hoard inside (roll on the Treasure Hoard: Challenge 5–10 table in chapter 7 of the Dungeon Master’s Guide)",
                 "An abandoned bathysphere",
                 "An empty castle made from coral",
@@ -1964,7 +2205,7 @@
                 "A large shark follows the group curiously, never attacking.",
                 "A glowing current spirals around them—an underwater leyline."
             ],
-            "monster": [
+            "combat": [
                 "3d6 steam mephits",
                 "1d10 sahuagin",
                 "1 giant octopus",
@@ -1984,10 +2225,16 @@
                 "1d4 giant sharks",
                 "1 marid",
                 "storm giant"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A ghost ship passing overhead, containing 2d6 + 10 ghosts",
                 "A 1-mile-radius sphere of effervescent water that allows air-breathing creatures to breathe water while in the sphere",
                 "A shimmering, blue-green portal to the Elemental Plane of Water",
@@ -2002,7 +2249,7 @@
                 "An enormous shell opens, revealing a sleeping leviathan inside.",
                 "A current carries relics from sunken civilizations."
             ],
-            "monster": [
+            "combat": [
                 "1 sahuagin baron with 1d4 sahuagin priestesses and 2d10 sahuagin",
                 "1d10 killer whales",
                 "1d6 giant sharks",
@@ -2011,10 +2258,16 @@
                 "1d3 storm giants",
                 "1 dragon turtle",
                 "1 kraken"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A leviathan stirs in its ancient sleep, shaking the seafloor.",
                 "The ocean turns silent for miles in every direction.",
                 "A portal to the Plane of Water opens, releasing elementals.",
@@ -2026,14 +2279,20 @@
                 "The sea glows with starlight reflected from beneath.",
                 "The tides reverse for one full minute—the sea holds its breath."
             ],
-            "monster": [
+            "combat": [
+                ""
+            ],
+            "exploration": [
                 ""
             ]
         }
     },
     "urban": {
         "tier1": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A peddler weighed down with a load of pots, pans, and other basic supplies",
                 "A wagon loaded with apples that has a broken wheel and holds up traffic",
                 "Someone empties a chamber pot onto the street from a second-floor window",
@@ -2053,7 +2312,7 @@
                 "A guard nervously admits the city’s prisoners are vanishing overnight.",
                 "The scent of perfume leads to a rooftop with a single red glove."
             ],
-            "monster": [
+            "combat": [
                 "1d6 cats",
                 "2d10 rats",
                 "1 raven perched on a signpost",
@@ -2113,10 +2372,16 @@
                 "1 invisible stalker",
                 "1d8 + 1 phase spiders",
                 "1 assassin"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier2": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A talkative urchin, badgering passersby to serve as their guide through the community for a price of 1 sp",
                 "A noble shouts “Stop! Thief!” at a fleeing scoundrel (bandit)",
                 "An actor leans out from a second-story window to call to passersby, announcing a show",
@@ -2132,7 +2397,7 @@
                 "A messenger hawk lands on a character’s shoulder with a sealed note.",
                 "A thief collapses in front of the group, whispering ‘You’re next.’"
             ],
-            "monster": [
+            "combat": [
                 "1d10 kenku",
                 "2d6 giant centipedes",
                 "2d8 skeletons",
@@ -2180,10 +2445,16 @@
                 "2d4 vampire spawn or 1d4 oni",
                 "1 mage with 1 shield guardian",
                 "1 rakshasa or 1 vampire"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier3": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A distant boom followed by a plume of smoke rising from the other side of the community",
                 "Street performers putting on a puppet show, involving two puppets beating each other with sticks to the amusement of the gathered crowd",
                 "A scruffy commoner that ducks into an alley to make a purchase from a suspicious-looking figure",
@@ -2200,7 +2471,7 @@
                 "The city’s statues shift slightly when unobserved.",
                 "A famous inventor claims the city’s clockwork guards are gaining sentience."
             ],
-            "monster": [
+            "combat": [
                 "1 mimic",
                 "1 bandit captain with 5d10 bandits, all on riding horses",
                 "1d10 knights on warhorses (one knight is a doppelganger)",
@@ -2233,10 +2504,16 @@
                 "1 rakshasa",
                 "1 vampire",
                 "1 ancient silver dragon"
+            ],
+            "exploration": [
+                ""
             ]
         },
         "tier4": {
-            "roleplay": [
+            "camping": [
+                ""
+            ],
+            "social": [
                 "A distraught parent who rushes up to people, begging for help for a child who fell into the sewer",
                 "A patrol of 2d10 guards marching up the street, searching for someone or something",
                 "An aggressive merchant who hawks wares to passersby, claiming to be the purveyor of the finest silks in all the land",
@@ -2251,7 +2528,7 @@
                 "Ghostly armies march through the streets at midnight.",
                 "A god walks the marketplace in mortal guise."
             ],
-            "monster": [
+            "combat": [
                 "1d10 invisible stalkers",
                 "1d10 revenants",
                 "1d6 + 2 gladiators",
@@ -2273,6 +2550,645 @@
                 "1d3 rakshasas",
                 "1d4 vampires",
                 "1 tarrasque"
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "abyss": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "astralPlane": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "elysium": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "feywild": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "mechanus": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "nineHells": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "planeOfAir": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "planeOfEarth": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "planeOfFire": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "planeOfWater": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        }
+    },
+    "shadowfell": {
+        "tier1": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier2": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier3": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
+            ]
+        },
+        "tier4": {
+            "camping": [
+                ""
+            ],
+            "social": [
+                ""
+            ],
+            "combat": [
+                ""
+            ],
+            "exploration": [
+                ""
             ]
         }
     }

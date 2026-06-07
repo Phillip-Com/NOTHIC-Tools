@@ -710,12 +710,11 @@ function alignments() {
 // Background Generator
 function getCheckedBackgrounds() {
   const all = Array.from(
-    document.querySelectorAll('.check-grid input[type="checkbox"][data-bg]')
+    document.querySelectorAll('.background-grid input[type="checkbox"][data-bg]')
   );
 
   const checked = all.filter(cb => cb.checked);
 
-  // If none checked → return all
   const source = checked.length ? checked : all;
 
   return source.map(cb => cb.dataset.bg);
@@ -1397,6 +1396,38 @@ const backgroundTraits = {
     ]
   }
 };
+
+function buildPortraitDescription(character) {
+  const {
+    name, gender, race, subrace, age, skin, hair, eyes,
+    height, weight, background, alignment
+  } = character;
+
+  const ageNote = typeof age === "string" ? age : `${age} years old`;
+  const subraceText = subrace ? ` (${subrace})` : "";
+  const alignmentMood = {
+    "Lawful Good": "warm and trustworthy",
+    "Neutral Good": "kind and open",
+    "Chaotic Good": "spirited and free",
+    "Lawful Neutral": "disciplined and reserved",
+    "Neutral": "calm and unreadable",
+    "Chaotic Neutral": "unpredictable and wild",
+    "Lawful Evil": "cold and calculating",
+    "Neutral Evil": "detached and self-serving",
+    "Chaotic Evil": "menacing and erratic"
+  }[alignment] || "neutral";
+
+  return `A ${gender.toLowerCase()} ${race}${subraceText}, ${ageNote}, with ${skin.toLowerCase()} skin. ` +
+    `${hair !== "N/A" ? `Their ${hair.toLowerCase()} hair frames` : "Their face features"} ` +
+    `${eyes !== "N/A" ? `${eyes.toLowerCase()} eyes that carry a ${alignmentMood} expression.` : "a striking expression."} ` +
+    `They stand ${height} tall and weigh ${weight}, ` +
+    `with the build and bearing of someone who has lived the life of a ${background.toLowerCase()}. ` +
+    `Their clothes and manner reflect both their profession and their ${alignment.toLowerCase()} nature. ` +
+    `\n\nStyle prompt: fantasy RPG character portrait, ${gender.toLowerCase()} ${race.toLowerCase()}${subraceText.toLowerCase()}, ` +
+    `${skin.toLowerCase()} skin, ${hair !== "N/A" ? hair.toLowerCase() + " hair, " : ""}` +
+    `${eyes !== "N/A" ? eyes.toLowerCase() + " eyes, " : ""}` +
+    `${background.toLowerCase()} background, ${alignment.toLowerCase()} alignment, detailed fantasy illustration, dramatic lighting.`;
+}
 
 // Race generator
 function races() {
@@ -2278,10 +2309,26 @@ const raceInputs = document.querySelectorAll('input[type="number"][data-race]');
 const raceCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="bool"]');
 const sectionCheckboxes = {
   PHB: document.getElementById("PHB"),
-  MPMM: document.getElementById("MP:MM"),
-  MISC: document.getElementById("misc"),
-  UNDEAD: document.getElementById("undead")
+  MPMM: document.getElementById("MPMM"),
+  MISC: document.getElementById("MISC"),
+  UNDEAD: document.getElementById("UNDEAD")
 };
+
+Object.entries(sectionCheckboxes).forEach(([sectionKey, sectionCheckbox]) => {
+  if (!sectionCheckbox) return;
+
+  sectionCheckbox.addEventListener("change", () => {
+    document.querySelectorAll(`input[type="number"][data-section="${sectionKey}"]`).forEach(input => {
+      const raceItem = input.closest(".race-item");
+      const raceCheckbox = raceItem?.querySelector('input[type="checkbox"]');
+      if (raceCheckbox) {
+        raceCheckbox.checked = sectionCheckbox.checked;
+      }
+    });
+
+    recalculateRaceChances();
+  });
+});
 
 function getRegionWeights(region) {
   const regionData = regionRaceData[region];
@@ -2289,33 +2336,12 @@ function getRegionWeights(region) {
   return flattenRaceData(regionData);
 }
 
-function getRaceWeightsFromInputs() {
-  const raceWeights = {};
-
-  document.querySelectorAll('input[type="number"][data-race]').forEach(input => {
-    const raceName = input.dataset.race;
-    const value = parseFloat(input.value) || 0;
-
-    // Find the checkbox next to this input
-    const checkbox = input
-      .closest('label')
-      ?.querySelector('input[type="checkbox"]');
-
-    // Skip if unchecked or weight is zero
-    if (!checkbox || !checkbox.checked || value <= 0) return;
-
-    raceWeights[raceName] = value;
-  });
-
-  updateChanceDisplay()
-  return raceWeights;
-}
-
 function getCheckedRaces() {
   const races = [];
 
   document.querySelectorAll('input[type="number"][data-race]').forEach(input => {
-    const checkbox = input.closest('label')?.querySelector('input[type="checkbox"]');
+    const raceItem = input.closest(".race-item");
+    const checkbox = raceItem?.querySelector('input[type="checkbox"]');
     if (!checkbox || !checkbox.checked) return;
 
     races.push({
@@ -2325,6 +2351,24 @@ function getCheckedRaces() {
   });
 
   return races;
+}
+
+function getRaceWeightsFromInputs() {
+  const raceWeights = {};
+
+  document.querySelectorAll('input[type="number"][data-race]').forEach(input => {
+    const raceItem = input.closest(".race-item");
+    const checkbox = raceItem?.querySelector('input[type="checkbox"]');
+    if (!checkbox || !checkbox.checked) return;
+
+    const value = parseFloat(input.value) || 0;
+    if (value <= 0) return;
+
+    raceWeights[input.dataset.race] = value;
+  });
+
+  updateChanceDisplay();
+  return raceWeights;
 }
 
 function rollRaceSmart() {
@@ -2404,15 +2448,14 @@ function isRaceEnabled(input) {
 }
 
 function recalculateRaceChances() {
-  const rows = document.querySelectorAll("label");
+  const rows = document.querySelectorAll(".race-item");
   let totalWeight = 0;
-
   const activeRaces = [];
 
-  rows.forEach(label => {
-    const checkbox = label.querySelector("input[type='checkbox']");
-    const input = label.querySelector("input[type='number'][data-race]");
-    const chanceSpan = label.querySelector(".chance-display");
+  rows.forEach(raceItem => {
+    const checkbox = raceItem.querySelector('input[type="checkbox"]');
+    const input = raceItem.querySelector('input[type="number"][data-race]');
+    const chanceSpan = raceItem.querySelector(".chance-display");
 
     if (!checkbox || !input || !chanceSpan) return;
 
@@ -2428,18 +2471,16 @@ function recalculateRaceChances() {
     if (enabled && weight > 0) {
       totalWeight += weight;
       activeRaces.push({ weight, chanceSpan });
-    } else {
+    } else if (chanceSpan) {
       chanceSpan.textContent = "—";
     }
   });
 
-  // Avoid divide-by-zero
   if (totalWeight === 0) {
     activeRaces.forEach(r => r.chanceSpan.textContent = "0%");
     return;
   }
 
-  // Write final percentages
   activeRaces.forEach(({ weight, chanceSpan }) => {
     const pct = (weight / totalWeight) * 100;
     chanceSpan.textContent = `${pct.toFixed(2)}%`;
@@ -2466,7 +2507,7 @@ summaryCheckboxes.forEach(summaryCheckbox => {
     if (!details) return;
 
     details
-      .querySelectorAll(".race-grid input[type='checkbox']")
+      .querySelectorAll(".race-item input[type='checkbox']")
       .forEach(cb => cb.checked = summaryCheckbox.checked);
 
     recalculateRaceChances();
@@ -2525,6 +2566,10 @@ document.getElementById("generate").addEventListener("click", async () => {
     subraceIndex = dragonbornSubraces.indexOf(subrace);
   }
   const background = backGround();
+if (!background) {
+  alert("No backgrounds selected.");
+  return;
+}
   stats = abilities(background);
   const alignment = alignments();
   console.log(undeadRace);
@@ -2567,6 +2612,27 @@ document.getElementById("generate").addEventListener("click", async () => {
   } else {
     raceDisplay = subrace ? `${baseRace} (${subrace})` : baseRace;
   }
+
+  const descBox = document.getElementById("npcDescription");
+const copyBtn = document.getElementById("copyDescription");
+
+const description = buildPortraitDescription({
+  name, gender, race: raceDisplay, subrace,
+  age, skin, hair, eyes,
+  height: `${heightFeet}'${heightInches}"`,
+  weight: `${weight} lbs`,
+  background, alignment
+});
+
+descBox.innerHTML = `<p>${description.replace("\n\n", "</p><p>")}</p>`;
+copyBtn.style.display = "block";
+
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(description).then(() => {
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => copyBtn.textContent = "Copy Description", 2000);
+  });
+};
 
   //stats = ["1","2","3","4","5","6"];
   // Update card

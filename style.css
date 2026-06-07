@@ -121,12 +121,6 @@ input[type="checkbox"] {
   height: auto;
 }
 
-/* Number inputs inside check-grid rows */
-.chance-input {
-  width: 60px;
-  padding: 5px;
-}
-
 label {
   display: inline-flex;
   align-items: center;
@@ -321,6 +315,78 @@ table th {
   font-size: 1rem;
 }
 
+.tri-layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 2fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.tri-left,
+.tri-center,
+.tri-right {
+  background: var(--surfaces);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.tri-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.npc-portrait {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px dashed var(--primary-accent);
+  border-radius: 12px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  font-size:1.2rem;
+}
+
+.portrait-description {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--primary-text);
+  line-height: 1.6;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.description-placeholder {
+  color: var(--secondary-text);
+  font-style: italic;
+  text-align: center;
+  margin-top: 40%;
+}
+
+.copy-desc-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.ability-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.ability-card {
+  text-align:center;
+  padding:12px;
+  border-radius:8px;
+  background:var(--elevated);
+}
+
 
 /* ============================================================
    CHECK GRIDS  (race + background lists in NPC generator)
@@ -342,6 +408,75 @@ table th {
 #customRegion label {
   display: inline;
   margin-bottom: 6px;
+}
+
+.background-grid,
+.book-grid {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.pill-toggle {
+  display:inline;
+  align-items:center;
+}
+
+.pill-toggle input[type="checkbox"] {
+  display:none;
+}
+
+.pill-toggle input[type="checkbox"]:checked + span {
+  background:var(--primary-accent);
+  color:var(--primary-text);
+}
+
+.pill-toggle span {
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--primary-accent);
+  background: var(--background);
+  cursor: pointer;
+  user-select: none;
+  transition: 0.15s ease;
+}
+
+.top-options {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.race-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--elevated);
+}
+
+.chance-display {
+  font-size: 0.75rem;
+  color: var(--secondary-text);
+  min-width: 42px;
+  text-align: right;
+}
+
+.chance-input {
+  width: 48px;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.race-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(238px, 1fr));
+  gap: 6px;
 }
 
 
