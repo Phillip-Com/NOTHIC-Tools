@@ -173,6 +173,12 @@ function updateEditionToggleLabel() {
   btn.textContent = gameData.edition === "pathfinder" ? "Edition: Pathfinder" : "Edition: D&D 5e";
 }
 
+function getSpellAttackBonus(sheet) {
+  const ability = sheet.spellcastingAbility;
+  if (!ability || !sheet.abilities?.[ability]) return 0;
+  return (sheet.proficiencyBonus ?? 2) + abilityMod(sheet.abilities[ability]);
+}
+
 // Characters active in stat tracker
 function getActiveCharacters() {
   if (!gameData) return [];
@@ -1145,20 +1151,24 @@ function buildInlineSheetEditor(name, sheet) {
     sheet.level = v;
     sheet.proficiencyBonus = profBonusForLevel(v);
     profInp.value = sheet.proficiencyBonus;
+    
     // Re-render skill/save totals
     renderSkillSection();
     renderSaveSection();
     sheet.initiative = computeInitiative(sheet);
     initModInp.value = sheet.initiative;
+    refreshSpellAttackBonus();
   }, 1, 20);
   topGrid.appendChild(topField("Level", levelInp));
 
   const profInp = numInput(sheet.proficiencyBonus, v => {
     sheet.proficiencyBonus = v;
+    
     renderSkillSection();
     renderSaveSection();
     sheet.initiative = computeInitiative(sheet);
     initModInp.value = sheet.initiative;
+    refreshSpellAttackBonus();
   }, 0, 10);
   topGrid.appendChild(topField("Prof Bonus", profInp));
 
@@ -1193,8 +1203,8 @@ function buildInlineSheetEditor(name, sheet) {
       sheet.spellcastingAbility = v;
       if (v && sheet.abilities[v] !== undefined) {
         const mod = abilityMod(sheet.abilities[v]);
-        sheet.spellAttackBonus = (sheet.proficiencyBonus ?? 2) + mod;
-        spellAtkInp.value = sheet.spellAttackBonus;
+        refreshSpellAttackBonus();
+        spellAtkInp.value = getSpellAttackBonus(sheet);
       }
     }
   );
@@ -1202,6 +1212,14 @@ function buildInlineSheetEditor(name, sheet) {
 
   const spellAtkInp = numInput(sheet.spellAttackBonus, v => sheet.spellAttackBonus = v, -10, 20);
   topGrid.appendChild(topField("Spell Attack Bonus", spellAtkInp));
+
+  function refreshSpellAttackBonus() {
+  const ability = sheet.spellcastingAbility;
+  if (!ability) return;
+  const bonus = (sheet.proficiencyBonus ?? 2) + abilityMod(sheet.abilities[ability] ?? 10);
+  sheet.spellAttackBonus = bonus;
+  spellAtkInp.value = bonus;
+}
 
   wrapper.appendChild(topGrid);
 
@@ -1287,11 +1305,12 @@ function buildInlineSheetEditor(name, sheet) {
       const val = parseInt(scoreInp.value) || 10;
       sheet.abilities[key] = val;
       modDisplay.textContent = modStr(abilityMod(val));
-      renderSkillSection();
+renderSkillSection();
       renderSaveSection();
       sheet.initiative = computeInitiative(sheet);
       initModInp.value = sheet.initiative;
       saveGameData("ability score edit");
+      refreshSpellAttackBonus();
     });
 
     cell.appendChild(label);
