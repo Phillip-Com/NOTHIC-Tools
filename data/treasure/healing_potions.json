@@ -1,17 +1,17 @@
 {
           "common": [
-            { "name": "Potion of Healing", "keyword": ["basic"], "attunement": "" }
+            { "name": "Potion of Healing", "keyword": ["basic"], "attunement": "", "cost": 10 }
           ],
           "uncommon": [
-            { "name": "Potion of Healing", "keyword": ["greater"], "attunement": "" }
+            { "name": "Potion of Healing", "keyword": ["greater"], "attunement": "", "cost": 25 }
           ],
           "rare": [
-            { "name": "Potion of Healing", "keyword": ["superior"], "attunement": "" }
+            { "name": "Potion of Healing", "keyword": ["superior"], "attunement": "", "cost": 250 }
           ],
           "veryRare": [
-            { "name": "Potion of Healing", "keyword": ["supreme"], "attunement": "" }
+            { "name": "Potion of Healing", "keyword": ["supreme"], "attunement": "", "cost": 2500 }
           ],
           "legendary": [
-            { "name": "", "keyword": ["extra"], "attunement": "" }
+            { "name": "", "keyword": ["extra"], "attunement": "", "cost": 0 }
           ]
         }

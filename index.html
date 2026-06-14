@@ -97,6 +97,15 @@
                 <option value="4">Tier 4 (Challenge 17+)</option>
               </select>
             </div>
+
+
+          </div>
+          <!-- ITEM SEARCH -->
+          <div class="panel" id="itemSearchPanel" style="margin-top: 16px;">
+            <label for="itemSearch"><strong>🔍 Search Items</strong></label>
+            <input type="text" id="itemSearch" placeholder="Search by item name…"
+              style="width: 100%; margin-top: 6px; box-sizing: border-box;" autocomplete="off">
+            <div id="itemSearchResults" style="margin-top: 8px; max-height: 320px; overflow-y: auto;"></div>
           </div>
         </div>
       </div>
@@ -354,10 +363,10 @@
 
 
         <div class="npc-portrait">
-            <div id="npcDescription" class="portrait-description">
-              <p class="description-placeholder">Generate a character to see their portrait description.</p> 
-            </div>
+          <div id="npcDescription" class="portrait-description">
+            <p class="description-placeholder">Generate a character to see their portrait description.</p>
           </div>
+        </div>
       </div>
 
       <!-- RIGHT SIDE: Controls (wider flex via data-flex) -->
@@ -522,16 +531,8 @@
                 <span>Aarakocra</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="aarakocra" 
-              data-race="Aarakocra" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="aarakocra" data-race="Aarakocra" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -540,16 +541,8 @@
                 <span>Aasimar</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="aasimar" 
-              data-race="Aasimar" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="aasimar" data-race="Aasimar" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -558,16 +551,8 @@
                 <span>Bugbear</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="bugbear" 
-              data-race="Bugbear" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="bugbear" data-race="Bugbear" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -576,16 +561,8 @@
                 <span>Centaur</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="centaur" 
-              data-race="Centaur" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="centaur" data-race="Centaur" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -594,16 +571,8 @@
                 <span>Dragonborn</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="dragonborn" 
-              data-race="Dragonborn" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="dragonborn" data-race="Dragonborn" data-section="PHB" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -612,16 +581,8 @@
                 <span>Drathunine</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="drathunine" 
-              data-race="Drathunine" 
-              data-section="MISC" 
-              min="0" 
-              max="100"
-              value="0" 
-              step="1" 
-              class="chance-input">
+              <input type="number" id="drathunine" data-race="Drathunine" data-section="MISC" min="0" max="100"
+                value="0" step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -630,16 +591,8 @@
                 <span>Dwarf</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="dwarf" 
-              data-race="Dwarf" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="dwarf" data-race="Dwarf" data-section="PHB" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -648,16 +601,8 @@
                 <span>Elf</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="elf" 
-              data-race="Elf" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="elf" data-race="Elf" data-section="PHB" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -666,16 +611,8 @@
                 <span>Firbolg</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="firbolg" 
-              data-race="Firbolg" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="firbolg" data-race="Firbolg" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -684,16 +621,8 @@
                 <span>Genasi</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="genasi" 
-              data-race="Genasi" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="genasi" data-race="Genasi" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -702,16 +631,8 @@
                 <span>Gnoll</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="gnoll" 
-              data-race="Gnoll" 
-              data-section="MISC" 
-              min="0" 
-              max="100" 
-              value="0" 
-              step="1"
-              class="chance-input">
+              <input type="number" id="gnoll" data-race="Gnoll" data-section="MISC" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -720,16 +641,8 @@
                 <span>Gnome</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="gnome" 
-              data-race="Gnome" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="gnome" data-race="Gnome" data-section="PHB" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -738,16 +651,8 @@
                 <span>Goblin</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="goblin" 
-              data-race="Goblin" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="goblin" data-race="Goblin" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -756,16 +661,8 @@
                 <span>Goliath</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="goliath" 
-              data-race="Goliath" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="goliath" data-race="Goliath" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -774,16 +671,8 @@
                 <span>Half-Cyclops</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="halfcyclops" 
-              data-race="Half-Cyclops" 
-              data-section="MISC" 
-              min="0" 
-              max="100"
-              value="0" 
-              step="1" 
-              class="chance-input">
+              <input type="number" id="halfcyclops" data-race="Half-Cyclops" data-section="MISC" min="0" max="100"
+                value="0" step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -792,16 +681,8 @@
                 <span>Half-Elf</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="halfelf" 
-              data-race="Half-Elf" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="halfelf" data-race="Half-Elf" data-section="PHB" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -810,16 +691,8 @@
                 <span>Halfling</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="halfling" 
-              data-race="Halfling" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="halfling" data-race="Halfling" data-section="PHB" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -828,16 +701,8 @@
                 <span>Half-Orc</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="halforc" 
-              data-race="Half-Orc" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="halforc" data-race="Half-Orc" data-section="PHB" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -846,16 +711,8 @@
                 <span>Hobgoblin</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="hobgoblin" 
-              data-race="Hobgoblin" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="hobgoblin" data-race="Hobgoblin" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -864,16 +721,8 @@
                 <span>Human</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="human" 
-              data-race="Human" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="human" data-race="Human" data-section="PHB" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -882,16 +731,8 @@
                 <span>Kenku</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="kenku" 
-              data-race="Kenku" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="kenku" data-race="Kenku" data-section="MPMM" min="0" max="100" value="0" step="1"
+                class="chance-input">
             </div>
 
             <div class="race-item">
@@ -900,16 +741,8 @@
                 <span>Kobold</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="kobold" 
-              data-race="Kobold" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="kobold" data-race="Kobold" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -918,16 +751,8 @@
                 <span>Lizardfolk</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="lizardfolk" 
-              data-race="Lizardfolk" 
-              data-section="MPMM" 
-              min="0" 
-              max="100"
-              value="0" 
-              step="1" 
-              class="chance-input">
+              <input type="number" id="lizardfolk" data-race="Lizardfolk" data-section="MPMM" min="0" max="100"
+                value="0" step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -936,16 +761,8 @@
                 <span>Loxodon</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="loxodon" 
-              data-race="Loxodon" 
-              data-section="MISC" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="loxodon" data-race="Loxodon" data-section="MISC" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -954,15 +771,7 @@
                 <span>Orc</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="orc" 
-              data-race="Orc" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0" 
-              step="1"
+              <input type="number" id="orc" data-race="Orc" data-section="MPMM" min="0" max="100" value="0" step="1"
                 class="chance-input">
             </div>
 
@@ -972,34 +781,18 @@
                 <span>Pixie</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="pixie" 
-              data-race="Pixie" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0" 
-              step="1"
+              <input type="number" id="pixie" data-race="Pixie" data-section="MPMM" min="0" max="100" value="0" step="1"
                 class="chance-input">
             </div>
-            
+
             <div class="race-item">
               <label class="pill-toggle">
                 <input type="checkbox" id="boolquickling" checked>
                 <span>Quickling</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="quickling" 
-              data-race="Quickling" 
-              data-section="MISC" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="quickling" data-race="Quickling" data-section="MISC" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1008,15 +801,7 @@
                 <span>Satyr</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="satyr" 
-              data-race="Satyr" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0" 
-              step="1"
+              <input type="number" id="satyr" data-race="Satyr" data-section="MPMM" min="0" max="100" value="0" step="1"
                 class="chance-input">
             </div>
 
@@ -1026,16 +811,8 @@
                 <span>Sprite</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="sprite" 
-              data-race="Sprite" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="sprite" data-race="Sprite" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1044,16 +821,8 @@
                 <span>Tabaxi</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="tabaxi" 
-              data-race="Tabaxi" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="tabaxi" data-race="Tabaxi" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1062,16 +831,8 @@
                 <span>Tiefling</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="tiefling" 
-              data-race="Tiefling" 
-              data-section="PHB" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="tiefling" data-race="Tiefling" data-section="PHB" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1080,16 +841,8 @@
                 <span>Tortle</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="tortle" 
-              data-race="Tortle" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="tortle" data-race="Tortle" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1098,16 +851,8 @@
                 <span>Triton</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="triton" 
-              data-race="Triton" 
-              data-section="MPMM" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="triton" data-race="Triton" data-section="MPMM" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1116,19 +861,11 @@
                 <span>Yuan-ti Pureblood</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="yuanti" 
-              data-race="Yuan-ti Pureblood" 
-              data-section="MPMM" 
-              min="0" 
-              max="100"
-              value="0" 
-              step="1" 
-              class="chance-input">
+              <input type="number" id="yuanti" data-race="Yuan-ti Pureblood" data-section="MPMM" min="0" max="100"
+                value="0" step="1" class="chance-input">
             </div>
 
-            
+
 
             <div class="race-item">
               <label class="pill-toggle">
@@ -1136,16 +873,8 @@
                 <span>Warforged</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="warforged" 
-              data-race="Warforged" 
-              data-section="MISC" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="warforged" data-race="Warforged" data-section="MISC" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1154,16 +883,8 @@
                 <span>Ghost</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="ghost" 
-              data-race="Ghost" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="ghost" data-race="Ghost" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1172,16 +893,8 @@
                 <span>Ghoul</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="ghoul" 
-              data-race="Ghoul" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="ghoul" data-race="Ghoul" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1190,16 +903,8 @@
                 <span>Skeleton</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="skeleton" 
-              data-race="Skeleton" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="skeleton" data-race="Skeleton" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1208,16 +913,8 @@
                 <span>Specter</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="specter" 
-              data-race="Specter" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="specter" data-race="Specter" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1226,16 +923,8 @@
                 <span>Vampire</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="vampire" 
-              data-race="Vampire" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="vampire" data-race="Vampire" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
 
             <div class="race-item">
@@ -1244,16 +933,8 @@
                 <span>Zombie</span>
               </label>
               <span class="chance-display">—</span>
-              <input 
-              type="number" 
-              id="zombie" 
-              data-race="Zombie" 
-              data-section="UNDEAD" 
-              min="0" 
-              max="100" 
-              value="0"
-              step="1" 
-              class="chance-input">
+              <input type="number" id="zombie" data-race="Zombie" data-section="UNDEAD" min="0" max="100" value="0"
+                step="1" class="chance-input">
             </div>
           </div>
         </details>

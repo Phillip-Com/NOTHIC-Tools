@@ -10,6 +10,22 @@ const lootData = {
   subtypes: {}
 }
 
+const rarityLabels = {
+  common: "Common",
+  uncommon: "Uncommon",
+  rare: "Rare",
+  veryRare: "Very Rare",
+  legendary: "Legendary",
+};
+
+const rarityColors = {
+  common:    "#9e9e9e",
+  uncommon:  "#4caf50",
+  rare:      "#2196f3",
+  veryRare:  "#9c27b0",
+  legendary: "#ff9800",
+};
+
 // === BASIC UTILS ===
 async function loadData() {
   try {
@@ -183,10 +199,15 @@ function generateHoard(tier) {
     );
 
     output += `<h3>Magic Items</h3>`;
-    for (const [item, count] of sortedItems) {
-      const qty = count > 1 ? `(${count}) ` : "";
-      output += `${qty}${item}<br>`;
-    }
+    for (const [item, data] of sortedItems) {
+  const qty =
+    data.count > 1
+      ? `(${data.count}) `
+      : "";
+
+  output += `${qty}${item} — Price: ${data.price} gp<br>`;
+}
+
   } else {
     output += `<h3>Magic Items</h3>None<br>`;
   }
@@ -239,6 +260,8 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
   const settings = lootData.shop_setting[level];
   let output = "";
 
+  const marketFlux = 0.95 + Math.random() * 0.10;
+
   for (const rarity of Object.keys(lootData.magic_item[type])) {
     const countRange = settings[rarity];
 
@@ -257,10 +280,8 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
     let chance = level;
     let option = rarity;
 
-    const shopTier = lootData.shop_chances[chance] || {};
-    const tierOption = shopTier[option] || { cost: [0, 0] };
-
-    const cost = tierOption.cost;
+    const rarityMultiplier =
+  lootData.shop_chances[level]?.[rarity] ?? 1;
 
     // --- Collect items first ---
     const generatedItems = [];
@@ -268,7 +289,11 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
       const item = lootData.magic_item[type][rarity][Math.floor(Math.random() * lootData.magic_item[type][rarity].length)];
       if (!item) continue;
       const fullItem = resolveItemDetails(item);
-      generatedItems.push(fullItem);
+      generatedItems.push({
+  name: fullItem,
+  baseCost: item.cost,
+  rarity
+});
     }
 
     if (type === "potionSeller" || type === "magicSeller") {
@@ -276,7 +301,11 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
         if (rarity != "legendary") {
           let item = lootData.healing_potions[rarity][Math.floor(Math.random() * lootData.healing_potions[rarity].length)];
           let fullItem = resolveItemDetails(item);
-          generatedItems.push(fullItem);
+          generatedItems.push({
+  name: fullItem,
+  baseCost: item.cost,
+  rarity
+});
         }
       }
     }
@@ -288,13 +317,21 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
     // --- Combine duplicates ---
     const combined = {};
     for (const item of generatedItems) {
-      if (!combined[item]) {
-        const price = Math.floor(Math.random() * (cost[1] - cost[0])) + cost[0];
-        combined[item] = { count: 1, price };
-      } else {
-        combined[item].count++;
-      }
-    }
+  const finalPrice = Number((
+    item.baseCost *
+    rarityMultiplier *
+    marketFlux
+  ));
+
+  if (!combined[item.name]) {
+    combined[item.name] = {
+      count: 1,
+      price: finalPrice
+    };
+  } else {
+    combined[item.name].count++;
+  }
+}
 
     // --- Sort alphabetically by item name ---
     const sortedItems = Object.entries(combined).sort((a, b) =>
@@ -302,17 +339,10 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
     );
 
     // --- Output display ---
-    output += `<h3>${rarity.toUpperCase()} ITEMS ${amount}</h3> `;
+    output += `<h3 style="color: ${rarityColors[rarity] ?? '#ccc'}">${(rarityLabels[rarity] ?? rarity).toUpperCase()} ITEMS (${amount})</h3>`;
     for (const [item, data] of sortedItems) {
-      const min = Number(cost[0]);
-      const max = Number(cost[1]);
-
-      const price =
-        Math.floor(Math.random() * (max - min + 1)) + min;
-
       const qty = data.count > 1 ? `(${data.count}) ` : "";
-      const safePrice = Number(data.price);
-      output += `${qty}${item} — Price: ${safePrice.toFixed(2)} gp<br>`;
+      output += `${qty}${item} — Price: ${data.price.toFixed(2)} gp<br>`;
     }
   }
 
@@ -974,6 +1004,7 @@ function generateTreasure(type, tier) {
 
   if (type === "shop") {
     let output = "";
+    const marketFlux = 0.95 + Math.random() * 0.10;
     for (const [rarity, { count, cost }] of Object.entries(lootData.shop_chances)) {
       const amount = Math.floor(Math.random() * (count[1] - count[0] + 1)) + count[0];
       if (amount === 0) continue;
@@ -991,14 +1022,12 @@ function generateTreasure(type, tier) {
 document.addEventListener("DOMContentLoaded", () => {
 
   const generatorType = document.getElementById("generatorType");
-
   const shopTypes = document.getElementById("shopTypes");
   const magicLevelContainer = document.getElementById("magicLevelContainer");
   const tierSelector = document.getElementById("tierSelector");
 
   function updateGeneratorUI() {
     const type = generatorType.value;
-
     if (type === "shop") {
       shopTypes.style.display = "block";
       magicLevelContainer.style.display = "block";
@@ -1010,13 +1039,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Initial load
   updateGeneratorUI();
-
-  // When selection changes
   generatorType.addEventListener("change", updateGeneratorUI);
 
-  // Load treasure data
   loadData().then(() => {
     console.log("Treasure data loaded.");
   });
@@ -1026,29 +1051,139 @@ document.addEventListener("DOMContentLoaded", () => {
   const output = document.getElementById("output");
 
   generateBtn.addEventListener("click", () => {
-
     if (!lootData.individual || Object.keys(lootData.individual).length === 0) {
       output.innerHTML = "Data still loading...";
       return;
     }
 
     const type = generatorType.value;
-
     let result = "";
 
     if (type === "shop") {
       const magicLevel = document.getElementById("magicLevel").value;
       const shopType = document.getElementById("types").value;
-
       result = generateMagicShop(magicLevel, shopType);
-
     } else {
       const tier = document.getElementById("tier").value;
-
       result = generateTreasure(type, tier);
     }
 
     output.innerHTML = result;
+  });
+
+  // === ITEM SEARCH ===
+  const itemSearchInput = document.getElementById("itemSearch");
+  const itemSearchResults = document.getElementById("itemSearchResults");
+
+  function buildSearchIndex() {
+    const index = [];
+    const allShopTypes = Object.keys(lootData.magic_item);
+    const allRarities = ["common", "uncommon", "rare", "veryRare", "legendary"];
+
+    for (const shopType of allShopTypes) {
+      for (const rarity of allRarities) {
+        const items = lootData.magic_item[shopType]?.[rarity];
+        if (!Array.isArray(items)) continue;
+        for (const item of items) {
+          if (!item?.name) continue;
+          const key = `${item.name}__${rarity}`;
+          if (!index.find(e => e._key === key)) {
+            index.push({
+              _key: key,
+              name: item.name,
+              rarity,
+              cost: item.cost ?? 0,
+            });
+          }
+        }
+      }
+    }
+
+    index.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
+    return index;
+  }
+
+  let searchIndex = null;
+
+  function runSearch() {
+    const query = itemSearchInput.value.trim().toLowerCase();
+    const currentLevel = document.getElementById("magicLevel").value || "mid";
+
+    if (!query) {
+      itemSearchResults.innerHTML = "";
+      return;
+    }
+
+    if (!searchIndex) {
+      if (!lootData.magic_item || Object.keys(lootData.magic_item).length === 0) {
+        itemSearchResults.innerHTML = "<em>Still loading data…</em>";
+        return;
+      }
+      searchIndex = buildSearchIndex();
+    }
+
+    const matches = searchIndex.filter(e =>
+      e.name.toLowerCase().includes(query)
+    );
+
+    if (matches.length === 0) {
+      itemSearchResults.innerHTML = `<em style="opacity:0.6;">No items found.</em>`;
+      return;
+    }
+
+    itemSearchResults.innerHTML = matches.map(e => {
+      const color = rarityColors[e.rarity] ?? "#ccc";
+      const label = rarityLabels[e.rarity] ?? e.rarity;
+      const multiplier = lootData.shop_chances[currentLevel]?.[e.rarity] ?? 1;
+const base = e.cost * multiplier;
+const low = (base * 0.95).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const high = (base * 1.05).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+      return `
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 5px 0;
+          border-bottom: 1px solid rgba(128,128,128,0.15);
+          gap: 8px;
+        ">
+          <span style="flex: 1; font-size: 0.88em;">${e.name}</span>
+          <span style="
+            font-size: 0.72em;
+            color: ${color};
+            white-space: nowrap;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          ">${label}</span>
+          <span style="
+            white-space: nowrap;
+            font-size: 0.88em;
+            opacity: 0.6;
+          ">BASE: ${e.cost.toLocaleString()} gp</span>
+          <span style="
+  white-space: nowrap;
+  font-size: 0.88em;
+  font-weight: 600;
+  color: ${color};
+">PRICE: ${low} – ${high} gp</span>
+        </div>`;
+    }).join("");
+  }
+
+  itemSearchInput.addEventListener("input", runSearch);
+
+  document.getElementById("magicLevel").addEventListener("change", () => {
+    if (itemSearchInput.value.trim()) {
+      runSearch();
+    }
   });
 
 });
