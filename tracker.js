@@ -61,18 +61,18 @@ function loadGameData() {
   const saved = localStorage.getItem("myGameData");
   if (!saved) return false;
   try {
-  gameData = JSON.parse(saved);
-} catch (e) {
-  console.error("⚠️ Save data corrupted, starting fresh:", e);
-  gameData = {
-    edition: "5e",
-    theme: "light",
-    characters: [],
-    characterStats: {},
-    characterSheets: {},
-    sessionStartedAt: Date.now()
-  };
-}
+    gameData = JSON.parse(saved);
+  } catch (e) {
+    console.error("⚠️ Save data corrupted, starting fresh:", e);
+    gameData = {
+      edition: "5e",
+      theme: "light",
+      characters: [],
+      characterStats: {},
+      characterSheets: {},
+      sessionStartedAt: Date.now()
+    };
+  }
   window.gameData = gameData;
   console.log("📂 Loaded saved game");
   return gameData.characters && gameData.characters.length > 0;
@@ -80,6 +80,13 @@ function loadGameData() {
 
 function init() {
   const saved = localStorage.getItem("myGameData");
+
+  try {
+    loadSpellDatabase();
+    console.log("Spell Data Loaded")
+  } catch (err) {
+    console.error("Failed to preload spells:", err);
+  }
 
   if (saved) {
     // Always load whatever is saved, even if characters array is empty
@@ -119,17 +126,17 @@ function init() {
   }
 
   const combatToggleBtn = document.getElementById("combat-toggle-btn");
-if (combatToggleBtn) {
-  combatToggleBtn.addEventListener("click", () => {
-    if (combatStarted) {
-      endCombat();
-    } else {
-      startCombat();
-    }
-  });
-}
+  if (combatToggleBtn) {
+    combatToggleBtn.addEventListener("click", () => {
+      if (combatStarted) {
+        endCombat();
+      } else {
+        startCombat();
+      }
+    });
+  }
 
-updateCombatTabVisibility();
+  updateCombatTabVisibility();
 
   // Google sync
   const syncBtn = document.getElementById("sync-google-btn");
@@ -233,12 +240,12 @@ function buildBlankStats() {
 }
 
 async function sendGameDataToGoogleSheet() {
-const activeCharacters = getCompatibleActiveCharacters();
+  const activeCharacters = getCompatibleActiveCharacters();
 
-const syncData = {
-  ...gameData,
-  characters: activeCharacters
-};
+  const syncData = {
+    ...gameData,
+    characters: activeCharacters
+  };
 
   if (!gameData.sheetId) {
     return alert("Please enter a Google Sheet URL before syncing.");
@@ -249,20 +256,20 @@ const syncData = {
   }
 
   try {
-  await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "data=" + encodeURIComponent(JSON.stringify(syncData))
-  });
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: "data=" + encodeURIComponent(JSON.stringify(syncData))
+    });
 
-  alert("✅ Sync request sent");
-} catch (err) {
-  console.error(err);
-  alert("❌ Failed to send data");
-}
+    alert("✅ Sync request sent");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to send data");
+  }
 }
 
 function openSyncModal() {
@@ -287,10 +294,10 @@ function openSyncModal() {
 
     console.log("scriptUrl =", gameData.scriptUrl);
 
-if (!APPS_SCRIPT_URL) {
-  alert("Apps Script URL not set!");
-  return;
-}
+    if (!APPS_SCRIPT_URL) {
+      alert("Apps Script URL not set!");
+      return;
+    }
   };
 
   cancelBtn.onclick = () => { modal.classList.add("hidden"); };
@@ -963,6 +970,14 @@ function renderSheetTab() {
   container.appendChild(layout);
 }
 
+function getSpellDefinition(sp) {
+  if (sp.custom) {
+    return sp;
+  }
+
+  return SPELL_DATABASE?.[sp.level]?.[sp.spellId] ?? sp;
+}
+
 // ── Inline Sheet Editor (replaces modal-based editor) ───────────────────────
 function buildInlineSheetEditor(name, sheet) {
   const wrapper = document.createElement("div");
@@ -1058,28 +1073,6 @@ function buildInlineSheetEditor(name, sheet) {
     return h;
   }
 
-  let SPELL_DATABASE = null;
-
-  async function loadSpellDatabase() {
-
-    if (SPELL_DATABASE) {
-      return SPELL_DATABASE;
-    }
-
-    const response =
-      await fetch("./data/5.5eSpells.json");
-
-    if (!response.ok) {
-      throw new Error(
-        "Failed to load 5.5eSpells.json"
-      );
-    }
-
-    SPELL_DATABASE = await response.json();
-
-    return SPELL_DATABASE;
-  }
-
   function getAllSpells(db) {
 
     const all = [];
@@ -1151,7 +1144,7 @@ function buildInlineSheetEditor(name, sheet) {
     sheet.level = v;
     sheet.proficiencyBonus = profBonusForLevel(v);
     profInp.value = sheet.proficiencyBonus;
-    
+
     // Re-render skill/save totals
     renderSkillSection();
     renderSaveSection();
@@ -1163,7 +1156,7 @@ function buildInlineSheetEditor(name, sheet) {
 
   const profInp = numInput(sheet.proficiencyBonus, v => {
     sheet.proficiencyBonus = v;
-    
+
     renderSkillSection();
     renderSaveSection();
     sheet.initiative = computeInitiative(sheet);
@@ -1214,12 +1207,12 @@ function buildInlineSheetEditor(name, sheet) {
   topGrid.appendChild(topField("Spell Attack Bonus", spellAtkInp));
 
   function refreshSpellAttackBonus() {
-  const ability = sheet.spellcastingAbility;
-  if (!ability) return;
-  const bonus = (sheet.proficiencyBonus ?? 2) + abilityMod(sheet.abilities[ability] ?? 10);
-  sheet.spellAttackBonus = bonus;
-  spellAtkInp.value = bonus;
-}
+    const ability = sheet.spellcastingAbility;
+    if (!ability) return;
+    const bonus = (sheet.proficiencyBonus ?? 2) + abilityMod(sheet.abilities[ability] ?? 10);
+    sheet.spellAttackBonus = bonus;
+    spellAtkInp.value = bonus;
+  }
 
   wrapper.appendChild(topGrid);
 
@@ -1305,7 +1298,7 @@ function buildInlineSheetEditor(name, sheet) {
       const val = parseInt(scoreInp.value) || 10;
       sheet.abilities[key] = val;
       modDisplay.textContent = modStr(abilityMod(val));
-renderSkillSection();
+      renderSkillSection();
       renderSaveSection();
       sheet.initiative = computeInitiative(sheet);
       initModInp.value = sheet.initiative;
@@ -1485,7 +1478,7 @@ align-items:stretch;
       const skillKey = sk.custom ? sk.id : sk.name;
 
       const skData = sheet.skillProficiencies[skillKey];
-      const total = computeSkillTotal(sheet,skillKey,sk.ability);
+      const total = computeSkillTotal(sheet, skillKey, sk.ability);
 
       const card = document.createElement("div");
       card.style.cssText = `
@@ -1807,15 +1800,15 @@ text-align:center;
     // Attack rows
     const grid = document.createElement("div");
 
-grid.className = "attacks-grid";
+    grid.className = "attacks-grid";
 
-grid.style.cssText = `
+    grid.style.cssText = `
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:8px;
 `;
 
-section.appendChild(grid);
+    section.appendChild(grid);
 
     (sheet.attacks || []).forEach((atk, index) => {
       const row = document.createElement("div");
@@ -1928,6 +1921,11 @@ section.appendChild(grid);
         custom: true,
         name: "New Spell",
         level: 0,
+        scaling: {
+          type: "None",
+          every: 0,
+          add: 0
+        },
         attacks: 0,
         saves: {
           count: 0,
@@ -2058,17 +2056,8 @@ section.appendChild(grid);
       sheet.spells.push({
         source: "database",
         spellId: foundSpell.id,
-
         name: foundSpell.name,
         level: foundSpell.level,
-
-        attacks: foundSpell.attacks ?? 0,
-
-        saves: foundSpell.saves ?? {
-          count: 0,
-          type: "dex"
-        },
-
         custom: false
       });
 
@@ -2467,14 +2456,14 @@ function openUnifiedActionModal(characterName, type, includeDamage = false) {
     modInput.classList.add("roll-mod-input");
     let defaultModifier = 0;
 
-if (type.startsWith("Initiative")) {
-  defaultModifier =
-    gameData.characterSheets?.[
-      characterName
-    ]?.initiative ?? 0;
-}
+    if (type.startsWith("Initiative")) {
+      defaultModifier =
+        gameData.characterSheets?.[
+          characterName
+        ]?.initiative ?? 0;
+    }
 
-modInput.value = defaultModifier;
+    modInput.value = defaultModifier;
     modInput.style.cssText = `margin-left:6px;width:100px;`;
     container.appendChild(document.createElement("br"));
     container.appendChild(modLabel);
@@ -2824,34 +2813,23 @@ function openNumberModal(title, prompt, step = 0) {
   });
 }
 
-function openCastSpellModal(characterName) {
-
+function openCastSpellModal(characterName, SPELL_DATABASE) {
   return new Promise(resolve => {
 
     const spell = {
       name: "",
       selectedSpell: null,
-
       attacks: [],
       saves: [],
       spellResistance: [],
-
       saveType: "dex",
-
       scaling: null,
-
-      extra: {
-        damage: 0,
-        healing: 0
-      }
+      baseLevel: 0,
+      slotLevel: 0,
+      extra: { damage: 0, healing: 0 }
     };
 
-    // ─────────────────────────────────────────────
-    // LAYOUT
-    // ─────────────────────────────────────────────
-
     const wrapper = document.createElement("div");
-
     wrapper.style.cssText = `
       display:grid;
       grid-template-columns:320px 1fr 300px;
@@ -2860,1090 +2838,448 @@ function openCastSpellModal(characterName) {
       max-height:75vh;
     `;
 
-    const left =
-      document.createElement("div");
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+    const spellLibrary = document.createElement("div");
+    spellLibrary.style.cssText = `border-left:1px solid var(--surfaces);padding-left:12px;overflow:auto;max-height:70vh;`;
+    wrapper.append(left, right, spellLibrary);
 
-    const right =
-      document.createElement("div");
+    const attackSection = document.createElement("div");
+    const saveSection = document.createElement("div");
+    const srSection = document.createElement("div");
+    right.append(attackSection, saveSection, srSection);
 
-    const spellLibrary =
-      document.createElement("div");
+    // ── HELPERS ──────────────────────────────────────────────────
 
-    spellLibrary.style.cssText = `
-      border-left:1px solid var(--surfaces);
-      padding-left:12px;
-      overflow:auto;
-      max-height:70vh;
-    `;
-
-    wrapper.append(
-      left,
-      right,
-      spellLibrary
-    );
-
-    const attackSection =
-      document.createElement("div");
-
-    const saveSection =
-      document.createElement("div");
-
-    const srSection =
-      document.createElement("div");
-
-    right.append(
-      attackSection,
-      saveSection,
-      srSection
-    );
-
-    // ─────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────
-
-    function createBoundInput(
-      obj,
-      key,
-      min = null,
-      max = null,
-      onChange = null
-    ) {
-
-      const input =
-        document.createElement("input");
-
+    function createBoundInput(obj, key, min = null, max = null, onChange = null) {
+      const input = document.createElement("input");
       input.type = "number";
-
-      if (min !== null) {
-        input.min = min;
-      }
-
-      if (max !== null) {
-        input.max = max;
-      }
-
+      if (min !== null) input.min = min;
+      if (max !== null) input.max = max;
       input.value = obj[key] ?? 0;
-
-      input.addEventListener(
-        "input",
-        () => {
-
-          obj[key] =
-            parseInt(input.value) || 0;
-
-          if (onChange) {
-            onChange();
-          }
-        }
-      );
-
+      input.addEventListener("input", () => {
+        obj[key] = parseInt(input.value) || 0;
+        if (onChange) onChange();
+      });
       return input;
     }
 
-    function createCountInput(
-      label,
-      onChange
-    ) {
+    // Shared input style matching the rest of the modal
+    const inputStyle = `
+      width:60px;
+      padding:4px 6px;
+      background:var(--background);
+      border:1px solid var(--surfaces);
+      color:var(--primary-text);
+      border-radius:4px;
+      font-size:0.9rem;
+    `;
 
-      const row =
-        document.createElement("div");
-
-      row.style.marginBottom = "8px";
-
-      const l =
-        document.createElement("label");
-
-      const i =
-        document.createElement("input");
-
-      l.textContent = label + ": ";
-
+    function createCountInput(labelText, onChange) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:flex;align-items:center;gap:8px;margin-bottom:8px;`;
+      const l = document.createElement("label");
+      l.textContent = labelText + ":";
+      l.style.cssText = `font-size:0.9rem;min-width:120px;`;
+      const i = document.createElement("input");
       i.type = "number";
       i.min = 0;
       i.value = 0;
-
-      i.addEventListener(
-        "input",
-        () => {
-
-          onChange(
-            parseInt(i.value) || 0
-          );
-        }
-      );
-
-      row.append(
-        l,
-        i
-      );
-
-      return {
-        row,
-        input: i
-      };
+      i.style.cssText = inputStyle;
+      i.addEventListener("input", () => onChange(parseInt(i.value) || 0));
+      row.append(l, i);
+      return { row, input: i };
     }
 
-    function createNumberInput(
-      label,
-      onChange
-    ) {
-
-      const row =
-        document.createElement("div");
-
-      row.style.marginBottom = "8px";
-
-      const l =
-        document.createElement("label");
-
-      const i =
-        document.createElement("input");
-
-      l.textContent = label + ": ";
-
+    function createNumberInput(labelText, onChange) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:flex;align-items:center;gap:8px;margin-bottom:8px;`;
+      const l = document.createElement("label");
+      l.textContent = labelText + ":";
+      l.style.cssText = `font-size:0.9rem;min-width:120px;`;
+      const i = document.createElement("input");
       i.type = "number";
-
       i.value = 0;
-
-      i.addEventListener(
-        "input",
-        () => {
-
-          onChange(
-            parseFloat(i.value) || 0
-          );
-        }
-      );
-
-      row.append(
-        l,
-        i
-      );
-
+      i.style.cssText = inputStyle;
+      i.addEventListener("input", () => onChange(parseFloat(i.value) || 0));
+      row.append(l, i);
       return row;
     }
 
     function buildColumnHeader(labels) {
-
-      const row =
-        document.createElement("div");
-
-      row.style.cssText = `
-        display:grid;
-        grid-template-columns:
-          120px repeat(${labels.length},1fr);
-        font-weight:bold;
-        margin-bottom:4px;
-      `;
-
-      row.appendChild(
-        document.createElement("div")
-      );
-
+      const row = document.createElement("div");
+      row.style.cssText = `display:grid;grid-template-columns:120px repeat(${labels.length},1fr);font-weight:bold;margin-bottom:4px;`;
+      row.appendChild(document.createElement("div"));
       labels.forEach(text => {
-
-        const cell =
-          document.createElement("div");
-
+        const cell = document.createElement("div");
         cell.textContent = text;
-
-        cell.style.textAlign =
-          "center";
-
+        cell.style.textAlign = "center";
         row.appendChild(cell);
       });
-
       return row;
     }
 
-    // ─────────────────────────────────────────────
-    // ATTACK ROWS
-    // ─────────────────────────────────────────────
+    // ── SCALING CALCULATOR ───────────────────────────────────────
 
-    function buildAttackRow(
-      atk,
-      index
-    ) {
+    function getScaledCounts(baseAttacks, baseSaves, scaling, slotLevel, charLevel, baseLevel) {
+      if (!scaling || scaling.type === "none") {
+        return { attacks: baseAttacks, saves: baseSaves };
+      }
+      let increments = 0;
+      if (scaling.type === "spellSlot") {
+        increments = Math.floor(Math.max(0, slotLevel - baseLevel) / (scaling.every || 1));
+      } else if (scaling.type === "characterLevel") {
+        // characterLevel scaling: every N levels above 0
+        console.log("HIT: LEVEL")
+        if (charLevel > 16) {
+          increments = 3;
+          console.log("HIT: 17")
+        }
+        else if (charLevel > 10) {
+          increments = 2;
+          console.log("HIT: 11")
+        }
+        else if (charLevel > 4) {
+          increments = 1;
+          console.log("HIT: 5")
+        }
+        else {
+          increments = 0;
+          console.log("HIT: 0")
+        }
+      }
+      console.log(baseLevel, slotLevel, increments)
+      return {
+        attacks: baseAttacks > 0 ? baseAttacks + increments * (scaling.add || 1) : 0,
+        saves: baseSaves > 0 ? baseSaves + increments * (scaling.add || 1) : 0
+      };
+    }
 
-      const row =
-        document.createElement("div");
+    // ── ATTACK / SAVE / SR ROWS ──────────────────────────────────
 
-      row.style.cssText = `
-        display:grid;
-        grid-template-columns:
-          120px 1fr 1fr 1fr;
-        gap:6px;
-        align-items:center;
-      `;
-
-      const label =
-        document.createElement("div");
-
-      label.textContent =
-        `Atk ${index + 1}`;
-
-      row.append(
-        label,
-
-        createBoundInput(
-          atk,
-          "roll",
-          1,
-          20
-        ),
-
-        createBoundInput(
-          atk,
-          "modifier"
-        ),
-
-        createBoundInput(
-          atk,
-          "damage"
-        )
-      );
-
+    function buildAttackRow(atk, index) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:grid;grid-template-columns:120px 1fr 1fr 1fr;gap:6px;align-items:center;`;
+      const label = document.createElement("div");
+      label.textContent = `Atk ${index + 1}`;
+      row.append(label, createBoundInput(atk, "roll", 1, 20), createBoundInput(atk, "modifier"), createBoundInput(atk, "damage"));
       return row;
     }
 
-    // ─────────────────────────────────────────────
-    // SAVE ROWS
-    // ─────────────────────────────────────────────
+    function buildSaveRow(sv, index, casterName) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:grid;grid-template-columns:120px 1.5fr 1fr 1fr;gap:6px;align-items:center;`;
+      const label = document.createElement("div");
+      label.textContent = `Save ${index + 1}`;
 
-    function buildSaveRow(
-      sv,
-      index,
-      casterName
-    ) {
-
-      const row =
-        document.createElement("div");
-
-      row.style.cssText = `
-        display:grid;
-        grid-template-columns:
-          120px 1.5fr 1fr 1fr;
-        gap:6px;
-        align-items:center;
-      `;
-
-      const label =
-        document.createElement("div");
-
-      label.textContent =
-        `Save ${index + 1}`;
-
-      const targetSelect =
-        document.createElement("select");
-
-      const emptyOption =
-        document.createElement("option");
-
-      emptyOption.value = "";
-
-      emptyOption.textContent =
-        "-- Select Target --";
-
-      targetSelect.appendChild(
-        emptyOption
-      );
-
+      const targetSelect = document.createElement("select");
+      const emptyOpt = document.createElement("option");
+      emptyOpt.value = ""; emptyOpt.textContent = "-- Select Target --";
+      targetSelect.appendChild(emptyOpt);
       getActiveCharacters().forEach(char => {
+        const opt = document.createElement("option"); opt.value = char; opt.textContent = char;
+        targetSelect.appendChild(opt);
+      });
 
-  const opt =
-    document.createElement("option");
-
-  opt.value = char;
-
-  opt.textContent = char;
-
-  targetSelect.appendChild(opt);
-});
-
-      function updateTarget(
-        newTarget
-      ) {
-
-        const oldTarget =
-          sv.target;
-
-        if (
-          oldTarget &&
-          oldTarget !== newTarget
-        ) {
-
-          const oldStats =
-            gameData.characterStats?.[
-            oldTarget
-            ];
-
-          if (
-            oldStats?.savesFromSpells
-          ) {
-
-            oldStats.savesFromSpells =
-              oldStats.savesFromSpells
-                .filter(
-                  s => s !== sv
-                );
-
-            recalcCharacterStats(
-              oldTarget
-            );
+      function updateTarget(newTarget) {
+        const oldTarget = sv.target;
+        if (oldTarget && oldTarget !== newTarget) {
+          const oldStats = gameData.characterStats?.[oldTarget];
+          if (oldStats?.savesFromSpells) {
+            oldStats.savesFromSpells = oldStats.savesFromSpells.filter(s => s !== sv);
+            recalcCharacterStats(oldTarget);
           }
         }
-
-        if (
-          newTarget &&
-          newTarget !== casterName
-        ) {
-
-          const tStats =
-            gameData.characterStats?.[
-            newTarget
-            ];
-
-          if (
-            !tStats.savesFromSpells
-          ) {
-
-            tStats.savesFromSpells =
-              [];
-          }
-
-          if (
-            !tStats
-              .savesFromSpells
-              .includes(sv)
-          ) {
-
-            tStats
-              .savesFromSpells
-              .push(sv);
-          }
+        if (newTarget && newTarget !== casterName) {
+          const tStats = gameData.characterStats?.[newTarget];
+          if (!tStats.savesFromSpells) tStats.savesFromSpells = [];
+          if (!tStats.savesFromSpells.includes(sv)) tStats.savesFromSpells.push(sv);
         }
-
         sv.target = newTarget;
-
-        if (casterName) {
-
-          recalcCharacterStats(
-            casterName
-          );
-        }
-
-        if (newTarget) {
-
-          recalcCharacterStats(
-            newTarget
-          );
-        }
-
+        if (casterName) recalcCharacterStats(casterName);
+        if (newTarget) recalcCharacterStats(newTarget);
         updateSideStats();
       }
 
-      const roll =
-        createBoundInput(
-          sv,
-          "roll",
-          1,
-          20,
-          () => {
-
-            if (sv.target) {
-
-              recalcCharacterStats(
-                sv.target
-              );
-            }
-
-            updateSideStats();
-          }
-        );
-
-      const mod =
-        createBoundInput(
-          sv,
-          "modifier",
-          null,
-          null,
-          () => {
-
-            if (sv.target) {
-
-              recalcCharacterStats(
-                sv.target
-              );
-            }
-
-            updateSideStats();
-          }
-        );
+      const roll = createBoundInput(sv, "roll", 1, 20, () => { if (sv.target) recalcCharacterStats(sv.target); updateSideStats(); });
+      const mod = createBoundInput(sv, "modifier", null, null, () => { if (sv.target) recalcCharacterStats(sv.target); updateSideStats(); });
 
       function updateSaveModifier() {
-
-        if (!sv.target) {
-          return;
-        }
-
-        const targetSheet =
-          gameData.characterSheets?.[
-          sv.target
-          ];
-
-        if (!targetSheet) {
-
-          sv.modifier = 0;
-
-          mod.value = 0;
-
-          return;
-        }
-
-        const saveType =
-          sv.saveType || "dex";
-
-        const total =
-          computeSaveTotal(
-            targetSheet,
-            saveType
-          );
-
-        sv.modifier = total;
-
-        mod.value = total;
-
-        console.log(
-  "Updating save modifier",
-  {
-    target: sv.target,
-    saveType: sv.saveType,
-    total,
-    sv
-  }
-);
+        if (!sv.target) return;
+        const targetSheet = gameData.characterSheets?.[sv.target];
+        if (!targetSheet) { sv.modifier = 0; mod.value = 0; return; }
+        const total = computeSaveTotal(targetSheet, sv.saveType || "dex");
+        sv.modifier = total; mod.value = total;
       }
 
-      targetSelect.addEventListener(
-        "change",
-        () => {
-
-          updateTarget(
-            targetSelect.value || null
-          );
-
-          updateSaveModifier();
-
-          if (sv.target) {
-      recalcCharacterStats(sv.target);
-      updateSideStats();
-    }
-        }
-      );
-
-      if (sv.target) {
-
-        targetSelect.value =
-          sv.target;
-
+      targetSelect.addEventListener("change", () => {
+        updateTarget(targetSelect.value || null);
         updateSaveModifier();
-      }
+        if (sv.target) { recalcCharacterStats(sv.target); updateSideStats(); }
+      });
+      if (sv.target) { targetSelect.value = sv.target; updateSaveModifier(); }
 
-      row.append(
-        label,
-        targetSelect,
-        roll,
-        mod
-      );
-
+      row.append(label, targetSelect, roll, mod);
       return row;
     }
 
-    // ─────────────────────────────────────────────
-    // SPELL RESISTANCE
-    // ─────────────────────────────────────────────
-
-    function buildSRRow(
-      sr,
-      index
-    ) {
-
-      const row =
-        document.createElement("div");
-
-      row.style.cssText = `
-        display:grid;
-        grid-template-columns:
-          120px 1fr 1fr;
-        gap:6px;
-        align-items:center;
-      `;
-
-      const label =
-        document.createElement("div");
-
-      label.textContent =
-        `SR ${index + 1}`;
-
-      const roll =
-        createBoundInput(
-          sr,
-          "roll",
-          1,
-          20
-        );
-
-      const mod =
-        createBoundInput(
-          sr,
-          "modifier"
-        );
-
-      mod.addEventListener(
-        "input",
-        () => {
-
-          sr.casterLevel =
-            sr.modifier;
-        }
-      );
-
-      row.append(
-        label,
-        roll,
-        mod
-      );
-
+    function buildSRRow(sr, index) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:grid;grid-template-columns:120px 1fr 1fr;gap:6px;align-items:center;`;
+      const label = document.createElement("div"); label.textContent = `SR ${index + 1}`;
+      const roll = createBoundInput(sr, "roll", 1, 20);
+      const mod = createBoundInput(sr, "modifier");
+      mod.addEventListener("input", () => { sr.casterLevel = sr.modifier; });
+      row.append(label, roll, mod);
       return row;
     }
 
-    // ─────────────────────────────────────────────
-    // SYNC FUNCTIONS
-    // ─────────────────────────────────────────────
+    // ── SYNC FUNCTIONS ───────────────────────────────────────────
 
     function syncAttacks(count) {
-
-      while (
-        spell.attacks.length < count
-      ) {
-
-        const casterSheet =
-          gameData.characterSheets?.[
-          characterName
-          ];
-
-        spell.attacks.push({
-          roll: 1,
-
-          modifier:
-            casterSheet
-              ?.spellAttackBonus || 0,
-
-          damage: 0
-        });
+      while (spell.attacks.length < count) {
+        const casterSheet = gameData.characterSheets?.[characterName];
+        spell.attacks.push({ roll: 1, modifier: casterSheet?.spellAttackBonus || 0, damage: 0 });
       }
-
-      spell.attacks.length =
-        count;
-
-      attackSection.innerHTML =
-        "";
-
+      spell.attacks.length = count;
+      attackSection.innerHTML = "";
       if (count > 0) {
-
-        attackSection.appendChild(
-          document.createElement("h4")
-        ).textContent =
-          "Attacks";
-
-        attackSection.appendChild(
-          buildColumnHeader([
-            "D20",
-            "Mod",
-            "Dmg"
-          ])
-        );
-
-        spell.attacks.forEach(
-          (atk, i) => {
-
-            attackSection.appendChild(
-              buildAttackRow(
-                atk,
-                i
-              )
-            );
-          }
-        );
+        attackSection.appendChild(document.createElement("h4")).textContent = "Attacks";
+        attackSection.appendChild(buildColumnHeader(["D20", "Mod", "Dmg"]));
+        spell.attacks.forEach((atk, i) => attackSection.appendChild(buildAttackRow(atk, i)));
       }
     }
 
     function syncSaves(count) {
-
-      while (
-        spell.saves.length < count
-      ) {
-
-        spell.saves.push({
-          target: null,
-          roll: 1,
-          modifier: 0,
-          saveType:
-            spell.saveType || "dex"
-        });
+      while (spell.saves.length < count) {
+        spell.saves.push({ target: null, roll: 1, modifier: 0, saveType: spell.saveType || "dex" });
       }
-
-      spell.saves.length =
-        count;
-
-      saveSection.innerHTML =
-        "";
-
+      spell.saves.length = count;
+      saveSection.innerHTML = "";
       if (count > 0) {
-
-        saveSection.appendChild(
-          document.createElement("h4")
-        ).textContent =
-          "Saving Throws";
-
-        saveSection.appendChild(
-          buildColumnHeader([
-            "Target",
-            "D20",
-            "Mod"
-          ])
-        );
-
-        spell.saves.forEach(
-          (sv, i) => {
-
-            sv.saveType =
-              spell.saveType;
-
-            saveSection.appendChild(
-              buildSaveRow(
-                sv,
-                i,
-                characterName
-              )
-            );
-          }
-        );
+        saveSection.appendChild(document.createElement("h4")).textContent = "Saving Throws";
+        saveSection.appendChild(buildColumnHeader(["Target", "D20", "Mod"]));
+        spell.saves.forEach((sv, i) => { sv.saveType = spell.saveType; saveSection.appendChild(buildSaveRow(sv, i, characterName)); });
       }
     }
 
     function syncSR(count) {
-
-      while (spell.spellResistance.length < count) {
-
-        spell.spellResistance.push({
-          roll: 1,
-          modifier: 0,
-          casterLevel: 0
-        });
-      }
-
-      spell.spellResistance.length =
-        count;
-
-      srSection.innerHTML =
-        "";
-
+      while (spell.spellResistance.length < count) spell.spellResistance.push({ roll: 1, modifier: 0, casterLevel: 0 });
+      spell.spellResistance.length = count;
+      srSection.innerHTML = "";
       if (count > 0) {
-
-        srSection.appendChild(
-          document.createElement("h4")
-        ).textContent =
-          "Spell Resistance";
-
-        srSection.appendChild(
-          buildColumnHeader([
-            "D20",
-            "CL"
-          ])
-        );
-
-        spell.spellResistance.forEach(
-          (sr, i) => {
-
-            srSection.appendChild(
-              buildSRRow(
-                sr,
-                i
-              )
-            );
-          }
-        );
+        srSection.appendChild(document.createElement("h4")).textContent = "Spell Resistance";
+        srSection.appendChild(buildColumnHeader(["D20", "CL"]));
+        spell.spellResistance.forEach((sr, i) => srSection.appendChild(buildSRRow(sr, i)));
       }
     }
 
-    // ─────────────────────────────────────────────
-    // SPELL LIBRARY
-    // ─────────────────────────────────────────────
+    // ── SCALING APPLY (called on spell select AND slot change) ───
+
+    function applyScaling() {
+      if (!spell.selectedSpell) return;
+      const sp = spell.selectedSpell;
+      const charLevel = gameData.characterSheets?.[characterName]?.level ?? 1;
+      const baseAttacks = sp.attacks ?? 0;
+      const baseSaves = sp.saves?.count ?? 0;
+
+      console.log({
+        spellName: sp.name,
+        scaling: spell.scaling,
+        baseLevel: spell.baseLevel,
+        slotLevel: spell.slotLevel
+      });
+
+      const scaled = getScaledCounts(
+        baseAttacks, baseSaves,
+        spell.scaling,
+        spell.slotLevel,
+        charLevel,
+        spell.baseLevel
+      );
+
+      // Update display label
+      scaledLabel.textContent = `Scaled → Attacks: ${scaled.attacks}, Saves: ${scaled.saves}`;
+
+      // Update count inputs
+      attackCountInput.input.value = scaled.attacks;
+      saveCountInput.input.value = scaled.saves;
+
+      // Rebuild attack/save rows
+      syncAttacks(scaled.attacks);
+      syncSaves(scaled.saves);
+    }
+
+    // ── SPELL LIBRARY ────────────────────────────────────────────
 
     function getCharacterSpells() {
-
-      return (
-        gameData.characterSheets?.[
-          characterName
-        ]?.spells || []
-      );
+      return gameData.characterSheets?.[characterName]?.spells || [];
     }
 
     function applySpellData(sp) {
+      const data = getSpellDefinition(sp);
 
-      spell.selectedSpell = sp;
+      spell.selectedSpell = data;
 
-      spell.name = sp.name;
+      spell.name = data.name;
+      nameInput.value = data.name;
 
-      nameInput.value = sp.name;
+      spell.saveType = data.saves?.type || "dex";
+      saveTypeSelect.value = spell.saveType;
 
-      spell.saveType =
-        sp.saves?.type || "dex";
+      spell.scaling = data.scaling || null;
+      spell.baseLevel = data.level ?? sp.level ?? 0;
 
-      saveTypeSelect.value =
-        spell.saveType;
+      // Set slot input bounds and default to base level
+      slotLevelInput.min = spell.baseLevel;
+      slotLevelInput.max = 9;
+      slotLevelInput.value = spell.baseLevel;
+      spell.slotLevel = spell.baseLevel;
 
-      spell.scaling =
-        sp.scaling || null;
+      // Show/hide slot row: only relevant for spellSlot scaling
+      // (still show for characterLevel — slot level doesn't affect it but keep UI consistent)
+      slotLevelRow.style.display = "flex";
 
-      // Sync actual data
-      syncAttacks(
-        sp.attacks || 0
-      );
+      if (gameData.edition === "pathfinder") {
+        syncSR(data.spellResistance || 0);
 
-      syncSaves(
-        sp.saves?.count || 0
-      );
-
-      if (
-        gameData.edition ===
-        "pathfinder"
-      ) {
-
-        syncSR(
-          sp.spellResistance || 0
-        );
+        if (srCountInput) {
+          srCountInput.input.value =
+            data.spellResistance || 0;
+        }
       }
 
-      // Sync UI inputs
-      attackCountInput.input.value =
-        sp.attacks || 0;
-
-      saveCountInput.input.value =
-        sp.saves?.count || 0;
-
-      if (srCountInput) {
-
-        srCountInput.input.value =
-          sp.spellResistance || 0;
-      }
-
-      // Refresh save rows
-      syncSaves(
-        spell.saves.length
-      );
+      applyScaling();
     }
 
     function renderSpellLibrary() {
+      spellLibrary.innerHTML = "";
+      const title = document.createElement("h4");
+      title.textContent = "Character Spells";
+      spellLibrary.appendChild(title);
 
-      spellLibrary.innerHTML =
-        "";
-
-      const title =
-        document.createElement("h4");
-
-      title.textContent =
-        "Character Spells";
-
-      spellLibrary.appendChild(
-        title
-      );
-
-      const spells =
-        getCharacterSpells();
-
+      const spells = getCharacterSpells();
       if (!spells.length) {
-
-        const empty =
-          document.createElement("div");
-
-        empty.textContent =
-          "No spells available.";
-
-        empty.style.opacity =
-          "0.6";
-
-        spellLibrary.appendChild(
-          empty
-        );
-
+        const empty = document.createElement("div");
+        empty.textContent = "No spells available.";
+        empty.style.opacity = "0.6";
+        spellLibrary.appendChild(empty);
         return;
       }
 
-      spells.sort((a, b) => {
-
-        if (
-          a.level !== b.level
-        ) {
-
-          return (
-            a.level - b.level
-          );
-        }
-
-        return a.name.localeCompare(
-          b.name
-        );
-      });
+      spells.sort((a, b) => (a.level !== b.level ? a.level - b.level : a.name.localeCompare(b.name)));
 
       spells.forEach(sp => {
-
-        const btn =
-          document.createElement(
-            "button"
-          );
-
-        btn.className =
-          "sheet-add-btn";
-
-        btn.style.cssText = `
-          width:100%;
-          text-align:left;
-          margin-bottom:6px;
-          display:flex;
-          flex-direction:column;
-          gap:2px;
-        `;
-
-        btn.innerHTML = `
-          <strong>${sp.name}</strong>
-          <span style="
-            opacity:0.7;
-            font-size:0.75rem;
-          ">
-            Level ${sp.level}
-          </span>
-        `;
-
-        btn.onclick = () => {
-          applySpellData(sp);
-        };
-
-        spellLibrary.appendChild(
-          btn
-        );
+        console.log("Library spell:", sp);
+        const btn = document.createElement("button");
+        btn.className = "sheet-add-btn";
+        btn.style.cssText = `width:100%;text-align:left;margin-bottom:6px;display:flex;flex-direction:column;gap:2px;`;
+        btn.innerHTML = `<strong>${sp.name}</strong><span style="opacity:0.7;font-size:0.75rem;">Level ${sp.level}</span>`;
+        btn.onclick = () => applySpellData(sp);
+        spellLibrary.appendChild(btn);
       });
     }
 
-    // ─────────────────────────────────────────────
-    // LEFT COLUMN
-    // ─────────────────────────────────────────────
+    // ── LEFT COLUMN ──────────────────────────────────────────────
 
-    const nameInput =
-      document.createElement("input");
+    const nameInput = document.createElement("input");
+    nameInput.placeholder = "Spell Name";
+    nameInput.style.cssText = `width:100%;padding:6px 8px;background:var(--background);border:1px solid var(--surfaces);color:var(--primary-text);border-radius:4px;margin-bottom:8px;`;
+    nameInput.addEventListener("input", () => { spell.name = nameInput.value; });
+    left.appendChild(nameInput);
+    left.appendChild(document.createElement("hr"));
 
-    nameInput.placeholder =
-      "Spell Name";
+    // Spell Slot Level row (matches style of count inputs)
+    const slotLevelRow = document.createElement("div");
+    slotLevelRow.style.cssText = `display:flex;align-items:center;gap:8px;margin-bottom:8px;display:none;`;
 
-    nameInput.addEventListener(
-      "input",
-      () => {
+    const slotLevelLabel = document.createElement("label");
+    slotLevelLabel.textContent = "Slot Level:";
+    slotLevelLabel.style.cssText = `font-size:0.9rem;min-width:120px;`;
 
-        spell.name =
-          nameInput.value;
-      }
-    );
+    const slotLevelInput = document.createElement("input");
+    slotLevelInput.type = "number";
+    slotLevelInput.min = 0;
+    slotLevelInput.max = 9;
+    slotLevelInput.value = 0;
+    slotLevelInput.style.cssText = inputStyle;
+    slotLevelInput.addEventListener("input", () => {
+      spell.slotLevel = parseInt(slotLevelInput.value) || 0;
+      applyScaling();
+    });
 
-    left.appendChild(
-      nameInput
-    );
+    slotLevelRow.append(slotLevelLabel, slotLevelInput);
+    left.appendChild(slotLevelRow);
 
-    left.appendChild(
-      document.createElement("hr")
-    );
+    // Scaled counts display
+    const scaledLabel = document.createElement("div");
+    scaledLabel.style.cssText = `font-size:0.78rem;opacity:0.65;margin-bottom:8px;min-height:1em;`;
+    left.appendChild(scaledLabel);
 
-    // Attack Count
+    // Attack / Save count inputs
+    const attackCountInput = createCountInput("Attack Rolls", v => {
+      syncAttacks(v);
+      // Clear scaling display if user manually overrides
+      scaledLabel.textContent = "";
+    });
+    left.appendChild(attackCountInput.row);
 
-    const attackCountInput =
-      createCountInput(
-        "Attack Rolls",
-        v => syncAttacks(v)
-      );
-
-    left.appendChild(
-      attackCountInput.row
-    );
-
-    // Save Count
-
-    const saveCountInput =
-      createCountInput(
-        "Saving Throws",
-        v => syncSaves(v)
-      );
-
-    left.appendChild(
-      saveCountInput.row
-    );
+    const saveCountInput = createCountInput("Saving Throws", v => {
+      syncSaves(v);
+      scaledLabel.textContent = "";
+    });
+    left.appendChild(saveCountInput.row);
 
     // Save Type
-
-    const saveTypeRow =
-      document.createElement("div");
-
-    saveTypeRow.style.cssText = `
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-top:6px;
-      margin-bottom:10px;
-    `;
-
-    const saveTypeLabel =
-      document.createElement("label");
-
-    saveTypeLabel.textContent =
-      "Save Type:";
-
-    const saveTypeSelect =
-      document.createElement("select");
-
+    const saveTypeRow = document.createElement("div");
+    saveTypeRow.style.cssText = `display:flex;align-items:center;gap:8px;margin-top:6px;margin-bottom:10px;`;
+    const saveTypeLabel = document.createElement("label");
+    saveTypeLabel.textContent = "Save Type:";
+    saveTypeLabel.style.cssText = `font-size:0.9rem;min-width:120px;`;
+    const saveTypeSelect = document.createElement("select");
+    saveTypeSelect.style.cssText = inputStyle;
     ABILITY_KEYS.forEach(ab => {
-
-      const opt =
-        document.createElement("option");
-
-      opt.value = ab;
-
-      opt.textContent =
-        ab.toUpperCase();
-
-      if (ab === spell.saveType) {
-        opt.selected = true;
-      }
-
+      const opt = document.createElement("option"); opt.value = ab; opt.textContent = ab.toUpperCase();
+      if (ab === spell.saveType) opt.selected = true;
       saveTypeSelect.appendChild(opt);
     });
-
-    saveTypeSelect.addEventListener(
-  "change",
-  () => {
-
-    spell.saveType = saveTypeSelect.value;
-
-    spell.saves.forEach(save => {
-
-      save.saveType = spell.saveType;
-
-      if (save.target) {
-
-        const targetSheet =
-          gameData.characterSheets?.[
-            save.target
-          ];
-
-        if (targetSheet) {
-
-          save.modifier =
-            computeSaveTotal(
-              targetSheet,
-              save.saveType
-            );
+    saveTypeSelect.addEventListener("change", () => {
+      spell.saveType = saveTypeSelect.value;
+      spell.saves.forEach(save => {
+        save.saveType = spell.saveType;
+        if (save.target) {
+          const targetSheet = gameData.characterSheets?.[save.target];
+          if (targetSheet) save.modifier = computeSaveTotal(targetSheet, save.saveType);
+          recalcCharacterStats(save.target);
         }
-
-        recalcCharacterStats(
-          save.target
-        );
-      }
+      });
+      syncSaves(spell.saves.length);
+      updateSideStats();
     });
+    saveTypeRow.append(saveTypeLabel, saveTypeSelect);
+    left.appendChild(saveTypeRow);
 
-    syncSaves(spell.saves.length);
-
-    updateSideStats();
-  }
-);
-
-    saveTypeRow.append(
-      saveTypeLabel,
-      saveTypeSelect
-    );
-
-    left.appendChild(
-      saveTypeRow
-    );
-
-    // SR Count
-
+    // SR Count (Pathfinder only)
     let srCountInput = null;
-
-    if (
-      gameData.edition ===
-      "pathfinder"
-    ) {
-
-      srCountInput =
-        createCountInput(
-          "Spell Resistance",
-          v => syncSR(v)
-        );
-
-      left.appendChild(
-        srCountInput.row
-      );
+    if (gameData.edition === "pathfinder") {
+      srCountInput = createCountInput("Spell Resistance", v => syncSR(v));
+      left.appendChild(srCountInput.row);
     }
 
-    left.appendChild(
-      document.createElement("hr")
-    );
+    left.appendChild(document.createElement("hr"));
+    left.appendChild(createNumberInput("Extra Damage", v => { spell.extra.damage = v; }));
+    left.appendChild(createNumberInput("Extra Healing", v => { spell.extra.healing = v; }));
 
-    left.appendChild(
-      createNumberInput(
-        "Extra Damage",
-        v => {
-
-          spell.extra.damage = v;
-        }
-      )
-    );
-
-    left.appendChild(
-      createNumberInput(
-        "Extra Healing",
-        v => {
-
-          spell.extra.healing = v;
-        }
-      )
-    );
-
-    // ─────────────────────────────────────────────
-    // INIT
-    // ─────────────────────────────────────────────
+    // ── INIT ─────────────────────────────────────────────────────
 
     renderSpellLibrary();
 
-    showModal(
-      `Cast Spell — ${characterName}`,
-      wrapper,
-      () => {
+    showModal(`Cast Spell — ${characterName}`, wrapper, () => {
+      spell.name = spell.name || "New Spell";
+      resolve(spell);
+    });
 
-        spell.name =
-          spell.name ||
-          "New Spell";
-
-        resolve(spell);
-      }
-    );
-
-    document.getElementById(
-      "modal-cancel"
-    ).onclick = () => {
-
-      hideModal();
-
-      resolve(null);
-    };
+    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
   });
 }
 
@@ -4062,21 +3398,21 @@ function renderInitiativeControls() {
   };
 
   document.getElementById("clear-init-btn").onclick = () => {
-  if (confirm("Clear all initiative entries?")) {
-    initiativeOrder = [];
-    currentTurnIndex = 0;
-    npcCount = 0;
-    Object.values(gameData.characterStats).forEach(stats => {
-      stats.isActiveInCombat = false;
-      if (Array.isArray(stats.initiativeRolls)) {
-        stats.initiativeRolls.forEach(entry => { entry.isVisibleInOrder = false; });
-      }
-    });
-    renderInitiative();
-    updateSideStats();
-    updateTurnButtons();
-  }
-};
+    if (confirm("Clear all initiative entries?")) {
+      initiativeOrder = [];
+      currentTurnIndex = 0;
+      npcCount = 0;
+      Object.values(gameData.characterStats).forEach(stats => {
+        stats.isActiveInCombat = false;
+        if (Array.isArray(stats.initiativeRolls)) {
+          stats.initiativeRolls.forEach(entry => { entry.isVisibleInOrder = false; });
+        }
+      });
+      renderInitiative();
+      updateSideStats();
+      updateTurnButtons();
+    }
+  };
 }
 
 function updateTurnButtons() {
@@ -4103,11 +3439,11 @@ function updateTurnButtons() {
 
 function updateCombatTabVisibility() {
   const combatTabBtn = document.getElementById("combat-tab-btn");
-  const statsTabBtn  = document.getElementById("stats-tab-btn");
+  const statsTabBtn = document.getElementById("stats-tab-btn");
   const combatToggleBtn = document.getElementById("combat-toggle-btn");
 
-  if (combatTabBtn)  combatTabBtn.style.display  = combatStarted ? "inline-block" : "none";
-  if (statsTabBtn)   statsTabBtn.style.display    = combatStarted ? "none" : "inline-block";
+  if (combatTabBtn) combatTabBtn.style.display = combatStarted ? "inline-block" : "none";
+  if (statsTabBtn) statsTabBtn.style.display = combatStarted ? "none" : "inline-block";
   if (combatToggleBtn) {
     combatToggleBtn.textContent = combatStarted ? "🏳️ End Combat" : "⚔️ Start Combat";
     combatToggleBtn.style.background = combatStarted ? "var(--secondary-accent)" : "";
@@ -4288,15 +3624,15 @@ async function startCombat() {
     stats.isActiveInCombat = true;
     if (!stats.initiativeRolls) stats.initiativeRolls = [];
 
-      const results = await openMultiRollModal(pc, "Initiative", false);
-      if (!results?.length) continue;
-      results.forEach(({ roll, modifier }, i) => {
-        const total = roll + modifier;
-        const tag = crypto.randomUUID();
-        const npcNum = stats.initiativeRolls.filter(r => r.isVisibleInOrder).length + 1;
-        stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `${pc} ${npcNum}`, source: `${pc}`, npcIndex: npcNum });
-        critChecker(pc, roll);
-      });
+    const results = await openMultiRollModal(pc, "Initiative", false);
+    if (!results?.length) continue;
+    results.forEach(({ roll, modifier }, i) => {
+      const total = roll + modifier;
+      const tag = crypto.randomUUID();
+      const npcNum = stats.initiativeRolls.filter(r => r.isVisibleInOrder).length + 1;
+      stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `${pc} ${npcNum}`, source: `${pc}`, npcIndex: npcNum });
+      critChecker(pc, roll);
+    });
   }
 
   currentTurnIndex = 0;
@@ -4367,7 +3703,7 @@ function renderCharacterButtons() {
       }
     });
 
-     // ── Add reset button inline in the editor bar only ──
+    // ── Add reset button inline in the editor bar only ──
     if (container.id === "editor-character-buttons") {
       const resetBtn = document.createElement("button");
       resetBtn.textContent = "🔄 Reset Session Stats";
@@ -4429,6 +3765,28 @@ function getCurrentTurnCharacter() {
 function getStatName(name) {
   if (name && name.startsWith("NPC ")) return "NPC";
   return name;
+}
+
+let SPELL_DATABASE = null;
+
+async function loadSpellDatabase() {
+
+  if (SPELL_DATABASE) {
+    return SPELL_DATABASE;
+  }
+
+  const response =
+    await fetch("./data/5.5eSpells.json");
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to load 5.5eSpells.json"
+    );
+  }
+
+  SPELL_DATABASE = await response.json();
+
+  return SPELL_DATABASE;
 }
 
 async function performSingleAttack(name, options = { logGlobal: false }) {
@@ -4563,7 +3921,7 @@ async function handleSpellsCast(name) {
   name = getStatName(name);
   const stats = gameData.characterStats[name];
   if (!stats) return;
-  const spell = await openCastSpellModal(name);
+  const spell = await openCastSpellModal(name, SPELL_DATABASE);
   if (!spell) return;
   playSoundFromUrl("https://cdn.pixabay.com/audio/2021/08/02/audio_4527d82a75.mp3", 0.3);
   stats.spellHistory.push(spell);
