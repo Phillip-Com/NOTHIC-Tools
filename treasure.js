@@ -19,11 +19,67 @@ const rarityLabels = {
 };
 
 const rarityColors = {
-  common:    "#9e9e9e",
-  uncommon:  "#4caf50",
-  rare:      "#2196f3",
-  veryRare:  "#9c27b0",
+  common: "#9e9e9e",
+  uncommon: "#4caf50",
+  rare: "#2196f3",
+  veryRare: "#9c27b0",
   legendary: "#ff9800",
+};
+
+const mundaneCosts = {
+  // Armor
+  "padded": 5, 
+  "leather": 10, 
+  "studded leather": 45,
+  "hide": 10, 
+  "chain shirt": 50, 
+  "scale mail": 50,
+  "breastplate": 400, 
+  "half plate": 750,
+  "ring mail": 30, 
+  "chain mail": 75, 
+  "splint": 200, 
+  "plate": 1500,
+  "shield": 10,
+  // Weapons
+  "club": 0.1,
+  "dagger": 2, 
+  "greatclub": 0.2,
+  "handaxe": 5, 
+  "javelin": 0.5,
+  "light hammer": 2,
+  "mace": 5,
+  "quarterstaff": 0.2,
+  "sickle": 1,
+  "spear": 1,
+  "dart": 0.05,
+  "light crossbow": 25, 
+  "shortbow": 25, 
+  "sling": 0.1,
+  "battleaxe": 10,
+  "flail": 10,
+  "glaive": 20,
+  "greataxe": 30, 
+  "greatsword": 50,
+  "halberd": 20,
+  "lance": 10,
+  "longsword": 15,
+  "maul": 10, 
+  "morningstar": 15,
+  "pike": 5,
+  "rapier": 25, 
+  "scimitar": 25, 
+  "shortsword": 10,
+  "trident": 5,  
+  "warhammer": 15, 
+  "war pick": 5,
+  "whip": 2,
+  "blowgun": 10,
+  "hand crossbow": 75,
+  "heavy crossbow": 50, 
+  "longbow": 50,
+  "musket": 500,
+  "pistol": 250
 };
 
 // === BASIC UTILS ===
@@ -183,7 +239,7 @@ function generateHoard(tier) {
         ? match.item()
         : match.item;
 
-      generatedItems.push(resolveItemDetails(item));
+      generatedItems.push(resolveItemDetails(item, true));
     }
   }
 
@@ -200,13 +256,13 @@ function generateHoard(tier) {
 
     output += `<h3>Magic Items</h3>`;
     for (const [item, data] of sortedItems) {
-  const qty =
-    data.count > 1
-      ? `(${data.count}) `
-      : "";
+      const qty =
+        data.count > 1
+          ? `(${data.count}) `
+          : "";
 
-  output += `${qty}${item} — Price: ${data.price} gp<br>`;
-}
+      output += `${qty}${item} — Price: ${data.price} gp<br>`;
+    }
 
   } else {
     output += `<h3>Magic Items</h3>None<br>`;
@@ -247,7 +303,7 @@ function resolveItemString(str) {
     const magicRow = lootData.hoard_magic[letter].find(r => roll >= r.min && roll <= r.max);
     if (magicRow) {
       const item = resolveMatchItem(magicRow);
-      results.push(resolveItemDetails(item));
+      results.push(resolveItemDetails(item, true));
     } else {
       results.push(`(No item found on table ${letter})`);
     }
@@ -281,31 +337,32 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
     let option = rarity;
 
     const rarityMultiplier =
-  lootData.shop_chances[level]?.[rarity] ?? 1;
+      lootData.shop_chances[level]?.[rarity] ?? 1;
 
     // --- Collect items first ---
     const generatedItems = [];
     for (let i = 0; i < amount; i++) {
       const item = lootData.magic_item[type][rarity][Math.floor(Math.random() * lootData.magic_item[type][rarity].length)];
       if (!item) continue;
-      const fullItem = resolveItemDetails(item);
+      const fullItem = resolveItemDetails(item, true);
       generatedItems.push({
-  name: fullItem,
-  baseCost: item.cost,
-  rarity
-});
+        name: fullItem.name ?? fullItem,
+        baseCost: item.cost,
+        mundaneAdd: fullItem.mundaneAdd ?? 0,
+        rarity
+      });
     }
 
     if (type === "potionSeller" || type === "magicSeller") {
       for (let i = 0; i < healingPotions; i++) {
         if (rarity != "legendary") {
           let item = lootData.healing_potions[rarity][Math.floor(Math.random() * lootData.healing_potions[rarity].length)];
-          let fullItem = resolveItemDetails(item);
+          let fullItem = resolveItemDetails(item, true);
           generatedItems.push({
-  name: fullItem,
-  baseCost: item.cost,
-  rarity
-});
+            name: fullItem,
+            baseCost: item.cost,
+            rarity
+          });
         }
       }
     }
@@ -317,21 +374,21 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
     // --- Combine duplicates ---
     const combined = {};
     for (const item of generatedItems) {
-  const finalPrice = Number((
-    item.baseCost *
-    rarityMultiplier *
-    marketFlux
-  ));
+      const finalPrice = Number((
+        (item.baseCost + (item.mundaneAdd ?? 0)) *
+        rarityMultiplier *
+        marketFlux
+      ));
 
-  if (!combined[item.name]) {
-    combined[item.name] = {
-      count: 1,
-      price: finalPrice
-    };
-  } else {
-    combined[item.name].count++;
-  }
-}
+      if (!combined[item.name]) {
+        combined[item.name] = {
+          count: 1,
+          price: finalPrice
+        };
+      } else {
+        combined[item.name].count++;
+      }
+    }
 
     // --- Sort alphabetically by item name ---
     const sortedItems = Object.entries(combined).sort((a, b) =>
@@ -350,7 +407,7 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
 }
 
 // === MAGIC ITEM SUBTYPE GENERATOR ===
-function resolveItemDetails(item) {
+function resolveItemDetails(item, includeMundaneCost = false) {
   if (!item) {
     return "Unknown Item";
   }
@@ -450,12 +507,10 @@ function resolveItemDetails(item) {
 
     if (subtypePool.length > 0) {
       const chosen = subtypePool[Math.floor(Math.random() * subtypePool.length)];
-      if (keyword.includes("magic armor")) {
-        return `${chosen}`;
-      }
-      else {
-        return `${name} (${chosen})${attunement}`;
-      }
+      const mundaneAdd = includeMundaneCost ? (mundaneCosts[chosen.toLowerCase()] ?? 0) : 0;
+      const displayName = keyword.includes("magic armor") ? chosen : `${name} (${chosen})${attunement}`;
+      if (includeMundaneCost) return { name: displayName, mundaneAdd };
+      return displayName;
     }
   }
 
@@ -480,22 +535,29 @@ function resolveItemDetails(item) {
     if (keyword.includes("answering")) subtypePool.push(...lootData.subtypes.weapon.answering);
 
     if (keyword.includes("slaying")) {
-      const roll = Math.floor(Math.random() * 100) + 1;
-      const pool = lootData.subtypes.scrollOfProtection;
-      const match = pool.find(entry => roll >= entry.min && roll <= entry.max);
+    // this branch returns early, handle it separately
+    const roll = Math.floor(Math.random() * 100) + 1;
+    const pool = lootData.subtypes.scrollOfProtection;
+    const match = pool.find(entry => roll >= entry.min && roll <= entry.max);
 
-      if (match) {
-        const chosen1 = subtypePool[Math.floor(Math.random() * subtypePool.length)];
-        const chosen2 = resolveMatchItem(match);
-        return `${name} (${chosen1}) (${chosen2.name})${attunement}`;
-      }
-    }
-
-    if (subtypePool.length > 0) {
-      const chosen = subtypePool[Math.floor(Math.random() * subtypePool.length)];
-      return `${name} (${chosen})${attunement}`;
+    if (match) {
+      const chosen1 = subtypePool[Math.floor(Math.random() * subtypePool.length)];
+      const chosen2 = resolveMatchItem(match);
+      const displayName = `${name} (${chosen1}) (${chosen2.name})${attunement}`;
+      const mundaneAdd = includeMundaneCost ? (mundaneCosts[chosen1.toLowerCase()] ?? 0) : 0;
+      if (includeMundaneCost) return { name: displayName, mundaneAdd };
+      return displayName;
     }
   }
+
+  if (subtypePool.length > 0) {
+    const chosen = subtypePool[Math.floor(Math.random() * subtypePool.length)];
+    const displayName = `${name} (${chosen})${attunement}`;
+    const mundaneAdd = includeMundaneCost ? (mundaneCosts[chosen.toLowerCase()] ?? 0) : 0;
+    if (includeMundaneCost) return { name: displayName, mundaneAdd };
+    return displayName;
+  }
+}
 
   if (keyword.includes("ring")) {
     let subtypePool = [];
@@ -1135,15 +1197,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const color = rarityColors[e.rarity] ?? "#ccc";
       const label = rarityLabels[e.rarity] ?? e.rarity;
       const multiplier = lootData.shop_chances[currentLevel]?.[e.rarity] ?? 1;
-const base = e.cost * multiplier;
-const low = (base * 0.95).toLocaleString(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const high = (base * 1.05).toLocaleString(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+      const base = e.cost * multiplier;
+      const low = (base * 0.95).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      const high = (base * 1.05).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
       return `
         <div style="

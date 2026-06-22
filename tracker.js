@@ -387,6 +387,11 @@ function setupTabs() {
 
 window.switchTab = function (tabId) {
 
+  const centerPanel = document.getElementById("tracker-center");
+const sideStats = document.getElementById("side-stats");
+const trackerLayout = document.querySelector(".tracker-layout");
+const fullWidthTabs = ["summary", "character-sheets"];
+
   // Hide ALL tracker tabs
   document.querySelectorAll("#tab-tracker .tab-content")
     .forEach(tab => {
@@ -419,14 +424,28 @@ window.switchTab = function (tabId) {
   }
 
   // Toggle side stats panel
-  const sideStats = document.getElementById("side-stats");
-
   if (sideStats) {
     sideStats.style.display =
       (tabId === "summary" || tabId === "character-sheets")
         ? "none"
         : "block";
   }
+
+  // Toggle center panel — add this right after the sideStats block
+
+
+if (fullWidthTabs.includes(tabId)) {
+  if (centerPanel) centerPanel.style.display = "none";
+  if (sideStats) sideStats.style.display = "none";
+  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "1fr";
+} else {
+  if (sideStats) sideStats.style.display = "block";
+  // Center only shows when a modal is open, handled by modal-active class
+  if (centerPanel && !centerPanel.classList.contains("modal-active")) {
+    centerPanel.style.display = "none";
+  }
+  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "";
+}
 
   // Render logic
   if (tabId === "combat") {
@@ -469,7 +488,7 @@ function renderStatsSummary() {
   const edition = gameData.edition;
   const summaries = [];
 
-  gameData.characters.forEach(name => {
+  getCompatibleActiveCharacters().forEach(name => {
     const s = gameData.characterStats[name];
     if (!s) return;
 
@@ -3734,24 +3753,44 @@ function exitReactionMode() {
 // -------------------- MODAL HELPERS --------------------
 function showModal(title, bodyContent, onConfirm = null) {
   const modal = document.getElementById("action-modal");
-  const modalTitle = document.getElementById("modal-title");
-  const modalBody = document.getElementById("modal-body");
-  const confirmBtn = document.getElementById("modal-confirm");
-  const cancelBtn = document.getElementById("modal-cancel");
+  const center = document.getElementById("tracker-center");
+  const placeholder = document.getElementById("center-placeholder");
+  const trackerLayout = document.querySelector(".tracker-layout");
 
-  modalTitle.textContent = title;
+  document.getElementById("modal-title").textContent = title;
+  const modalBody = document.getElementById("modal-body");
   modalBody.innerHTML = "";
   if (bodyContent instanceof HTMLElement) modalBody.appendChild(bodyContent);
   else modalBody.textContent = bodyContent;
 
-  confirmBtn.onclick = () => { if (onConfirm) onConfirm(); hideModal(); };
-  cancelBtn.onclick = hideModal;
+  document.getElementById("modal-confirm").onclick = () => {
+    if (onConfirm) onConfirm();
+    hideModal();
+  };
+  document.getElementById("modal-cancel").onclick = hideModal;
+
   modal.classList.remove("hidden");
+  if (center) {
+    center.classList.add("modal-active");
+    center.style.display = "block";
+  }
+  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "2fr 1.5fr 1fr";
+  if (placeholder) placeholder.style.display = "none";
 }
 
 function hideModal() {
   const modal = document.getElementById("action-modal");
+  const center = document.getElementById("tracker-center");
+  const placeholder = document.getElementById("center-placeholder");
+  const trackerLayout = document.querySelector(".tracker-layout");
+
   modal.classList.add("hidden");
+  if (center) {
+    center.classList.remove("modal-active");
+    center.style.display = "none";
+  }
+  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "3.5fr 1fr";
+  if (placeholder) placeholder.style.display = "block";
 }
 
 function getCurrentTurnCharacter() {
