@@ -38,6 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showTab(tabName) {
+        if (tabName === "npc") {
+            populateRegionDropdown();
+            populateNameTypeDropdown();
+        }
         hideAllTabs();
         const page = document.querySelector(`#tab-${tabName}`);
         const btn = document.querySelector(`[data-tab="${tabName}"]`);

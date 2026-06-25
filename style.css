@@ -425,6 +425,19 @@ table th {
    Both old .race-grid and .background-grid are now .check-grid
    ============================================================ */
 
+
+#customNameContainer {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
 .check-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -602,6 +615,24 @@ table th {
 #summary.active ~ * .tracker-center,
 #character-sheets.active ~ * .tracker-center {
   display: none !important;
+}
+
+#character-sheet-modal {
+  margin: 10px 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.sheet-popup {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--primary-accent);
+  border-radius: 8px;
+  background: var(--elevated);
 }
 
 /* Tracker sub-tabs */

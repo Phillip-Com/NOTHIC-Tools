@@ -11,7 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTjfUFbi6l3BAKqW-8vEvnqSRHsvlkE0px4JKjMz2J5Q5qJNvGnfarWnaLaEPTMm2G/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhNcQCF2OZWlhH1o6nIgoyBLxV0ZOCZ43AQGUeYz6AAeHKrI3II4f0KLIIfwComAt8XQ/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
@@ -51,35 +51,39 @@ window.addEventListener("beforeunload", () => {
 
 // -------------------- INITIALIZATION --------------------
 function saveGameData(reason = "auto") {
-  if (!trackerStarted || !gameData) return;
-  gameData.__lastSaved = { reason, time: new Date().toISOString() };
-  localStorage.setItem("myGameData", JSON.stringify(gameData));
-  console.log("💾 Saved", reason);
+  console.log("SAVE CALLED", reason);
+    if (!trackerStarted || !gameData) return;
+
+    gameData.__lastSaved = {
+        reason,
+        time: new Date().toISOString()
+    };
+
+    window.userData.tracker.gameData = gameData;
+
+    saveUserData();
 }
 
 function loadGameData() {
-  const saved = localStorage.getItem("myGameData");
-  if (!saved) return false;
-  try {
-    gameData = JSON.parse(saved);
-  } catch (e) {
-    console.error("⚠️ Save data corrupted, starting fresh:", e);
-    gameData = {
-      edition: "5e",
-      theme: "light",
-      characters: [],
-      characterStats: {},
-      characterSheets: {},
-      sessionStartedAt: Date.now()
-    };
-  }
-  window.gameData = gameData;
-  console.log("📂 Loaded saved game");
-  return gameData.characters && gameData.characters.length > 0;
+    const saved =
+        window.userData.tracker.gameData;
+
+    if (!saved) return false;
+
+    gameData = saved;
+
+    window.gameData = gameData;
+
+    console.log("📂 Loaded saved game");
+
+    return (
+        gameData.characters &&
+        gameData.characters.length > 0
+    );
 }
 
 function init() {
-  const saved = localStorage.getItem("myGameData");
+  const saved = window.userData?.tracker?.gameData;
 
   try {
     loadSpellDatabase();
@@ -89,30 +93,16 @@ function init() {
   }
 
   if (saved) {
-    // Always load whatever is saved, even if characters array is empty
-    gameData = JSON.parse(saved);
-    window.gameData = gameData;
-    console.log("📂 Loaded saved game");
+  gameData = saved;
+  window.gameData = gameData;
 
-    // Patch in any missing top-level fields without overwriting existing data
-    if (!gameData.edition) gameData.edition = "5e";
-    if (!gameData.characters) gameData.characters = [];
-    if (!gameData.characterStats) gameData.characterStats = {};
-    if (!gameData.characterSheets) gameData.characterSheets = {};
+  console.log("📂 Loaded saved game");
 
-  } else {
-    // Only create fresh data if there is truly nothing saved
-    console.log("🆕 No save found, creating fresh data");
-    gameData = {
-      edition: "5e",
-      theme: "light",
-      characters: [],
-      characterStats: {},
-      characterSheets: {},
-      sessionStartedAt: Date.now()
-    };
-    saveGameData("initial setup");
-  }
+  if (!gameData.edition) gameData.edition = "5e";
+  if (!gameData.characters) gameData.characters = [];
+  if (!gameData.characterStats) gameData.characterStats = {};
+  if (!gameData.characterSheets) gameData.characterSheets = {};
+}
 
   window.gameData = gameData;
   trackerStarted = true;
@@ -2397,25 +2387,29 @@ text-align:center;
 
 // ── Add Character Modal ──────────────────────────────────────
 function openAddCharacterModal() {
-  const container = document.createElement("div");
-  container.style.cssText = `display:flex;flex-direction:column;gap:10px;`;
+  const modal = document.getElementById("character-sheet-modal");
 
-  const nameLabel = document.createElement("label");
-  nameLabel.textContent = "Character Name:";
-  const nameInput = document.createElement("input");
-  nameInput.type = "text";
-  nameInput.placeholder = "e.g. Thalindra";
-  nameInput.style.cssText = `font-size:1.1rem;padding:6px;`;
+  modal.innerHTML = `
+    <div class="sheet-popup">
+      <h3>Add Character</h3>
+      <input id="new-character-name" placeholder="Character Name">
+      <button id="confirm-add-character">Add</button>
+      <button id="cancel-add-character">Cancel</button>
+    </div>
+  `;
 
-  nameInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") { addNewCharacter(nameInput.value); hideModal(); }
-  });
+  modal.classList.remove("hidden");
 
-  container.appendChild(nameLabel);
-  container.appendChild(nameInput);
+  document.getElementById("confirm-add-character").onclick = () => {
+    addNewCharacter(
+      document.getElementById("new-character-name").value
+    );
+    modal.classList.add("hidden");
+  };
 
-  showModal("Add New Character", container, () => { addNewCharacter(nameInput.value); });
-  setTimeout(() => nameInput.focus(), 50);
+  document.getElementById("cancel-add-character").onclick = () => {
+    modal.classList.add("hidden");
+  };
 }
 
 // Keep openSheetEditor for backward compatibility / can also be called from other places

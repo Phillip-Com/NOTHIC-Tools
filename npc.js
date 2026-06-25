@@ -6,6 +6,20 @@ const racesSummary = {
   undead: ["Ghost", "Ghoul", "Skeleton", "Specter", "Vampire", "Zombie"]
 }
 
+const REGION_DISPLAY_NAMES = {
+    Random: "Random",
+    Empire: "Empire",
+    SummerIsle: "Summer Isle",
+    Neshiustein: "Neshiustein",
+    CarponIsles: "Carpon Isles",
+    Sherus: "Sherus",
+    Drustein: "Drustein",
+    Whiteberg: "Whiteberg",
+    Sundermark: "Sundermark"
+};
+
+
+
 const regionRaceData = {
   Random: {
     phb: {
@@ -468,7 +482,16 @@ const regionRaceData = {
   }
 }
 
-const nameData = {};
+const BUILTIN_REGIONS = Object.keys(regionRaceData);
+
+let nameData = {};
+
+fetch("data/names.json")
+  .then(r => r.json())
+  .then(data => {
+    nameData = data;
+    populateNameTypeDropdown();
+  });
 
 async function loadNames() {
   try {
@@ -508,6 +531,113 @@ async function getCulture(culture) {
   }
 
   return data[culture];
+}
+
+function prettyName(key) {
+  return key
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim();
+}
+
+function populateNameTypeDropdown() {
+  const select = document.getElementById("customNameType");
+  if (!select) return;
+
+  select.innerHTML = "";
+
+  select.appendChild(
+    new Option("Region Default", "Any")
+  );
+
+  Object.keys(nameData).forEach(region => {
+  select.appendChild(
+    new Option(prettyName(region), region)
+  );
+});
+}
+
+function populateRegionDropdown() {
+    const select = document.getElementById("region");
+
+    if (!select) return;
+
+    select.innerHTML = "";
+
+    const allRegions = getAllRegions();
+
+    Object.keys(allRegions).forEach(regionName => {
+        const option = document.createElement("option");
+
+        option.value = regionName;
+
+        option.textContent =
+            REGION_DISPLAY_NAMES[regionName] ||
+            regionName;
+
+        select.appendChild(option);
+    });
+}
+
+function getAllRegions() {
+    return {
+        ...regionRaceData,
+        ...(window.userData.npcGenerator.customRegions || {})
+    };
+}
+
+function saveCustomRegion(regionName) {
+  if (BUILTIN_REGIONS.includes(regionName)) {
+    alert("Cannot overwrite built-in regions.");
+    return;
+  }
+
+  if (!regionName) return;
+
+  if (!window.userData.npcGenerator.customRegions) {
+    window.userData.npcGenerator.customRegions = {};
+  }
+
+  window.userData.npcGenerator.customRegions[regionName] =
+    collectCurrentRegionData();
+
+  saveUserData();
+
+  populateRegionDropdown();
+}
+
+function cloneRegion(regionName) {
+    const source = structuredClone(
+        getAllRegions()[regionName]
+    );
+
+    return source;
+}
+
+function deleteCustomRegion(regionName) {
+  if (!regionName) return;
+
+  if (!window.userData.npcGenerator.customRegions?.[regionName]) {
+    alert("Only custom regions can be deleted.");
+    return;
+  }
+
+  if (
+      !window.confirm(
+        `Delete custom region "${regionName}"?`
+      )
+    ) {
+      return;
+    }
+
+  delete window.userData.npcGenerator.customRegions[regionName];
+
+  saveUserData();
+
+  populateRegionDropdown();
+
+  regionSelect.value = "Random";
+  applyRegionData("Random");
+  recalculateRaceChances();
 }
 
 // ---------------------------
@@ -2313,6 +2443,34 @@ const sectionCheckboxes = {
   MISC: document.getElementById("MISC"),
   UNDEAD: document.getElementById("UNDEAD")
 };
+document
+  .getElementById("save-region-btn")
+  ?.addEventListener("click", () => {
+
+    const regionName =
+      document.getElementById("custom-region-name")
+      .value
+      .trim();
+
+    if (!regionName) {
+      alert("Enter a region name.");
+      return;
+    }
+
+    saveCustomRegion(regionName);
+
+    regionSelect.value = regionName;
+  });
+
+  document
+  .getElementById("delete-region-btn")
+  ?.addEventListener("click", () => {
+
+    const regionName = regionSelect.value;
+
+    deleteCustomRegion(regionName);
+  });
+
 
 Object.entries(sectionCheckboxes).forEach(([sectionKey, sectionCheckbox]) => {
   if (!sectionCheckbox) return;
@@ -2331,7 +2489,7 @@ Object.entries(sectionCheckboxes).forEach(([sectionKey, sectionCheckbox]) => {
 });
 
 function getRegionWeights(region) {
-  const regionData = regionRaceData[region];
+  const regionData = getAllRegions()[region];
   if (!regionData) return {};
   return flattenRaceData(regionData);
 }
@@ -2426,7 +2584,7 @@ function flattenRaceData(regionData) {
 }
 
 function applyRegionData(regionKey) {
-  const regionData = regionRaceData[regionKey];
+  const regionData = getAllRegions()[regionKey];
   if (!regionData) return;
 
   const flat = flattenRaceData(regionData);
@@ -2435,6 +2593,28 @@ function applyRegionData(regionKey) {
     const key = normalizeRaceKey(input.dataset.race);
     input.value = flat[key] ?? 0;
   });
+}
+
+function collectCurrentRegionData() {
+  const regionData = {
+    phb: {},
+    mpmm: {},
+    misc: {},
+    undead: {}
+  };
+
+  document.querySelectorAll("input[data-race]").forEach(input => {
+    const race = normalizeRaceKey(input.dataset.race);
+    const section = input.dataset.section?.toLowerCase();
+
+    const value = parseFloat(input.value) || 0;
+
+    if (regionData[section]) {
+      regionData[section][race] = value;
+    }
+  });
+
+  return regionData;
 }
 
 function isRaceEnabled(input) {
@@ -2536,6 +2716,23 @@ raceInputs.forEach(input => {
     recalculateRaceChances();
   });
 });
+
+document.getElementById("save-region-btn")?.addEventListener("click", () => {
+
+    const regionName =
+      document.getElementById("custom-region-name")
+      .value
+      .trim();
+
+    if (!regionName) {
+      alert("Enter a region name.");
+      return;
+    }
+
+    saveCustomRegion(regionName);
+
+    regionSelect.value = regionName;
+  });
 
 // Generate character
 document.getElementById("generate").addEventListener("click", async () => {

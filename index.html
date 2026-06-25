@@ -236,6 +236,11 @@
             <!-- CHARACTER SHEETS -->
             <div id="character-sheets" class="tab-content">
               <h2 id="character-sheets-header">Character Sheets</h2>
+
+              <div id="character-sheet-controls"></div>
+
+              <div id="character-sheet-modal" class="hidden"></div>
+
               <div id="character-sheet-tab"></div>
             </div>
 
@@ -374,37 +379,28 @@
 
       <!-- RIGHT SIDE: Controls (wider flex via data-flex) -->
       <div class="tri-right" data-flex="wide">
-        <div class="top-options">
-          <div>
+        <div id="customNameContainer">
+
+          <div class="field">
             <label for="region">Region:</label>
-            <select id="region">
-              <option value="Random">Random</option>
-              <option value="Empire">Empire</option>
-              <option value="SummerIsle">Summer Isle</option>
-              <option value="Neshiustein">Neshiustein</option>
-              <option value="CarponIsles">Carpon Isles</option>
-              <option value="Sherus">Sherus</option>
-              <option value="Drustein">Drustein</option>
-              <option value="Whiteberg">Whiteberg</option>
-              <option value="Sundermark">Sundermark</option>
-            </select>
+            <select id="region"></select>
           </div>
 
-          <div>
-            <div id="customRegion">
-              <div id="customNameContainer">
-                <label for="customNameType">Name Type:</label>
-                <select id="customNameType">
-                  <option value="Any">Region Default</option>
-                  <option value="Empire">English</option>
-                  <option value="Sherus">Elvish</option>
-                  <option value="Drustein">Gnomish</option>
-                  <option value="Whiteberg">Dwarvish</option>
-                  <option value="Sundermark">French</option>
-                </select>
-              </div>
-            </div>
+          <div class="field">
+            <label for="custom-region-name">Name:</label>
+            <input type="text" id="custom-region-name">
           </div>
+
+          <div class="field">
+            <button id="save-region-btn">Save Region</button>
+            <button id="delete-region-btn">Delete Region</button>
+          </div>
+
+          <div class="field">
+            <label for="customNameType">Name Type:</label>
+            <select id="customNameType"></select>
+          </div>
+
         </div>
 
         <details open>
@@ -949,10 +945,11 @@
   </div>
 
   <!-- Load JS files at the bottom, order matters -->
-  <script src="treasure.js"></script>
-  <script src="encounter.js"></script>
+  <script src="dataManager.js"></script>
   <script src="tracker.js"></script>
   <script src="npc.js"></script>
+  <script src="treasure.js"></script>
+  <script src="encounter.js"></script>
   <script src="main.js"></script>
 </body>
 
