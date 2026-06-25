@@ -70,7 +70,7 @@ function createDefaultGameData() {
     trackerStarted: false,
     sessionNumber: 1,
 
-    characters: ["NPC"],
+    characters: [],
 
     activeCharacter: null,
 
@@ -790,6 +790,12 @@ function renderSheetTab() {
   const container = document.getElementById("character-sheet-tab");
   if (!container) return;
   ensureCharacterSheets();
+
+  // If there are no characters yet, still build the layout
+if (!sheetTabSelectedCharacter && gameData.characters.length > 0) {
+    sheetTabSelectedCharacter = gameData.characters[0];
+}
+  
   container.innerHTML = "";
 
   // ── Two-column layout ──────────────────────────────────────────
