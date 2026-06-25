@@ -70,7 +70,7 @@ function createDefaultGameData() {
     trackerStarted: false,
     sessionNumber: 1,
 
-    characters: [],
+    characters: ["NPC"],
 
     activeCharacter: null,
 
