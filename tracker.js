@@ -52,59 +52,52 @@ window.addEventListener("beforeunload", () => {
 // -------------------- INITIALIZATION --------------------
 function saveGameData(reason = "auto") {
   console.log("SAVE CALLED", reason);
-    if (!trackerStarted || !gameData) return;
+  if (!trackerStarted || !gameData) return;
 
-    gameData.__lastSaved = {
-        reason,
-        time: new Date().toISOString()
-    };
+  gameData.__lastSaved = {
+    reason,
+    time: new Date().toISOString()
+  };
 
-    window.userData.tracker.gameData = gameData;
+  window.userData.tracker.gameData = gameData;
 
-    saveUserData();
+  saveUserData();
 }
 
-function loadGameData() {
-    const saved =
-        window.userData.tracker.gameData;
+function createDefaultGameData() {
+  return {
+    edition: "5e",
+    trackerStarted: false,
+    sessionNumber: 1,
 
-    if (!saved) return false;
+    characters: [],
 
-    gameData = saved;
+    activeCharacter: null,
 
-    window.gameData = gameData;
+    scriptUrl: "",
+    deploymentID: "",
+    sheetId: "",
 
-    console.log("📂 Loaded saved game");
-
-    return (
-        gameData.characters &&
-        gameData.characters.length > 0
-    );
+    settings: {
+      theme: "dark"
+    }
+  };
 }
 
 function init() {
-  const saved = window.userData?.tracker?.gameData;
+  loadSpellDatabase();
 
-  try {
-    loadSpellDatabase();
-    console.log("Spell Data Loaded")
-  } catch (err) {
-    console.error("Failed to preload spells:", err);
-  }
-
-  if (saved) {
-  gameData = saved;
-  window.gameData = gameData;
-
-  console.log("📂 Loaded saved game");
-
-  if (!gameData.edition) gameData.edition = "5e";
-  if (!gameData.characters) gameData.characters = [];
-  if (!gameData.characterStats) gameData.characterStats = {};
-  if (!gameData.characterSheets) gameData.characterSheets = {};
-}
+  gameData =
+    window.userData?.tracker?.gameData ??
+    createDefaultGameData();
 
   window.gameData = gameData;
+
+  gameData.characters ??= [];
+  gameData.characterStats ??= {};
+  gameData.characterSheets ??= {};
+  gameData.settings ??= { theme: "dark" };
+
   trackerStarted = true;
 
   setupTabs();
@@ -378,9 +371,9 @@ function setupTabs() {
 window.switchTab = function (tabId) {
 
   const centerPanel = document.getElementById("tracker-center");
-const sideStats = document.getElementById("side-stats");
-const trackerLayout = document.querySelector(".tracker-layout");
-const fullWidthTabs = ["summary", "character-sheets"];
+  const sideStats = document.getElementById("side-stats");
+  const trackerLayout = document.querySelector(".tracker-layout");
+  const fullWidthTabs = ["summary", "character-sheets"];
 
   // Hide ALL tracker tabs
   document.querySelectorAll("#tab-tracker .tab-content")
@@ -424,18 +417,18 @@ const fullWidthTabs = ["summary", "character-sheets"];
   // Toggle center panel — add this right after the sideStats block
 
 
-if (fullWidthTabs.includes(tabId)) {
-  if (centerPanel) centerPanel.style.display = "none";
-  if (sideStats) sideStats.style.display = "none";
-  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "1fr";
-} else {
-  if (sideStats) sideStats.style.display = "block";
-  // Center only shows when a modal is open, handled by modal-active class
-  if (centerPanel && !centerPanel.classList.contains("modal-active")) {
-    centerPanel.style.display = "none";
+  if (fullWidthTabs.includes(tabId)) {
+    if (centerPanel) centerPanel.style.display = "none";
+    if (sideStats) sideStats.style.display = "none";
+    if (trackerLayout) trackerLayout.style.gridTemplateColumns = "1fr";
+  } else {
+    if (sideStats) sideStats.style.display = "block";
+    // Center only shows when a modal is open, handled by modal-active class
+    if (centerPanel && !centerPanel.classList.contains("modal-active")) {
+      centerPanel.style.display = "none";
+    }
+    if (trackerLayout) trackerLayout.style.gridTemplateColumns = "";
   }
-  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "";
-}
 
   // Render logic
   if (tabId === "combat") {
