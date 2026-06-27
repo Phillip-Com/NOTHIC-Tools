@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabPages = document.querySelectorAll(".tab-page");
     const themeToggle = document.getElementById("theme-toggle");
+    const exportBtn = document.getElementById("export-data");
+    const importBtn = document.getElementById("import-data");
+    const importFile = document.getElementById("import-file");
 
     // APPLY SAVED THEME
     if (window.gameData?.theme === "dark") {
@@ -30,6 +33,25 @@ document.addEventListener("DOMContentLoaded", () => {
         themeToggle.textContent = isDark
             ? "🌙Dark Mode"
             : "☀️Light Mode";
+    });
+
+    // Export
+    exportBtn.addEventListener("click", () => {
+        exportUserData();
+    });
+
+    // Import
+    importBtn.addEventListener("click", () => {
+        importFile.click();
+    });
+
+    importFile.addEventListener("change", (e) => {
+        if (e.target.files.length) {
+            importUserData(e.target.files[0]);
+
+            // Allows importing the same file twice in a row
+            e.target.value = "";
+        }
     });
 
     function hideAllTabs() {

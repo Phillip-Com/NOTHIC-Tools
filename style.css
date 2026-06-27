@@ -272,15 +272,27 @@ table th {
 }
 
 .dropdown-content {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 220px;
-  background-color: var(--background);
-  border: 1px solid var(--primary-accent);
-  box-shadow: var(--panel-shadow);
-  z-index: 1000;
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;          /* Changed from left: 0 */
+    left: auto;        /* Optional, but explicit */
+
+    min-width: 220px;
+    background-color: var(--background);
+    border: 1px solid var(--primary-accent);
+    box-shadow: var(--panel-shadow);
+    z-index: 1000;
+}
+
+.dropdown-content.align-left {
+    left: 0;
+    right: auto;
+}
+
+.dropdown-content.align-right {
+    left: auto;
+    right: 0;
 }
 
 .dropdown-content button {
