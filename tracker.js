@@ -3767,7 +3767,7 @@ function showModal(title, bodyContent, onConfirm = null) {
     center.classList.add("modal-active");
     center.style.display = "block";
   }
-  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "2fr 1.5fr 1fr";
+  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "400px 1.5fr 413px";
   if (placeholder) placeholder.style.display = "none";
 }
 

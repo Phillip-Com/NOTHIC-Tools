@@ -654,7 +654,7 @@ table th {
 }
 
 .tab-content.active {
-  display: inlineZz;
+  display: flex;
   flex-direction: column;
 }
 
