@@ -5,34 +5,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportBtn = document.getElementById("export-data");
     const importBtn = document.getElementById("import-data");
     const importFile = document.getElementById("import-file");
+    const editionSelect = document.getElementById("edition-select");
 
-    // APPLY SAVED THEME
-    if (window.gameData?.theme === "dark") {
-        document.body.classList.add("dark-mode");
-        themeToggle.textContent = "🌙Dark Mode";
-    } else {
-        document.body.classList.remove("dark-mode");
-        themeToggle.textContent = "☀️Light Mode";
-    }
+    // APPLY SAVED SETTINGS
+
+    const settings = window.userData.settings;
+
+    document.dispatchEvent(
+        new CustomEvent("themeChanged", {
+            detail: {
+                theme: settings.theme
+            }
+        })
+    );
+
+    editionSelect.value =
+        settings.edition || "5e";
 
     themeToggle.addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
 
-        const isDark = document.body.classList.contains("dark-mode");
+        const newTheme =
+            document.body.classList.contains("dark-mode")
+                ? "light"
+                : "dark";
 
-        // SAVE TO GAMEDATA
-        if (window.gameData) {
-            window.gameData.theme = isDark ? "dark" : "light";
+        updateTheme(newTheme);
 
-            // save existing tracker data too
-            if (typeof saveGameData === "function") {
-                saveGameData("theme toggle");
-            }
-        }
+    });
 
-        themeToggle.textContent = isDark
-            ? "🌙Dark Mode"
-            : "☀️Light Mode";
+    editionSelect.addEventListener("change", () => {
+
+        updateEdition(editionSelect.value);
+
     });
 
     // Export
@@ -79,4 +83,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     showTab("treasure");
+});
+
+document.addEventListener("themeChanged", (e) => {
+
+    const isDark = e.detail.theme === "dark";
+
+    document.body.classList.toggle(
+        "dark-mode",
+        isDark
+    );
+
+    themeToggle.textContent =
+        isDark
+            ? "🌙 Dark Mode"
+            : "☀️ Light Mode";
+
+});
+
+document.addEventListener("editionChanged", (e) => {
+
+    console.log("Edition changed:", e.detail.edition);
+
 });

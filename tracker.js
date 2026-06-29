@@ -66,7 +66,6 @@ function saveGameData(reason = "auto") {
 
 function createDefaultGameData() {
   return {
-    edition: "5e",
     trackerStarted: false,
     sessionNumber: 1,
 
@@ -102,12 +101,6 @@ function init() {
 
   setupTabs();
 
-  // Edition toggle
-  const editionToggleBtn = document.getElementById("edition-toggle-btn");
-  if (editionToggleBtn) {
-    editionToggleBtn.addEventListener("click", toggleEdition);
-  }
-
   const combatToggleBtn = document.getElementById("combat-toggle-btn");
   if (combatToggleBtn) {
     combatToggleBtn.addEventListener("click", () => {
@@ -139,28 +132,52 @@ function init() {
     renderStatsActions(selectedCharacter);
   }
 
-  updateEditionToggleLabel();
-
   console.log("✅ Tracker initialized");
 }
 
+document.addEventListener("editionChanged", (e) => {
+
+    if (!gameData) return;
+
+    const compatible = getCompatibleActiveCharacters();
+
+    if (!compatible.includes(selectedCharacter)) {
+        selectedCharacter = compatible[0] || null;
+    }
+
+    renderCharacterButtons();
+    populateStatsSelects();
+
+    if (selectedCharacter) {
+        renderStatsActions(selectedCharacter);
+    } else {
+        clearStatsActions();
+    }
+
+    if (document.getElementById("character-sheet-tab")) {
+        renderSheetTab();
+    }
+
+    renderStatsSummary();
+
+    saveGameData("edition changed");
+});
+
 // -------------------- EDITION --------------------
+function getCurrentEdition() {
+    return window.userData.settings.edition || "5e";
+}
+
 function toggleEdition() {
   if (!gameData) return;
-  gameData.edition = gameData.edition === "pathfinder" ? "5e" : "pathfinder";
+  window.userData.settings.edition = getCurrentEdition() === "pathfinder" ? "5e" : "pathfinder";
   updateEditionToggleLabel();
   renderCharacterButtons();
   populateStatsSelects();
   renderStatsActions(selectedCharacter);
   if (document.getElementById("character-sheet-tab")) renderSheetTab();
   saveGameData("edition toggle");
-  showTrackerMessage(`Edition switched to ${gameData.edition === "pathfinder" ? "Pathfinder" : "D&D 5e"}`);
-}
-
-function updateEditionToggleLabel() {
-  const btn = document.getElementById("edition-toggle-btn");
-  if (!btn || !gameData) return;
-  btn.textContent = gameData.edition === "pathfinder" ? "Edition: Pathfinder" : "Edition: D&D 5e";
+  showTrackerMessage(`Edition switched to ${getCurrentEdition() === "pathfinder" ? "Pathfinder" : "D&D 5e"}`);
 }
 
 function getSpellAttackBonus(sheet) {
@@ -183,7 +200,7 @@ function getActiveCharacters() {
 // Characters whose edition matches the tracker edition
 function getCompatibleActiveCharacters() {
   if (!gameData) return [];
-  const trackerEdition = gameData.edition || "5e";
+  const trackerEdition = getCurrentEdition() || "5e";
   return getActiveCharacters().filter(name => {
     const sheet = gameData.characterSheets?.[name];
     if (!sheet) return true;
@@ -468,7 +485,7 @@ function renderStatsSummary() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  const edition = gameData.edition;
+  const edition = getCurrentEdition();
   const summaries = [];
 
   getCompatibleActiveCharacters().forEach(name => {
@@ -723,7 +740,7 @@ function ensureCharacterSheets() {
 function createSheetForCharacter(name) {
   ensureCharacterSheets();
   if (!gameData.characterSheets[name]) {
-    gameData.characterSheets[name] = blankSheet(name, gameData.edition);
+    gameData.characterSheets[name] = blankSheet(name, getCurrentEdition());
   }
   saveGameData("Created sheet for " + name);
 }
@@ -737,7 +754,7 @@ function addNewCharacter(name) {
   }
   gameData.characters.push(name);
   ensureCharacterSheets();
-  gameData.characterSheets[name] = blankSheet(name, gameData.edition);
+  gameData.characterSheets[name] = blankSheet(name, getCurrentEdition());
   if (!gameData.characterStats[name]) gameData.characterStats[name] = buildBlankStats();
   saveGameData("Added new character: " + name);
   renderCharacterButtons();
@@ -3152,7 +3169,7 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       // (still show for characterLevel — slot level doesn't affect it but keep UI consistent)
       slotLevelRow.style.display = "flex";
 
-      if (gameData.edition === "pathfinder") {
+      if (getCurrentEdition() === "pathfinder") {
         syncSR(data.spellResistance || 0);
 
         if (srCountInput) {
@@ -3273,7 +3290,7 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
 
     // SR Count (Pathfinder only)
     let srCountInput = null;
-    if (gameData.edition === "pathfinder") {
+    if (getCurrentEdition() === "pathfinder") {
       srCountInput = createCountInput("Spell Resistance", v => syncSR(v));
       left.appendChild(srCountInput.row);
     }
@@ -4035,7 +4052,7 @@ async function handleReactionMode() {
       { label: "Heal", handler: handleHealingDone }
     ];
 
-    if (gameData.edition === "pathfinder") {
+    if (getCurrentEdition() === "pathfinder") {
       actions.splice(3, 0, { label: "Concentration", handler: handleConcentration });
     }
 
@@ -4100,7 +4117,7 @@ function renderStatsActions(characterName, context = "combat") {
     return btn;
   }
 
-  let labels = gameData.edition === "pathfinder"
+  let labels = getCurrentEdition() === "pathfinder"
     ? ["Attack", "Ability", "Save", "Concentration", "Initiative", "Spell", "Times Killed", "Money Spent", "Damage", "Heal"]
     : ["Attack", "Ability", "Save", "Initiative", "Spell", "Times Killed", "Money Spent", "Damage", "Heal"];
 
@@ -4186,7 +4203,7 @@ function renderSpellEditor(characterName) {
     dmgHealDiv.appendChild(healInput);
     spellDiv.appendChild(dmgHealDiv);
 
-    if (gameData.edition === "pathfinder") {
+    if (getCurrentEdition() === "pathfinder") {
       const srHeader = document.createElement("h4"); srHeader.textContent = "Spell Resistance Checks";
       spellDiv.appendChild(srHeader);
       spell.spellResistance = spell.spellResistance || [];
@@ -4340,7 +4357,7 @@ function updateSideStats() {
   const combinedHealing = (s.healingDone || 0) + spellHealing;
 
 
-  if (gameData.edition === "pathfinder") {
+  if (getCurrentEdition() === "pathfinder") {
     panel.innerHTML = `
       <p>Attacks Made: ${s.attacksMade}</p>
       <p>Ability Checks: ${s.abilityChecks}</p>
@@ -4511,7 +4528,7 @@ function renderEditorStats(characterName) {
     { label: "Initiative Rolls", key: "initiative" }
   ];
 
-  if (gameData.edition === "pathfinder") {
+  if (getCurrentEdition() === "pathfinder") {
     sections.splice(3, 0, { label: "Concentration Checks", key: "concentration" });
   }
 

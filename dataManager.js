@@ -6,7 +6,8 @@ const STORAGE_KEY = "dndToolboxData";
 
 window.userData = {
     settings: {
-        theme: "dark"
+        theme: "dark",
+        edition: "5e"
     },
 
     tracker: {
@@ -17,13 +18,9 @@ window.userData = {
         customRegions: {}
     },
 
-    encounterGenerator: {
-        // Future settings
-    },
+    encounterGenerator: {},
 
-    lootGenerator: {
-        // Future settings
-    }
+    lootGenerator: {}
 };
 
 // ======================================================
@@ -98,10 +95,6 @@ window.saveUserData = function () {
 
 window.loadUserData = function () {
 
-    // -----------------------------
-    // Load current toolbox save
-    // -----------------------------
-
     const saved = localStorage.getItem(STORAGE_KEY);
 
     if (saved) {
@@ -120,9 +113,9 @@ window.loadUserData = function () {
 
     }
 
-    // -----------------------------
-    // One-time migration
-    // -----------------------------
+    // --------------------------------------------
+    // One-time migration from old tracker save
+    // --------------------------------------------
 
     const oldTracker = localStorage.getItem("myGameData");
 
@@ -153,6 +146,45 @@ window.loadUserData = function () {
 };
 
 // ======================================================
+// SETTINGS
+// ======================================================
+
+window.updateTheme = function (theme) {
+
+    window.userData.settings.theme = theme;
+
+    saveUserData();
+
+    document.dispatchEvent(
+        new CustomEvent("themeChanged", {
+            detail: {
+                theme
+            }
+        })
+    );
+
+};
+
+window.updateEdition = function (edition) {
+
+    if (window.userData.settings.edition === edition)
+        return;
+
+    window.userData.settings.edition = edition;
+
+    saveUserData();
+
+    document.dispatchEvent(
+        new CustomEvent("editionChanged", {
+            detail: {
+                edition
+            }
+        })
+    );
+
+};
+
+// ======================================================
 // EXPORT
 // ======================================================
 
@@ -177,9 +209,13 @@ window.exportUserData = function () {
 
     a.href = url;
     a.download =
-        `DND-Toolbox-${new Date().toISOString().slice(0,10)}.json`;
+        `DND-Toolbox-${new Date().toISOString().slice(0, 10)}.json`;
+
+    document.body.appendChild(a);
 
     a.click();
+
+    a.remove();
 
     URL.revokeObjectURL(url);
 
@@ -193,15 +229,17 @@ window.importUserData = function (file) {
 
     if (!file) return;
 
-    if (!confirm(
-        "Importing will overwrite your current Toolbox data. Continue?"
-    )) {
+    if (
+        !confirm(
+            "Importing will overwrite your current Toolbox data. Continue?"
+        )
+    ) {
         return;
     }
 
     const reader = new FileReader();
 
-    reader.onload = e => {
+    reader.onload = (e) => {
 
         try {
 
@@ -225,7 +263,8 @@ window.importUserData = function (file) {
                 throw new Error("Not a Toolbox backup");
             }
 
-            window.userData = mergeUserData(imported);
+            window.userData =
+                mergeUserData(imported);
 
             saveUserData();
 
@@ -244,6 +283,31 @@ window.importUserData = function (file) {
     };
 
     reader.readAsText(file);
+
+};
+
+// ======================================================
+// RESET
+// ======================================================
+
+window.resetUserData = function () {
+
+    if (
+        !confirm(
+            "This will permanently erase ALL Toolbox data. Continue?"
+        )
+    ) {
+        return;
+    }
+
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("myGameData");
+
+    window.userData = mergeUserData({});
+
+    saveUserData();
+
+    location.reload();
 
 };
 

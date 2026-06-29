@@ -557,6 +557,18 @@ table th {
   margin-left:auto;
 }
 
+.settings-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    padding: 10px;
+}
+
+.settings-row select {
+    width: 100%;
+}
+
 .centered-panel {
   text-align: center;
   line-height: 2.0;

@@ -31,41 +31,47 @@
 
     <!-- RIGHT -->
     <div class="top-right">
-    <div class="dropdown">
+      <div class="dropdown">
         <button class="dropdown-btn">⚙ Settings</button>
 
         <div class="dropdown-content align-right">
 
-            <button id="theme-toggle">
-                🌙 Dark Mode
-            </button>
+          <button id="theme-toggle">
+            🌙 Dark Mode
+          </button>
 
-            <hr>
+          <hr>
 
-            <button id="export-data">
-                Export Data
-            </button>
+          <label class="settings-row">
+            Game Edition
 
-            <button id="import-data">
-                Import Data
-            </button>
+            <select id="edition-select">
+              <option value="5e">D&D 5e</option>
+              <option value="pathfinder">Pathfinder 1e</option>
+            </select>
+          </label>
 
-            <input
-                type="file"
-                id="import-file"
-                accept=".json"
-                style="display:none"
-            >
+          <hr>
 
-            <hr>
+          <button id="export-data">
+            Export Data
+          </button>
 
-            <button id="reset-data-btn">
-                🗑 Reset All Data
-            </button>
+          <button id="import-data">
+            Import Data
+          </button>
+
+          <input type="file" id="import-file" accept=".json" style="display:none">
+
+          <hr>
+
+          <button id="reset-data-btn">
+            🗑 Reset All Data
+          </button>
 
         </div>
+      </div>
     </div>
-</div>
 
   </header>
 
@@ -232,7 +238,6 @@
           <button onclick="switchTab('summary')">Stats Summary</button>
           <button id="sync-google-btn">Sync Data to Google Sheets</button>
           <button id="combat-toggle-btn" class="tracker-edition-toggle">⚔️ Start Combat</button>
-          <button id="edition-toggle-btn" class="tracker-edition-toggle"></button>
         </div>
 
         <div class="tracker-layout">
