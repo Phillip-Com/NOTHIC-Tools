@@ -93,12 +93,16 @@ document.addEventListener("themeChanged", (e) => {
         "dark-mode",
         isDark
     );
+    
+    const themeToggle =
+        document.getElementById("theme-toggle");
 
-    themeToggle.textContent =
-        isDark
-            ? "🌙 Dark Mode"
-            : "☀️ Light Mode";
-
+    if (themeToggle) {
+        themeToggle.textContent =
+            isDark
+                ? "🌙 Dark Mode"
+                : "☀️ Light Mode";
+    }
 });
 
 document.addEventListener("editionChanged", (e) => {

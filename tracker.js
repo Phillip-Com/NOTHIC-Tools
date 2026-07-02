@@ -112,6 +112,20 @@ function init() {
     });
   }
 
+  document
+    .getElementById("save-party-btn")
+    ?.addEventListener(
+      "click",
+      savePartyPreset
+    );
+
+  document
+    .getElementById("delete-party-btn")
+    ?.addEventListener(
+      "click",
+      deletePartyPreset
+    );
+
   updateCombatTabVisibility();
 
   // Google sync
@@ -127,6 +141,8 @@ function init() {
 
   renderCharacterButtons();
   populateStatsSelects();
+  setupPartySelector();
+  loadParty();
 
   if (selectedCharacter) {
     renderStatsActions(selectedCharacter);
@@ -135,37 +151,68 @@ function init() {
   console.log("✅ Tracker initialized");
 }
 
-document.addEventListener("editionChanged", (e) => {
+function setupPartySelector() {
 
-    if (!gameData) return;
+  const partySelect =
+    document.getElementById("party-select");
 
-    const compatible = getCompatibleActiveCharacters();
+  if (!partySelect) return;
 
-    if (!compatible.includes(selectedCharacter)) {
-        selectedCharacter = compatible[0] || null;
+  partySelect.addEventListener("change", () => {
+
+    const party =
+      partySelect.value;
+
+    window.userData.tracker.activeParty =
+      party;
+
+    saveUserData();
+
+    if (party) {
+
+      applyPartyPreset(party);
+
     }
 
+    renderSheetTab();
     renderCharacterButtons();
     populateStatsSelects();
 
-    if (selectedCharacter) {
-        renderStatsActions(selectedCharacter);
-    } else {
-        clearStatsActions();
-    }
+  });
 
-    if (document.getElementById("character-sheet-tab")) {
-        renderSheetTab();
-    }
+}
 
-    renderStatsSummary();
+document.addEventListener("editionChanged", (e) => {
 
-    saveGameData("edition changed");
+  if (!gameData) return;
+
+  const compatible = getCompatibleActiveCharacters();
+
+  if (!compatible.includes(selectedCharacter)) {
+    selectedCharacter = compatible[0] || null;
+  }
+
+  renderCharacterButtons();
+  populateStatsSelects();
+
+  if (selectedCharacter) {
+    renderStatsActions(selectedCharacter);
+  } else {
+    clearStatsActions();
+  }
+
+  if (document.getElementById("character-sheet-tab")) {
+    renderSheetTab();
+  }
+
+  renderStatsSummary();
+
+  saveGameData("edition changed");
 });
 
 // -------------------- EDITION --------------------
 function getCurrentEdition() {
-    return window.userData.settings.edition || "5e";
+  return window.userData.settings.edition || "5e";
 }
 
 function toggleEdition() {
@@ -178,6 +225,119 @@ function toggleEdition() {
   if (document.getElementById("character-sheet-tab")) renderSheetTab();
   saveGameData("edition toggle");
   showTrackerMessage(`Edition switched to ${getCurrentEdition() === "pathfinder" ? "Pathfinder" : "D&D 5e"}`);
+}
+
+function loadParty() {
+  const activeParty = window.userData.tracker.activeParty;
+
+  renderPartyPresets();
+
+  if (activeParty) {
+    applyPartyPreset(activeParty);
+  }
+
+  renderCharacterButtons();
+  populateStatsSelects();
+
+  if (!getCompatibleActiveCharacters().includes(selectedCharacter)) {
+    selectedCharacter = getCompatibleActiveCharacters()[0] || null;
+  }
+
+  populatePartyDropdown();
+
+  saveGameData("party preset loaded");
+}
+
+window.savePartyPreset = function () {
+
+  const name = prompt("Party name?");
+
+  if (!name) return;
+
+  const activeCharacters = getActiveCharacters();
+
+  window.userData.tracker.partyPresets[name] = {
+    characters: [...activeCharacters]
+  };
+
+  window.userData.tracker.activeParty = name;
+
+  saveUserData();
+
+  loadParty();
+};
+
+window.deletePartyPreset = function () {
+
+  const name =
+    window.userData.tracker.activeParty;
+
+  if (!name) {
+    alert("Select a party first.");
+    return;
+  }
+
+  if (!confirm(`Delete "${name}"?`))
+    return;
+
+  delete window.userData.tracker.partyPresets[name];
+
+  window.userData.tracker.activeParty = "";
+
+  saveUserData();
+
+  loadParty();
+
+};
+
+function applyPartyPreset(name) {
+
+  const preset =
+    window.userData.tracker.partyPresets[name];
+
+  if (!preset) return;
+
+  const active = new Set(preset.characters);
+
+  Object.entries(gameData.characterSheets).forEach(([characterName, sheet]) => {
+    sheet.active = active.has(characterName);
+  });
+
+  saveGameData("Applied party preset");
+
+}
+
+function populatePartyDropdown() {
+    const select = document.getElementById("party-select");
+    if (!select) return;
+
+    select.innerHTML = "";
+
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "-- Select Party --";
+    select.appendChild(blank);
+
+    for (const name of Object.keys(window.userData.tracker.partyPresets)) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+    }
+
+    select.value = window.userData.tracker.activeParty || "";
+}
+
+function renderPartyPresets() {
+  const select = document.getElementById("party-select");
+  if (select) {
+    select.onchange = () => {
+      if (select.value) {
+        loadParty(select.value);
+      }
+    };
+  }
+
 }
 
 function getSpellAttackBonus(sheet) {
@@ -809,10 +969,10 @@ function renderSheetTab() {
   ensureCharacterSheets();
 
   // If there are no characters yet, still build the layout
-if (!sheetTabSelectedCharacter && gameData.characters.length > 0) {
+  if (!sheetTabSelectedCharacter && gameData.characters.length > 0) {
     sheetTabSelectedCharacter = gameData.characters[0];
-}
-  
+  }
+
   container.innerHTML = "";
 
   // ── Two-column layout ──────────────────────────────────────────
@@ -993,6 +1153,7 @@ if (!sheetTabSelectedCharacter && gameData.characters.length > 0) {
   layout.appendChild(leftCol);
   layout.appendChild(rightCol);
   container.appendChild(layout);
+
 }
 
 function getSpellDefinition(sp) {

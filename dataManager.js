@@ -11,7 +11,9 @@ window.userData = {
     },
 
     tracker: {
-        gameData: null
+        gameData: null,
+        partyPresets: {},
+        activeParty: ""
     },
 
     npcGenerator: {
