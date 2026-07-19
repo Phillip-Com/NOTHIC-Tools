@@ -50,8 +50,16 @@ window.addEventListener("beforeunload", () => {
 
 
 // -------------------- INITIALIZATION --------------------
+let saveGameDataTimer = null;
+
+function flushGameDataSave() {
+  if (saveGameDataTimer === null) return;
+  clearTimeout(saveGameDataTimer);
+  saveGameDataTimer = null;
+  saveUserData();
+}
+
 function saveGameData(reason = "auto") {
-  console.log("SAVE CALLED", reason);
   if (!trackerStarted || !gameData) return;
 
   gameData.__lastSaved = {
@@ -61,8 +69,11 @@ function saveGameData(reason = "auto") {
 
   window.userData.tracker.gameData = gameData;
 
-  saveUserData();
+  clearTimeout(saveGameDataTimer);
+  saveGameDataTimer = setTimeout(flushGameDataSave, 400);
 }
+
+window.addEventListener("beforeunload", flushGameDataSave);
 
 function createDefaultGameData() {
   return {
@@ -3640,16 +3651,6 @@ function updateCombatTabVisibility() {
   }
 }
 
-function addToInitiative(name) {
-  const value = parseInt(prompt(`Enter initiative for ${name}:`));
-  if (!isNaN(value)) {
-    initiativeOrder.push({ name, initiative: value });
-    initiativeOrder.sort((a, b) => b.initiative - a.initiative);
-    renderInitiative();
-    updateTurnButtons();
-  }
-}
-
 async function openNpcInitiativeModal(count) {
   return new Promise(resolve => {
     const container = document.createElement("div");
@@ -3884,13 +3885,6 @@ function renderCharacterButtons() {
         renderStatsActions(selectedCharacter, "stats");
       };
       container.appendChild(btn);
-
-      if (container.id === "combat-character-buttons") {
-        const initBtn = document.createElement("button");
-        initBtn.textContent = "Add to Initiative";
-        initBtn.onclick = () => addToInitiative(name);
-        container.appendChild(initBtn);
-      }
     });
 
     // ── Add reset button inline in the editor bar only ──
@@ -4494,12 +4488,6 @@ function updateSideStats() {
 
   let nameToUse = selectedCharacter;
 
-  const header2 = document.getElementById("side-stats-header");
-
-  if (header2) {
-    header2.textContent = `${nameToUse}'s Character Stats`;
-  }
-
   if (selectedTag) {
     for (const [charName, stats] of Object.entries(gameData.characterStats)) {
       const match = stats.initiativeRolls?.some(r => r.tag === selectedTag);
@@ -4507,7 +4495,18 @@ function updateSideStats() {
     }
   }
   if (nameToUse && nameToUse.startsWith("NPC ") && !gameData.characterStats[nameToUse]) nameToUse = "NPC";
-  if (!nameToUse || !gameData.characterStats[nameToUse]) { panel.innerHTML = "<p>No character selected</p>"; return; }
+
+  const header2 = document.getElementById("side-stats-header");
+
+  if (!nameToUse || !gameData.characterStats[nameToUse]) {
+    if (header2) header2.textContent = "Character Stats";
+    panel.innerHTML = "<p>No character selected</p>";
+    return;
+  }
+
+  if (header2) {
+    header2.textContent = `${nameToUse}'s Character Stats`;
+  }
 
   const s = gameData.characterStats[nameToUse];
   let spellHealing = 0;

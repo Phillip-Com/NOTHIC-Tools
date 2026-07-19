@@ -10,6 +10,8 @@ const lootData = {
   subtypes: {}
 }
 
+let lootDataLoaded = false;
+
 const rarityLabels = {
   common: "Common",
   uncommon: "Uncommon",
@@ -117,6 +119,8 @@ async function loadData() {
     lootData.shop_chances = shop_chances;
     lootData.shop_setting = shop_setting;
     lootData.subtypes = subtypes;
+
+    lootDataLoaded = true;
   } catch (error) {
     console.error("Error loading treasure data:", error);
   }
@@ -412,7 +416,7 @@ function resolveItemDetails(item, includeMundaneCost = false) {
     return "Unknown Item";
   }
 
-  const { name, keyword, attunement } = item;
+  const { name, keyword = "", attunement } = item;
 
   // === Handle Armor of Resistance ===
   if (keyword.includes("armor") && (keyword.includes("resistance") || keyword.includes("bps resistance"))) {
@@ -1113,7 +1117,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const output = document.getElementById("output");
 
   generateBtn.addEventListener("click", () => {
-    if (!lootData.individual || Object.keys(lootData.individual).length === 0) {
+    if (!lootDataLoaded) {
       output.innerHTML = "Data still loading...";
       return;
     }

@@ -93,7 +93,7 @@ document.addEventListener("themeChanged", (e) => {
         "dark-mode",
         isDark
     );
-    
+
     const themeToggle =
         document.getElementById("theme-toggle");
 

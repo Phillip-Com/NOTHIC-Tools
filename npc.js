@@ -486,51 +486,24 @@ const BUILTIN_REGIONS = Object.keys(regionRaceData);
 
 let nameData = {};
 
-fetch("data/names.json")
+const nameDataReady = fetch("data/names.json")
   .then(r => r.json())
   .then(data => {
     nameData = data;
     populateNameTypeDropdown();
-  });
-
-async function loadNames() {
-  try {
-    const files = [
-      "imperial",
-      "sherus",
-      "drustein",
-      "whiteberg",
-      "sundermark"
-    ];
-
-    for (const file of files) {
-      const data = await fetch(`data/names/${file}.json`).then(res => res.json());
-
-      nameData[file] = data;
-    }
-
-    console.log("All names loaded.");
-  } catch (error) {
-    console.error("Error loading name data:", error);
-  }
-}
+  })
+  .catch(error => console.error("Error loading names.json:", error));
 
 async function getCulture(culture) {
   culture = culture.toLowerCase();
 
-  const response = await fetch(`data/names.json`);
+  await nameDataReady;
 
-  if (!response.ok) {
-    throw new Error(`Error fetching names.json`);
-  }
-
-  const data = await response.json();
-
-  if (!data[culture]) {
+  if (!nameData[culture]) {
     throw new Error(`Culture not found: ${culture}`);
   }
 
-  return data[culture];
+  return nameData[culture];
 }
 
 function prettyName(key) {
@@ -663,44 +636,6 @@ function weightedRandom(items, weights) {
 
   // Safety fallback
   return valid[valid.length - 1].item;
-}
-
-function getRegionWeights(region) {
-  let weights;
-
-  switch (region) {
-    case "Empire":
-      weights = racesEmpire;
-      break;
-    case "SummerIsle":
-      weights = racesSummerIsle;
-      break;
-    case "Neshiustein":
-      weights = racesNeshiustein;
-      break;
-    case "CarponIsles":
-      weights = racesCarponIsles;
-      break;
-    case "Sherus":
-      weights = racesSherus;
-      break;
-    case "Drustein":
-      weights = racesDrustein;
-      break;
-    case "Whiteberg":
-      weights = racesWhiteberg;
-      break;
-    case "Sundermark":
-      weights = racesSundermark;
-      break;
-    default:
-      weights = races1.map(_ => 1); // equal chance for all races
-  }
-
-  // convert array to object: race name → weight
-  const racePercentages = {};
-  races1.forEach((race, i) => racePercentages[race] = weights[i]);
-  return racePercentages;
 }
 
 // Stats generator
@@ -2419,7 +2354,7 @@ function eyeColors(race, subrace) {
     eyeColor = fey[randomNumber % fey.length];
   } else if (race === "Tiefling") {
     eyeColor = teiflingColors[randomNumber % teiflingColors.length];
-  } else if (["Aarakocra", "Tabaxi", "Yuan-Ti Pureblood", "Drathunine", "Tortle"].includes(race)) {
+  } else if (["Aarakocra", "Tabaxi", "Yuan-ti Pureblood", "Drathunine", "Tortle"].includes(race)) {
     eyeColor = beast[randomNumber % beast.length];
   } else if (race === "Dragonborn") {
     eyeColor = subrace;
@@ -2432,7 +2367,6 @@ function eyeColors(race, subrace) {
 
 // --- Utility: Weighted random selection ---
 const regionSelect = document.getElementById("region");
-const customContainer = document.getElementById("customRegion"); // match your HTML
 const customNameContainer = document.getElementById("customNameContainer");
 const customNameType = document.getElementById("customNameType");
 const raceInputs = document.querySelectorAll('input[type="number"][data-race]');
@@ -2716,23 +2650,6 @@ raceInputs.forEach(input => {
     recalculateRaceChances();
   });
 });
-
-document.getElementById("save-region-btn")?.addEventListener("click", () => {
-
-    const regionName =
-      document.getElementById("custom-region-name")
-      .value
-      .trim();
-
-    if (!regionName) {
-      alert("Enter a region name.");
-      return;
-    }
-
-    saveCustomRegion(regionName);
-
-    regionSelect.value = regionName;
-  });
 
 // Generate character
 document.getElementById("generate").addEventListener("click", async () => {
