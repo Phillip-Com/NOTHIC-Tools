@@ -46,6 +46,7 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", () => {
   saveGameData("before unload");
+  flushGameDataSave();
 });
 
 
@@ -72,8 +73,6 @@ function saveGameData(reason = "auto") {
   clearTimeout(saveGameDataTimer);
   saveGameDataTimer = setTimeout(flushGameDataSave, 400);
 }
-
-window.addEventListener("beforeunload", flushGameDataSave);
 
 function createDefaultGameData() {
   return {
@@ -867,6 +866,22 @@ function computeSaveTotal(sheet, abilityKey) {
   }
 
   return abilMod + profBonus + auraBonus + miscBonus;
+}
+
+/**
+ * Compute an attack's total modifier for a given sheet.
+ * Applies ability score, proficiency, and a manual misc modifier.
+ * Attacks without an ability/proficient field (legacy data) fall back
+ * to treating "modifier" as the full hand-entered bonus.
+ */
+function computeAttackTotal(sheet, atk) {
+  const abilScore = sheet.abilities?.[atk.ability] ?? 10;
+  const abilMod = abilityMod(abilScore);
+  const prof = sheet.proficiencyBonus ?? 2;
+  const profBonus = atk.proficient ? prof : 0;
+  const miscBonus = atk.modifier ?? 0;
+
+  return abilMod + profBonus + miscBonus;
 }
 
 function blankSheet(name, edition) {
@@ -1970,7 +1985,9 @@ text-align:center;
 
       sheet.attacks.push({
         name: "New Attack",
-        modifier: 0
+        modifier: 0,
+        ability: "str",
+        proficient: true
       });
 
       renderAttacksSection();
@@ -2008,32 +2025,30 @@ text-align:center;
     section.appendChild(grid);
 
     (sheet.attacks || []).forEach((atk, index) => {
+      if (!atk.ability) atk.ability = "str";
+
       const row = document.createElement("div");
 
       row.style.cssText = `
-        display:grid;
-  grid-template-columns:1fr 100px auto;
-  gap:8px;
-  align-items:center;
+        display:flex;
+  flex-direction:column;
+  gap:6px;
   padding:8px;
   border:1px solid var(--surfaces);
   border-radius:6px;
   background:var(--background);
       `;
 
+      // Top line: name + delete
+      const topLine = document.createElement("div");
+      topLine.style.cssText = `display:flex;align-items:center;gap:8px;`;
+
       // Name input
       const nameInput = textInput(
         atk.name,
         v => atk.name = v
       );
-
-      // Modifier input
-      const modInput = numInput(
-        atk.modifier,
-        v => atk.modifier = v,
-        -20,
-        99
-      );
+      nameInput.style.flex = "1";
 
       // Delete button
       const deleteBtn = document.createElement("button");
@@ -2046,9 +2061,62 @@ text-align:center;
         saveGameData("attack removed");
       };
 
-      row.appendChild(nameInput);
-      row.appendChild(modInput);
-      row.appendChild(deleteBtn);
+      topLine.appendChild(nameInput);
+      topLine.appendChild(deleteBtn);
+
+      // Bottom line: ability, proficiency, misc modifier, computed total
+      const bottomLine = document.createElement("div");
+      bottomLine.style.cssText = `
+        display:grid;
+  grid-template-columns:80px 100px 70px auto;
+  gap:6px;
+  align-items:center;
+      `;
+
+      const abilitySelect = selectInput(
+        ABILITY_KEYS,
+        atk.ability,
+        v => { atk.ability = v; renderAttacksSection(); }
+      );
+      abilitySelect.title = "Ability score";
+
+      const proficiencySelect = selectInput(
+        ["none", "proficient"],
+        atk.proficient ? "proficient" : "none",
+        v => { atk.proficient = v === "proficient"; renderAttacksSection(); }
+      );
+      proficiencySelect.title = "Proficiency";
+
+      const totalBadge = document.createElement("span");
+      totalBadge.style.cssText = `
+        font-weight:bold;
+        text-align:center;
+        padding:6px 8px;
+        background:var(--elevated);
+        border-radius:6px;
+      `;
+      totalBadge.title = "Total attack modifier (ability + proficiency + misc)";
+      totalBadge.textContent = modStr(computeAttackTotal(sheet, atk));
+
+      // Modifier input (misc/magic bonus on top of ability + proficiency)
+      const modInput = numInput(
+        atk.modifier,
+        v => {
+          atk.modifier = v;
+          totalBadge.textContent = modStr(computeAttackTotal(sheet, atk));
+        },
+        -20,
+        99
+      );
+      modInput.title = "Misc modifier (magic weapon, etc.)";
+
+      bottomLine.appendChild(abilitySelect);
+      bottomLine.appendChild(proficiencySelect);
+      bottomLine.appendChild(modInput);
+      bottomLine.appendChild(totalBadge);
+
+      row.appendChild(topLine);
+      row.appendChild(bottomLine);
 
       grid.appendChild(row);
     });
@@ -2712,6 +2780,29 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
 
     const container = document.createElement("div");
 
+    // Optional character selector — shown only when no character was
+    // pre-selected (e.g. Add Initiative, where you pick the character
+    // right here instead of in a separate modal beforehand).
+    let charSelect = null;
+    if (!characterName) {
+      const charLabel = document.createElement("label");
+      charLabel.textContent = "Character:";
+      container.appendChild(charLabel);
+
+      charSelect = document.createElement("select");
+      charSelect.style.cssText = `margin-left:6px;margin-bottom:8px;`;
+      gameData.characters.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        charSelect.appendChild(opt);
+      });
+      container.appendChild(charSelect);
+      container.appendChild(document.createElement("hr"));
+
+      characterName = charSelect.value;
+    }
+
     const typeLabel = document.createElement("p");
     typeLabel.textContent = `Enter number of ${type} rolls and set values:`;
     container.appendChild(typeLabel);
@@ -2772,7 +2863,7 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
 
         case "Attack":
           (sheet.attacks || []).forEach(atk => {
-            addMod(atk.name, atk.modifier);
+            addMod(atk.name, computeAttackTotal(sheet, atk));
           });
           break;
 
@@ -2792,11 +2883,16 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
           ];
 
           allSkills.forEach(sk => {
+            const skillKey = sk.custom ? sk.id : sk.name;
             addMod(
               sk.name,
-              computeSkillTotal(sheet, sk.name, sk.ability)
+              computeSkillTotal(sheet, skillKey, sk.ability)
             );
           });
+          break;
+
+        case "Initiative":
+          addMod("Initiative", sheet.initiative ?? 0);
           break;
       }
 
@@ -2900,6 +2996,26 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
     rebuildRows();
     countInput.addEventListener("input", rebuildRows);
 
+    if (charSelect) {
+      charSelect.addEventListener("change", () => {
+        characterName = charSelect.value;
+
+        const modalTitle = document.getElementById("modal-title");
+        if (modalTitle) modalTitle.textContent = `Perform ${type} Rolls — ${characterName}`;
+
+        renderModifierButtons();
+
+        // Update the modifier already entered on every row to match the
+        // newly selected character's sheet value (e.g. initiative mod).
+        if (type === "Initiative") {
+          const sheetMod = gameData.characterSheets?.[characterName]?.initiative ?? 0;
+          rollsContainer.querySelectorAll(".roll-mod-input").forEach(input => {
+            input.value = sheetMod;
+          });
+        }
+      });
+    }
+
     showModal(`Perform ${type} Rolls — ${characterName}`, container, () => {
       const results = [];
       [...rollsContainer.children].forEach(colDiv => {
@@ -2911,6 +3027,7 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
           results.push({ roll, modifier, damage });
         });
       });
+      results.character = characterName;
       return resolve(results);
     });
   });
@@ -3484,21 +3601,6 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
   });
 }
 
-function openCharacterSelectModal(title) {
-  return new Promise(resolve => {
-    const container = document.createElement("div");
-    const select = document.createElement("select");
-    gameData.characters.forEach(name => {
-      const opt = document.createElement("option"); opt.value = name; opt.textContent = name; select.appendChild(opt);
-    });
-    container.appendChild(document.createTextNode(title));
-    container.appendChild(document.createElement("br"));
-    container.appendChild(select);
-    showModal(title, container, () => { resolve(select.value); });
-    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
-  });
-}
-
 function updateStatsAndRender(characterName) {
   renderEditorStats(characterName);
   updateSideStats();
@@ -3541,43 +3643,51 @@ function renderInitiativeControls() {
   const nextBtn = document.getElementById("next-turn-btn");
   const prevBtn = document.getElementById("prev-turn-btn");
 
-  const updateTurnButtons = () => {
+  const updateNavButtons = () => {
     const hasInit = initiativeOrder.length > 0;
     nextBtn.disabled = !hasInit;
     prevBtn.disabled = !hasInit;
     nextBtn.style.display = hasInit ? "inline-block" : "none";
     prevBtn.style.display = hasInit ? "inline-block" : "none";
   };
+  updateNavButtons();
+
+  // (Re)creates the Reaction button, which controlsDiv.innerHTML above
+  // just wiped along with everything else in this container.
   updateTurnButtons();
 
   document.getElementById("add-init-btn").onclick = async () => {
-    const name = await openCharacterSelectModal("Select a character for initiative");
+    const rolls = await openMultiRollModal(null, "Initiative", false);
+    if (!rolls || rolls.length === 0) return;
+
+    const name = rolls.character;
     if (!name || !gameData.characterStats[name]) return;
     const stats = gameData.characterStats[name];
     if (!stats.initiativeRolls) stats.initiativeRolls = [];
     stats.isActiveInCombat = true;
-    const result = await openUnifiedActionModal(name, "Initiative", false);
-    if (!result) return;
-    const { roll, modifier } = result;
-    const total = roll + modifier;
-    const tag = crypto.randomUUID();
-    let displayName = name;
-    let source = name;
-    if (name === "NPC") {
-      const npcPool = gameData.characterStats["NPC"];
-      if (!npcPool.initiativeRolls) npcPool.initiativeRolls = [];
-      const nextNpcNumber = npcPool.initiativeRolls.filter(r => r.isVisibleInOrder !== false).length + 1;
-      displayName = `NPC ${nextNpcNumber}`;
-      source = "NPC";
-    }
-    const entry = { roll, modifier, total, isVisibleInOrder: true, tag, displayName, source };
-    stats.initiativeRolls.push(entry);
-    initiativeOrder.push({ tag, displayName, initiative: total, source });
+
+    rolls.forEach(({ roll, modifier }) => {
+      const total = roll + modifier;
+      const tag = crypto.randomUUID();
+      let displayName = name;
+      let source = name;
+      if (name === "NPC") {
+        const npcPool = gameData.characterStats["NPC"];
+        if (!npcPool.initiativeRolls) npcPool.initiativeRolls = [];
+        const nextNpcNumber = npcPool.initiativeRolls.filter(r => r.isVisibleInOrder !== false).length + 1;
+        displayName = `NPC ${nextNpcNumber}`;
+        source = "NPC";
+      }
+      const entry = { roll, modifier, total, isVisibleInOrder: true, tag, displayName, source };
+      stats.initiativeRolls.push(entry);
+      initiativeOrder.push({ tag, displayName, initiative: total, source });
+      critChecker(name, roll);
+    });
+
     initiativeOrder.sort((a, b) => b.initiative - a.initiative);
-    critChecker(name, roll);
     renderInitiative();
     updateSideStats();
-    updateTurnButtons();
+    updateNavButtons();
   };
 
   document.getElementById("next-turn-btn").onclick = () => {
@@ -3611,7 +3721,7 @@ function renderInitiativeControls() {
       });
       renderInitiative();
       updateSideStats();
-      updateTurnButtons();
+      updateNavButtons();
     }
   };
 }
@@ -4140,21 +4250,21 @@ function handleMoneySpent(name) {
   playSoundFromUrl("https://cdn.pixabay.com/audio/2022/12/17/audio_43e9af63f3.mp3", 0.2);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  inputAction(name, "money", "money spent");
+  return inputAction(name, "money", "money spent");
 }
 
 function handleDamageTaken(name) {
   playSoundFromUrl("https://cdn.pixabay.com/audio/2025/08/03/audio_639437072a.mp3", 0.3);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  inputAction(name, "damage", "damage");
+  return inputAction(name, "damage", "damage");
 }
 
 function handleHealingDone(name) {
   playSoundFromUrl("https://cdn.pixabay.com/download/audio/2021/08/09/audio_07e661df12.mp3?filename=health-pickup-6860.mp3", 0.4);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  inputAction(name, "healing", "healing");
+  return inputAction(name, "healing", "healing");
 }
 
 function handleTimesKilled(name) {
@@ -4214,7 +4324,11 @@ async function handleReactionMode() {
     actions.forEach(({ label, handler }) => {
       const btn = document.createElement("button");
       btn.textContent = label;
-      btn.onclick = () => handler(name);
+      btn.onclick = async () => {
+        reactionCharacter = name;
+        await handler(name);
+        exitReactionMode();
+      };
       btn.onmouseenter = () => { btn.style.backgroundColor = "red"; btn.style.transform = "scale(1.05)"; };
       btn.onmouseleave = () => { btn.style.backgroundColor = ""; btn.style.transform = ""; };
       actionsDiv.appendChild(btn);
@@ -4225,9 +4339,7 @@ async function handleReactionMode() {
   select.onchange = () => renderActionsFor(select.value);
 
   showModal("Reaction Mode", container, () => {
-    reactionCharacter = select.value;
-    showTrackerMessage(`${reactionCharacter} is reacting!`);
-    renderActionsFor(reactionCharacter);
+    reactionMode = false;
   });
 
   const cancelBtn = document.getElementById("modal-cancel");
