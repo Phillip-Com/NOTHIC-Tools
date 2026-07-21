@@ -186,6 +186,18 @@ function normalize(val) {
   return Array.isArray(val) ? val : [val];
 }
 
+// === MAGIC ITEM BOOK FILTER ===
+const MAGIC_ITEM_BOOKS = ["DMG", "XGE", "TCE", "FTD", "ERLW", "MOOT", "MISC"];
+
+function getEnabledBooks() {
+  const enabled = new Set();
+  MAGIC_ITEM_BOOKS.forEach(book => {
+    const cb = document.getElementById(`book-${book}`);
+    if (!cb || cb.checked) enabled.add(book);
+  });
+  return enabled;
+}
+
 // === COIN FORMATTER ===
 function formatCoins({ cp = 0, sp = 0, gp = 0, pp = 0 }) {
   let str = "";
@@ -321,6 +333,7 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
   let output = "";
 
   const marketFlux = 0.95 + Math.random() * 0.10;
+  const enabledBooks = getEnabledBooks();
 
   for (const rarity of Object.keys(lootData.magic_item[type])) {
     const countRange = settings[rarity];
@@ -344,9 +357,12 @@ function generateMagicShop(level = "mid", type = "magicSeller") {
       lootData.shop_chances[level]?.[rarity] ?? 1;
 
     // --- Collect items first ---
+    const bookFilteredPool = lootData.magic_item[type][rarity].filter(i => enabledBooks.has(i.book));
+
     const generatedItems = [];
     for (let i = 0; i < amount; i++) {
-      const item = lootData.magic_item[type][rarity][Math.floor(Math.random() * lootData.magic_item[type][rarity].length)];
+      if (bookFilteredPool.length === 0) break;
+      const item = bookFilteredPool[Math.floor(Math.random() * bookFilteredPool.length)];
       if (!item) continue;
       const fullItem = resolveItemDetails(item, true);
       generatedItems.push({
@@ -1090,6 +1106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const generatorType = document.getElementById("generatorType");
   const shopTypes = document.getElementById("shopTypes");
   const magicLevelContainer = document.getElementById("magicLevelContainer");
+  const magicBooksContainer = document.getElementById("magicBooksContainer");
   const tierSelector = document.getElementById("tierSelector");
 
   function updateGeneratorUI() {
@@ -1097,10 +1114,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "shop") {
       shopTypes.style.display = "block";
       magicLevelContainer.style.display = "block";
+      magicBooksContainer.style.display = "block";
       tierSelector.style.display = "none";
     } else {
       shopTypes.style.display = "none";
       magicLevelContainer.style.display = "none";
+      magicBooksContainer.style.display = "none";
       tierSelector.style.display = "block";
     }
   }
