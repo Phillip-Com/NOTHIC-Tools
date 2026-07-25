@@ -11,7 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhNcQCF2OZWlhH1o6nIgoyBLxV0ZOCZ43AQGUeYz6AAeHKrI3II4f0KLIIfwComAt8XQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNg-47HOYUj2dXDW-usUvxU8eTJiT5l95odceESGEHzbfA6vfsIInuS7LYbTzggSe80w/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 

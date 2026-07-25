@@ -53,6 +53,12 @@
 
           <hr>
 
+          <button class="tab-btn" data-tab="session-data">
+            📊 Saved Session Data
+          </button>
+
+          <hr>
+
           <button id="export-data">
             Export Data
           </button>
@@ -1038,11 +1044,42 @@
       </div>
     </div>
     </div>
+
+    <!-- ⭐ TAB 5: SAVED SESSION DATA -->
+    <div id="tab-session-data" class="tab-page">
+      <!-- Campaign Controls -->
+      <div class="panel" style="margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
+          <div>
+            <label for="campaign-select">Campaign:</label>
+            <select id="campaign-select"></select>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="new-campaign-btn">+ New Campaign</button>
+            <button id="delete-campaign-btn">Delete Campaign</button>
+          </div>
+
+          <div>
+            <label for="session-count-input">Sessions to show:</label>
+            <input type="number" id="session-count-input" min="1" value="5" style="width: 60px;">
+          </div>
+
+          <button id="refresh-session-data-btn">Refresh Data</button>
+        </div>
+      </div>
+
+      <!-- Display -->
+      <div id="session-data-output">
+        <p>Select or create a campaign to view session data.</p>
+      </div>
+    </div>
   </div>
 
   <!-- Load JS files at the bottom, order matters -->
   <script src="dataManager.js"></script>
   <script src="tracker.js"></script>
+  <script src="sessionData.js"></script>
   <script src="npc.js"></script>
   <script src="treasure.js"></script>
   <script src="encounter.js"></script>

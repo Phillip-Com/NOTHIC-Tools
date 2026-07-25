@@ -68,6 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
             populateRegionDropdown();
             populateNameTypeDropdown();
         }
+        if (tabName === "session-data") {
+            populateSessionDataTab();
+        }
         hideAllTabs();
         const page = document.querySelector(`#tab-${tabName}`);
         const btn = document.querySelector(`[data-tab="${tabName}"]`);

@@ -22,7 +22,12 @@ window.userData = {
 
     encounterGenerator: {},
 
-    lootGenerator: {}
+    lootGenerator: {},
+
+    sessionData: {
+        campaigns: {},
+        activeCampaign: ""
+    }
 };
 
 // ======================================================
@@ -64,6 +69,16 @@ function mergeUserData(savedData) {
         lootGenerator: {
             ...window.userData.lootGenerator,
             ...(savedData.lootGenerator || {})
+        },
+
+        sessionData: {
+            ...window.userData.sessionData,
+            ...(savedData.sessionData || {}),
+
+            campaigns: {
+                ...window.userData.sessionData.campaigns,
+                ...(savedData.sessionData?.campaigns || {})
+            }
         }
 
     };
@@ -260,7 +275,8 @@ window.importUserData = function (file) {
                 !imported.tracker &&
                 !imported.npcGenerator &&
                 !imported.encounterGenerator &&
-                !imported.lootGenerator
+                !imported.lootGenerator &&
+                !imported.sessionData
             ) {
                 throw new Error("Not a Toolbox backup");
             }

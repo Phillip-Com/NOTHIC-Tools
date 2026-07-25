@@ -1,0 +1,275 @@
+// ============================================================
+// SHARED CONSTANTS — moved out of doPost so doGet can use them too.
+// (This is the only structural change to your existing code besides
+// the two new functions at the bottom: doGet and jsonOutput.)
+// ============================================================
+
+const statOrder5e = [
+  "attacksMade",
+  "abilityChecks",
+  "savingThrows",
+  "spellsCast",
+  "initiativeRolls",
+  "totalD20Rolls",
+  "totalModD20Rolls",
+  "timesKilled",
+  "natural1s",
+  "natural20s",
+  "damageDealt",
+  "totalHealing",
+  "moneySpent"
+];
+
+const statOrderPathfinder = [
+  "attacksMade",
+  "abilityChecks",
+  "savingThrows",
+  "concentrationChecks",
+  "totalSpellResistance",
+  "spellsCast",
+  "initiativeRolls",
+  "totalD20Rolls",
+  "totalModD20Rolls",
+  "timesKilled",
+  "natural1s",
+  "natural20s",
+  "damageDealt",
+  "totalHealing",
+  "moneySpent"
+];
+
+// ============================================================
+// doPost — UNCHANGED except statOrder5e/statOrderPathfinder are no
+// longer declared inside this function (they're now above, shared).
+// ============================================================
+
+function doPost(e) {
+  try {
+    const raw = e.parameter.data;
+    const data = JSON.parse(raw);
+
+    const ss = SpreadsheetApp.openById(data.sheetId);
+    const edition = (data.edition || "").toLowerCase();
+    const sessionNumber = data.sessionNumber || "";
+
+    const statOrder = edition === "pathfinder" ? statOrderPathfinder : statOrder5e;
+    const numCols = statOrder.length;
+
+    for (const name of data.characters) {
+      const stats = data.characterStats[name];
+      if (!stats) continue;
+
+      // Ensure character-specific sheet exists
+      const cleanName = name.trim().normalize();
+      let sheet = ss.getSheetByName(cleanName);
+      if (!sheet) sheet = ss.insertSheet(name);
+
+      // --- Robust targetRow calculation (treat 0 as content) ---
+      const colToCheck = 2; // column B
+      const startRow = 4;
+      const maxRows = sheet.getMaxRows();
+      const numRowsToScan = Math.max(0, maxRows - startRow + 1);
+
+      let targetRow = startRow;
+      if (numRowsToScan > 0) {
+        const block = sheet.getRange(startRow, colToCheck, numRowsToScan, numCols).getValues();
+        let lastNonEmptyIndex = -1;
+        for (let i = block.length - 1; i >= 0; i--) {
+          const row = block[i];
+          const hasContent = row.some(cell => !(cell === "" || cell === null));
+          if (hasContent) {
+            lastNonEmptyIndex = i;
+            break;
+          }
+        }
+        if (lastNonEmptyIndex === -1) {
+          targetRow = startRow;
+        } else {
+          targetRow = startRow + lastNonEmptyIndex + 1;
+        }
+      } else {
+        sheet.insertRowsAfter(sheet.getMaxRows(), startRow - sheet.getMaxRows());
+        targetRow = startRow;
+      }
+
+      // --- Prepare row values ---
+      const rowData = statOrder.map(key => {
+        const value = stats[key];
+
+        if (key === "initiativeRolls" && Array.isArray(value)) {
+          const parts = value.map(v => {
+            if (typeof v === "object" && v !== null) {
+              const roll = v.roll || 0;
+              const mod = v.modifier ?? v.mod ?? 0;
+              return `(${roll}+${mod})`;
+            }
+            if (typeof v === "number") {
+              return `(${v}+0)`;
+            }
+            return "(0+0)";
+          });
+          const formula = parts.length ? "=" + parts.join("+") : 0;
+          return formula;
+        }
+
+        if (key === "totalD20Rolls" && Array.isArray(value)) {
+          const parts = value.filter(v => typeof v === "number").join("+");
+          return parts ? "=" + parts : 0;
+        }
+
+        if (key === "totalModD20Rolls" && Array.isArray(value)) {
+          const parts = value.map(v => {
+            if (typeof v === "object" && v !== null) {
+              const roll = v.roll || 0;
+              const mod = v.modifier ?? v.mod ?? 0;
+              return `(${roll}+${mod})`;
+            }
+            if (typeof v === "number") return `(${v}+0)`;
+            return "(0+0)";
+          });
+          const formula = parts.length ? "=" + parts.join("+") : 0;
+          return formula;
+        }
+
+        if (Array.isArray(value)) return value.length;
+        return typeof value === "number" ? value : 0;
+      });
+
+      rowData.push(sessionNumber);
+
+      // --- Write row ---
+      const range = sheet.getRange(targetRow, colToCheck, 1, rowData.length);
+      range.setValues([rowData]);
+
+      // Apply formulas manually (since `setValues` writes them as text)
+      for (let c = 0; c < rowData.length; c++) {
+        const v = rowData[c];
+        if (typeof v === "string" && v.startsWith("=")) {
+          range.getCell(1, c + 1).setFormula(v);
+        }
+      }
+    }
+
+    return jsonOutput({ status: "success", message: "Data logged successfully!" });
+  } catch (err) {
+    return jsonOutput({ status: "error", message: err.toString() });
+  }
+}
+
+// ============================================================
+// doGet — NEW. Returns the last N logged sessions for EVERY
+// character tab in the spreadsheet, in one call — plus, per
+// character: the per-session average-roll % (one column past the
+// session-number column, e.g. column P for the 5e stat layout), the
+// overall campaign average-roll % (row 2 of that same column, e.g.
+// cell P2), and column display labels read from row 3 (same columns
+// as the data itself).
+//
+// Example request:
+//   .../exec?action=allHistory&sheetId=XXXX&n=5&edition=5e
+//
+// Tabs that don't contain any data shaped like a session row
+// (e.g. a separate Dashboard/summary tab) are silently skipped —
+// no need to list which tabs are "real" characters.
+// ============================================================
+
+function doGet(e) {
+  // JSONP callback name, if the client asked for one (the browser client
+  // always sends this — Apps Script GET responses can't carry real CORS
+  // headers, so plain fetch() gets blocked; JSONP via a <script> tag is
+  // the standard workaround).
+  const callback = e.parameter.callback;
+
+  try {
+    const sheetId = e.parameter.sheetId;
+    if (!sheetId) return jsonOutput({ status: "error", message: "Missing sheetId." }, callback);
+
+    const n = parseInt(e.parameter.n, 10) || 5;
+    const edition = (e.parameter.edition || "").toLowerCase();
+    const statOrder = edition === "pathfinder" ? statOrderPathfinder : statOrder5e;
+    const numCols = statOrder.length;
+
+    const startRow = 4;
+    const colToCheck = 2;
+
+    // Same column as sessionNumber's neighbor: stats end at
+    // colToCheck + numCols - 1, sessionNumber is colToCheck + numCols,
+    // and the per-session avg roll % is the next column over.
+    const avgRollCol = colToCheck + numCols + 1;
+
+    const ss = SpreadsheetApp.openById(sheetId);
+    const sheets = ss.getSheets();
+    const characters = {};
+
+    sheets.forEach(sheet => {
+      const numRowsToScan = Math.max(0, sheet.getMaxRows() - startRow + 1);
+      if (numRowsToScan <= 0) return;
+
+      // Stat columns + sessionNumber + per-session avg roll %.
+      const block = sheet.getRange(startRow, colToCheck, numRowsToScan, numCols + 2).getValues();
+
+      // A row counts as real session data if any of its stat cells
+      // (not counting the trailing session-number/avg-roll cells) is
+      // filled in.
+      const filledRows = block.filter(row =>
+        row.slice(0, numCols).some(cell => !(cell === "" || cell === null))
+      );
+
+      // Tabs with no matching rows aren't character sheets — skip them.
+      if (filledRows.length === 0) return;
+
+      const lastN = filledRows.slice(-n);
+
+      const sessions = lastN.map(row => {
+        const entry = {};
+        statOrder.forEach((key, i) => { entry[key] = row[i]; });
+        entry.sessionNumber = row[numCols];
+        entry.avgRoll = row[numCols + 1];
+        return entry;
+      });
+
+      const campaignAvgRoll = sheet.getRange(2, avgRollCol).getValue();
+
+      // Column display labels come straight from row 3 — same columns as
+      // the data itself (stats, then sessionNumber, then avgRoll).
+      const labelRow = sheet.getRange(3, colToCheck, 1, numCols + 2).getValues()[0];
+      const columnLabels = {};
+      statOrder.forEach((key, i) => { columnLabels[key] = labelRow[i]; });
+      columnLabels.sessionNumber = labelRow[numCols];
+      columnLabels.avgRoll = labelRow[numCols + 1];
+
+      characters[sheet.getName()] = { campaignAvgRoll, columnLabels, sessions };
+    });
+
+    return jsonOutput({ status: "success", characters }, callback);
+  } catch (err) {
+    return jsonOutput({ status: "error", message: err.toString() }, callback);
+  }
+}
+
+// ============================================================
+// jsonOutput — shared response helper for both doPost and doGet.
+//
+// doPost calls this with no callback (its response body is ignored
+// client-side anyway, since the sync POST uses mode: "no-cors").
+//
+// doGet always gets a callback from the client and returns JSONP —
+// "callbackName({...})" served as JavaScript — since Apps Script GET
+// responses can't be read via a real cross-origin fetch().
+// ============================================================
+
+function jsonOutput(obj, callback) {
+  const json = JSON.stringify(obj);
+
+  if (callback) {
+    return ContentService
+      .createTextOutput(`${callback}(${json});`)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return ContentService
+    .createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader("Access-Control-Allow-Origin", "*")
+    .setHeader("Access-Control-Allow-Methods", "GET, POST");
+}
