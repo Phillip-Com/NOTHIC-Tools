@@ -162,6 +162,18 @@ table th {
   background-color: var(--background);
 }
 
+/* Denser variant for tables in tight side-by-side layouts (e.g. the
+   Campaign Titles table next to the roll percentage charts). */
+table.compact-table th,
+table.compact-table td {
+  padding: 3px 6px;
+  font-size: 0.8rem;
+}
+
+table.compact-table {
+  margin-top: 4px;
+}
+
 
 /* ============================================================
    MODALS

@@ -1069,6 +1069,23 @@
         </div>
       </div>
 
+      <!-- Campaign Overview: titles table + roll percentage charts -->
+      <div class="panel" style="margin-bottom: 16px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+          <div style="flex: 1 1 260px; max-width: 300px; min-width: 220px; overflow-x: auto;">
+            <h3>Campaign Titles</h3>
+            <div id="campaign-titles-output">
+              <p>Select or create a campaign to view campaign titles.</p>
+            </div>
+          </div>
+
+          <div style="flex: 3 1 640px; min-width: 320px; display: flex; gap: 16px; flex-wrap: wrap;">
+            <div id="campaign-rolls-chart-npc-container" style="flex: 1 1 300px; min-width: 0;"></div>
+            <div id="campaign-rolls-chart-pc-container" style="flex: 1 1 300px; min-width: 0;"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Display -->
       <div id="session-data-output">
         <p>Select or create a campaign to view session data.</p>
@@ -1080,6 +1097,7 @@
   <script src="dataManager.js"></script>
   <script src="tracker.js"></script>
   <script src="sessionData.js"></script>
+  <script src="campaignOverview.js"></script>
   <script src="npc.js"></script>
   <script src="treasure.js"></script>
   <script src="encounter.js"></script>

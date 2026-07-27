@@ -2,6 +2,12 @@
 // Reads historical session data back out of the same Google Sheet that
 // tracker.js's sendGameDataToGoogleSheet() writes to.
 
+// The Apps Script's `n` param only truncates its response to the last n
+// rows (it scans the whole sheet either way), so passing a very large
+// value here is how we fetch "the entire campaign" instead of a recent
+// window.
+const FULL_CAMPAIGN_SESSION_LIMIT = 100000;
+
 // -------------------- CHARACTER COLOR CODING --------------------
 
 const CHARACTER_COLOR_WHEEL = [
@@ -101,6 +107,7 @@ window.deleteCampaign = function () {
 
   const output = document.getElementById("session-data-output");
   if (output) output.innerHTML = "<p>Select or create a campaign to view session data.</p>";
+  resetCampaignOverview("Select or create a campaign to view campaign titles.");
 };
 
 function populateCampaignDropdown() {
@@ -378,6 +385,18 @@ function filterToTrackerCharacters(charactersData) {
   return filtered;
 }
 
+// Trims each character's session list down to just the most recent
+// `limit` entries — used only for the on-screen session-by-session
+// table. The Campaign Titles table and roll charts (campaignOverview.js)
+// always aggregate the full fetched history regardless of this limit.
+function limitSessionsPerCharacter(charactersData, limit) {
+  const limited = {};
+  Object.entries(charactersData).forEach(([name, data]) => {
+    limited[name] = { ...data, sessions: (data.sessions || []).slice(-limit) };
+  });
+  return limited;
+}
+
 function renderSessionData(charactersData) {
   const output = document.getElementById("session-data-output");
   if (!output) return;
@@ -492,32 +511,44 @@ async function loadActiveCampaignData() {
 
   if (!name) {
     if (output) output.innerHTML = "<p>Select or create a campaign to view session data.</p>";
+    resetCampaignOverview("Select or create a campaign to view campaign titles.");
     return;
   }
 
   const campaign = window.userData.sessionData.campaigns[name];
   if (!campaign?.sheetId) {
     if (output) output.innerHTML = "<p>This campaign has no linked sheet.</p>";
+    resetCampaignOverview("This campaign has no linked sheet.");
     return;
   }
 
   const sessionCount = parseInt(document.getElementById("session-count-input")?.value, 10) || 5;
 
   if (output) output.innerHTML = "<p>Loading…</p>";
+  resetCampaignOverview("Loading…");
 
   try {
-    const charactersData = await fetchCampaignData(campaign.sheetId, sessionCount);
+    // The Apps Script side already scans every row in the sheet
+    // regardless of `n` — it only truncates the response to the last n
+    // rows before sending it back — so requesting a huge n here costs
+    // nothing extra server-side. That lets the Campaign Titles table and
+    // roll charts always reflect the whole campaign, while the
+    // session-by-session table below still honors "Sessions to show".
+    const charactersData = await fetchCampaignData(campaign.sheetId, FULL_CAMPAIGN_SESSION_LIMIT);
     const filtered = filterToTrackerCharacters(charactersData);
 
     if (Object.keys(charactersData).length > 0 && Object.keys(filtered).length === 0) {
       if (output) output.innerHTML = "<p>None of this sheet's tabs match a character in your tracker.</p>";
+      resetCampaignOverview("None of this sheet's tabs match a character in your tracker.");
       return;
     }
 
-    renderSessionData(filtered);
+    renderSessionData(limitSessionsPerCharacter(filtered, sessionCount));
+    renderCampaignOverview(filtered);
   } catch (err) {
     console.error(err);
     if (output) output.innerHTML = `<p>Failed to load session data: ${err.message}</p>`;
+    resetCampaignOverview(`Failed to load campaign titles: ${err.message}`);
   }
 }
 
