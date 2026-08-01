@@ -70,30 +70,58 @@ function computeCampaignTotals(charactersData) {
 
 // -------------------- TITLES TABLE --------------------
 
+// A tied record (two or more characters sharing the highest/lowest
+// total) has no single title-holder, so it's rendered in this neutral
+// color instead of any character's color.
+const TIED_RECORD_COLOR = "#ffffff";
+
 // Reduces each stat down to who holds the highest/lowest campaign total
 // and what that record's joke title is — shared by the DOM table and
-// the exported canvas image so they never drift apart.
+// the exported canvas image so they never drift apart. Ties (multiple
+// characters sharing the extreme value) are flagged rather than
+// arbitrarily picking a "winner".
 function computeCampaignTitleRows(charactersData, characterColors) {
-  const names = Object.keys(charactersData);
+  // NPC sheets never hold a highest/lowest title — only real characters
+  // are eligible, same as the "without NPCs" roll chart.
+  const names = Object.keys(charactersData).filter(name => !name.toUpperCase().includes("NPC"));
   const totals = computeCampaignTotals(charactersData);
   const statRows = CAMPAIGN_STAT_ROWS.concat(
     getCurrentEdition() === "pathfinder" ? CAMPAIGN_STAT_ROWS_PATHFINDER : []
   );
 
   return statRows.map(statRow => {
-    let highestName = names[0], highestValue = -Infinity;
-    let lowestName = names[0], lowestValue = Infinity;
+    const valueFor = (name) => totals[name]?.[statRow.key] ?? 0;
+
+    let highestValue = -Infinity;
+    let lowestValue = Infinity;
 
     names.forEach(name => {
-      const value = totals[name]?.[statRow.key] ?? 0;
-      if (value > highestValue) { highestValue = value; highestName = name; }
-      if (value < lowestValue) { lowestValue = value; lowestName = name; }
+      const value = valueFor(name);
+      if (value > highestValue) highestValue = value;
+      if (value < lowestValue) lowestValue = value;
     });
+
+    const highestNames = names.filter(name => valueFor(name) === highestValue);
+    const lowestNames = names.filter(name => valueFor(name) === lowestValue);
+    const highestTied = highestNames.length > 1;
+    const lowestTied = lowestNames.length > 1;
 
     return {
       label: statRow.label,
-      highest: { text: statRow.highest, name: highestName, value: highestValue, color: characterColors[highestName] },
-      lowest: { text: statRow.lowest, name: lowestName, value: lowestValue, color: characterColors[lowestName] }
+      highest: {
+        text: statRow.highest,
+        names: highestNames,
+        value: highestValue,
+        tied: highestTied,
+        color: highestTied ? TIED_RECORD_COLOR : characterColors[highestNames[0]]
+      },
+      lowest: {
+        text: statRow.lowest,
+        names: lowestNames,
+        value: lowestValue,
+        tied: lowestTied,
+        color: lowestTied ? TIED_RECORD_COLOR : characterColors[lowestNames[0]]
+      }
     };
   });
 }
@@ -133,14 +161,14 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
     highestTd.textContent = row.highest.text;
     highestTd.style.color = row.highest.color;
     highestTd.style.fontWeight = "bold";
-    highestTd.title = `${row.highest.name}: ${row.highest.value}`;
+    highestTd.title = `${row.highest.names.join(", ")}: ${row.highest.value}${row.highest.tied ? " (tied)" : ""}`;
     tr.appendChild(highestTd);
 
     const lowestTd = document.createElement("td");
     lowestTd.textContent = row.lowest.text;
     lowestTd.style.color = row.lowest.color;
     lowestTd.style.fontWeight = "bold";
-    lowestTd.title = `${row.lowest.name}: ${row.lowest.value}`;
+    lowestTd.title = `${row.lowest.names.join(", ")}: ${row.lowest.value}${row.lowest.tied ? " (tied)" : ""}`;
     tr.appendChild(lowestTd);
 
     table.appendChild(tr);
