@@ -160,10 +160,11 @@ function doPost(e) {
 // doGet — NEW. Returns the last N logged sessions for EVERY
 // character tab in the spreadsheet, in one call — plus, per
 // character: the per-session average-roll % (one column past the
-// session-number column, e.g. column P for the 5e stat layout), the
-// overall campaign average-roll % (row 2 of that same column, e.g.
-// cell P2), and column display labels read from row 3 (same columns
-// as the data itself).
+// session-number column, e.g. column P for the 5e stat layout),
+// campaign-wide totals read from row 2 (same columns as the data —
+// e.g. total attacks made all-time, plus the true campaign average
+// roll % rather than a sum of per-session averages), and column
+// display labels read from row 3 (same columns as the data).
 //
 // Example request:
 //   .../exec?action=allHistory&sheetId=XXXX&n=5&edition=5e
@@ -191,11 +192,6 @@ function doGet(e) {
 
     const startRow = 4;
     const colToCheck = 2;
-
-    // Same column as sessionNumber's neighbor: stats end at
-    // colToCheck + numCols - 1, sessionNumber is colToCheck + numCols,
-    // and the per-session avg roll % is the next column over.
-    const avgRollCol = colToCheck + numCols + 1;
 
     const ss = SpreadsheetApp.openById(sheetId);
     const sheets = ss.getSheets();
@@ -228,7 +224,16 @@ function doGet(e) {
         return entry;
       });
 
-      const campaignAvgRoll = sheet.getRange(2, avgRollCol).getValue();
+      // Campaign-wide totals live in row 2 — same columns as the data
+      // itself. The session-number column has no meaningful total, so
+      // it's left blank; the avg-roll column already holds the true
+      // campaign average (not a sum of the per-session averages below
+      // it), since that's what the sheet's own formula computes there.
+      const totalsRow = sheet.getRange(2, colToCheck, 1, numCols + 2).getValues()[0];
+      const totals = {};
+      statOrder.forEach((key, i) => { totals[key] = totalsRow[i]; });
+      totals.sessionNumber = "";
+      totals.avgRoll = totalsRow[numCols + 1];
 
       // Column display labels come straight from row 3 — same columns as
       // the data itself (stats, then sessionNumber, then avgRoll).
@@ -238,7 +243,7 @@ function doGet(e) {
       columnLabels.sessionNumber = labelRow[numCols];
       columnLabels.avgRoll = labelRow[numCols + 1];
 
-      characters[sheet.getName()] = { campaignAvgRoll, columnLabels, sessions };
+      characters[sheet.getName()] = { totals, columnLabels, sessions };
     });
 
     return jsonOutput({ status: "success", characters }, callback);

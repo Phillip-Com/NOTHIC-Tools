@@ -11,7 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNg-47HOYUj2dXDW-usUvxU8eTJiT5l95odceESGEHzbfA6vfsIInuS7LYbTzggSe80w/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJKezeq6Z3XBzaOpbmwnVJZCHx-zP23MR_yBSp9DGio6aScSC3ZCWUG09z_xm9q7dPig/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
@@ -448,6 +448,48 @@ function openSyncModal() {
 
   const confirmBtn = document.getElementById("sync-confirm");
   const cancelBtn = document.getElementById("sync-cancel");
+  const campaignSelect = document.getElementById("sync-campaign-select");
+  const sheetUrlInput = document.getElementById("syncSheetUrl");
+  const sessionNumberInput = document.getElementById("sessionNumber");
+
+  if (campaignSelect) {
+    const campaigns = window.userData.sessionData?.campaigns || {};
+
+    campaignSelect.innerHTML = "";
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "-- Manual Entry --";
+    campaignSelect.appendChild(blank);
+
+    Object.keys(campaigns).forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      campaignSelect.appendChild(opt);
+    });
+    campaignSelect.value = "";
+
+    campaignSelect.onchange = async () => {
+      const campaign = campaigns[campaignSelect.value];
+      if (!campaign?.sheetId) return;
+
+      sheetUrlInput.value = campaign.sheetId;
+
+      const previousPlaceholder = sessionNumberInput.placeholder;
+      sessionNumberInput.value = "";
+      sessionNumberInput.placeholder = "Loading last session…";
+
+      try {
+        // n=1: only need each character's most recent logged session.
+        const charactersData = await fetchCampaignData(campaign.sheetId, 1);
+        sessionNumberInput.value = getNextSessionNumber(charactersData);
+      } catch (err) {
+        console.error("Failed to look up last session number:", err);
+      } finally {
+        sessionNumberInput.placeholder = previousPlaceholder;
+      }
+    };
+  }
 
   confirmBtn.onclick = () => {
     const sheetInput = document.getElementById("syncSheetUrl").value.trim();

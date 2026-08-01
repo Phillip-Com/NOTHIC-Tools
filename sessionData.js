@@ -35,9 +35,10 @@ function assignCharacterColors(names) {
   return colors;
 }
 
-// Rounds roll-average values (from the sheet's avgRoll/campaignAvgRoll
-// columns) to 2 decimal places for display. Leaves non-numeric values
-// (blank cells, etc.) untouched instead of showing "NaN".
+// Rounds roll-average values (the per-session avgRoll field and the
+// row-2 campaign-total avgRoll) to 2 decimal places for display. Leaves
+// non-numeric values (blank cells, etc.) untouched instead of showing
+// "NaN".
 function formatRollAverage(value) {
   const num = Number(value);
   if (value === "" || value === null || value === undefined || Number.isNaN(num)) {
@@ -192,6 +193,22 @@ function fetchCampaignData(sheetId, sessionCount) {
   });
 }
 
+// Highest sessionNumber logged for any character in the fetched data,
+// plus 1 — used to pre-fill the sync modal's "Session Number" field with
+// the next number in sequence when a campaign is selected there.
+function getNextSessionNumber(charactersData) {
+  let maxSession = 0;
+
+  Object.values(charactersData).forEach(characterData => {
+    (characterData.sessions || []).forEach(session => {
+      const num = Number(session.sessionNumber);
+      if (!Number.isNaN(num) && num > maxSession) maxSession = num;
+    });
+  });
+
+  return maxSession + 1;
+}
+
 // -------------------- IMAGE EXPORT --------------------
 
 function getThemeColor(varName, fallback) {
@@ -199,25 +216,25 @@ function getThemeColor(varName, fallback) {
   return value || fallback;
 }
 
-// Draws a titled table onto a canvas element, sized to fit its content.
-// Used to turn on-screen data into a downloadable/copyable image, since
-// there's no built-in way to rasterize arbitrary DOM to an image and this
+// Draws a table onto a canvas element, sized to fit its content. Used to
+// turn on-screen data into a downloadable/copyable image, since there's
+// no built-in way to rasterize arbitrary DOM to an image and this
 // project doesn't pull in any external libraries (e.g. html2canvas).
 //
-// accentColor (if given) colors the title and column-header text, so
-// exported images match the on-screen character color coding. subtitle
-// (if given) is drawn as a second line under the title, in the normal
-// text color — used for the campaign-average-roll line.
-function buildTableCanvas({ title, subtitle, accentColor, headers, rows }) {
+// accentColor (if given) colors the column-header text and the first
+// cell of totalsRow (the character name), so exported images match the
+// on-screen character color coding. totalsRow (if given) is drawn as a
+// bold row above the column headers, showing each column's campaign-wide
+// total — its first cell holds the character name instead of a total.
+function buildTableCanvas({ accentColor, headers, totalsRow, rows }) {
   const scale = 2; // draw at 2x for crisper text, then display at 1x
   const cellPadding = 10;
   const rowHeight = 28;
   const headerHeight = 32;
-  const titleHeight = subtitle ? 54 : 36;
+  const totalsHeight = totalsRow ? 28 : 0;
   const font = "14px Arial, sans-serif";
   const headerFont = "bold 14px Arial, sans-serif";
-  const titleFont = "bold 18px Arial, sans-serif";
-  const subtitleFont = "13px Arial, sans-serif";
+  const totalsFont = "bold 14px Arial, sans-serif";
 
   const bg = getThemeColor("--surfaces", "#1e2329");
   const headerBg = getThemeColor("--elevated", "#2a3138");
@@ -237,11 +254,16 @@ function buildTableCanvas({ title, subtitle, accentColor, headers, rows }) {
       const w = measureCtx.measureText(String(row[i] ?? "")).width;
       if (w > max) max = w;
     });
+    if (totalsRow) {
+      measureCtx.font = totalsFont;
+      const w = measureCtx.measureText(String(totalsRow[i] ?? "")).width;
+      if (w > max) max = w;
+    }
     return Math.ceil(max) + cellPadding * 2;
   });
 
   const tableWidth = colWidths.reduce((a, b) => a + b, 0);
-  const tableHeight = titleHeight + headerHeight + rows.length * rowHeight;
+  const tableHeight = totalsHeight + headerHeight + rows.length * rowHeight;
 
   const canvas = document.createElement("canvas");
   canvas.width = tableWidth * scale;
@@ -257,19 +279,22 @@ function buildTableCanvas({ title, subtitle, accentColor, headers, rows }) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, tableWidth, tableHeight);
 
-  // Title (+ optional subtitle line)
-  ctx.fillStyle = titleColor;
-  ctx.font = titleFont;
-  ctx.fillText(title, cellPadding, subtitle ? 20 : titleHeight / 2);
+  let y = 0;
 
-  if (subtitle) {
-    ctx.fillStyle = text;
-    ctx.font = subtitleFont;
-    ctx.fillText(subtitle, cellPadding, 42);
+  // Totals row (campaign-wide totals, above the column headers). The
+  // first cell is the character name, colored like the column headers.
+  if (totalsRow) {
+    let x = 0;
+    ctx.font = totalsFont;
+    totalsRow.forEach((cell, i) => {
+      ctx.fillStyle = i === 0 ? titleColor : text;
+      ctx.fillText(String(cell ?? ""), x + cellPadding, y + totalsHeight / 2);
+      x += colWidths[i];
+    });
+    y += totalsHeight;
   }
 
   // Header row
-  let y = titleHeight;
   ctx.fillStyle = headerBg;
   ctx.fillRect(0, y, tableWidth, headerHeight);
 
@@ -302,12 +327,12 @@ function buildTableCanvas({ title, subtitle, accentColor, headers, rows }) {
   ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
 
-  let hy = titleHeight;
+  let hy = 0;
   ctx.beginPath();
   ctx.moveTo(0, hy);
   ctx.lineTo(tableWidth, hy);
   ctx.stroke();
-  hy += headerHeight;
+  hy += totalsHeight + headerHeight;
   for (let i = 0; i <= rows.length; i++) {
     ctx.beginPath();
     ctx.moveTo(0, hy);
@@ -319,13 +344,13 @@ function buildTableCanvas({ title, subtitle, accentColor, headers, rows }) {
   let vx = 0;
   colWidths.forEach(w => {
     ctx.beginPath();
-    ctx.moveTo(vx, titleHeight);
+    ctx.moveTo(vx, 0);
     ctx.lineTo(vx, tableHeight);
     ctx.stroke();
     vx += w;
   });
   ctx.beginPath();
-  ctx.moveTo(vx, titleHeight);
+  ctx.moveTo(vx, 0);
   ctx.lineTo(vx, tableHeight);
   ctx.stroke();
 
@@ -412,7 +437,7 @@ function renderSessionData(charactersData) {
   const characterColors = assignCharacterColors(names);
 
   names.forEach(name => {
-    const { campaignAvgRoll, columnLabels, sessions: rawSessions } = charactersData[name] || {};
+    const { totals, columnLabels, sessions: rawSessions } = charactersData[name] || {};
     const sessions = [...(rawSessions || [])].reverse();
     if (sessions.length === 0) return;
 
@@ -424,28 +449,7 @@ function renderSessionData(charactersData) {
     card.style.overflowX = "auto";
 
     const cardHeader = document.createElement("div");
-    cardHeader.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;";
-
-    const titleGroup = document.createElement("div");
-
-    const title = document.createElement("h3");
-    title.textContent = name;
-    title.style.margin = "0";
-    title.style.color = color;
-    titleGroup.appendChild(title);
-
-    const subtitleText = campaignAvgRoll !== "" && campaignAvgRoll !== undefined && campaignAvgRoll !== null
-      ? `Campaign Average Roll: ${formatRollAverage(campaignAvgRoll)}`
-      : "";
-
-    if (subtitleText) {
-      const subtitleEl = document.createElement("div");
-      subtitleEl.textContent = subtitleText;
-      subtitleEl.style.cssText = "font-size:0.85rem;opacity:0.8;margin-top:2px;";
-      titleGroup.appendChild(subtitleEl);
-    }
-
-    cardHeader.appendChild(titleGroup);
+    cardHeader.style.cssText = "display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;";
 
     const statKeys = Object.keys(sessions[0]).filter(k => k !== "sessionNumber");
     const dataKeys = ["sessionNumber", ...statKeys];
@@ -455,6 +459,14 @@ function renderSessionData(charactersData) {
     // older cached data or blank label cells.
     const tableHeaders = dataKeys.map(key => columnLabels?.[key] || key);
 
+    // Campaign-wide totals (row 2) — the character name takes the place
+    // of a (meaningless) total under the Session column.
+    const totalsRowValues = dataKeys.map(key => {
+      if (key === "sessionNumber") return name;
+      const value = totals?.[key];
+      return key === "avgRoll" ? formatRollAverage(value) : (value ?? "");
+    });
+
     const tableRows = sessions.map(session =>
       dataKeys.map(key =>
         key === "avgRoll" ? formatRollAverage(session[key]) : (session[key] ?? "")
@@ -462,13 +474,12 @@ function renderSessionData(charactersData) {
     );
 
     const copyBtn = document.createElement("button");
-    copyBtn.textContent = "📋 Copy/Save Image";
+    copyBtn.textContent = "📋 Save Image";
     copyBtn.onclick = () => {
       const canvas = buildTableCanvas({
-        title: name,
-        subtitle: subtitleText,
         accentColor: color,
         headers: tableHeaders,
+        totalsRow: totalsRowValues,
         rows: tableRows
       });
       copyAndSaveImage(canvas, `${name}-sessions.png`);
@@ -478,6 +489,18 @@ function renderSessionData(charactersData) {
     card.appendChild(cardHeader);
 
     const table = document.createElement("table");
+
+    // Totals row — sits above the header/label row. The first cell (the
+    // character name) is styled like a column label instead of a total.
+    const totalsRowEl = document.createElement("tr");
+    totalsRowValues.forEach((value, i) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      td.style.fontWeight = "bold";
+      if (i === 0) td.style.color = color;
+      totalsRowEl.appendChild(td);
+    });
+    table.appendChild(totalsRowEl);
 
     const headerRow = document.createElement("tr");
     tableHeaders.forEach(h => {

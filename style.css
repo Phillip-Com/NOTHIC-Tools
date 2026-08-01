@@ -163,14 +163,27 @@ table th {
 }
 
 /* Denser variant for tables in tight side-by-side layouts (e.g. the
-   Campaign Titles table next to the roll percentage charts). */
+   Campaign Titles table next to the roll percentage charts). Cells stay
+   on one line and size to their content (no width:100% stretch/wrap),
+   and the table stretches to fill the height of whatever it's next to
+   (its flex row uses align-items:stretch) so extra height distributes
+   evenly across rows instead of leaving the table short and cramped. */
 table.compact-table th,
 table.compact-table td {
-  padding: 3px 6px;
-  font-size: 0.8rem;
+  padding: 0px 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
+/* height:100% only ever gives table rows extra space to grow into — it
+   can't shrink them below their natural size, so if the table's natural
+   content height comes out even slightly taller than its stretched
+   container (e.g. rounding, borders), the last row overflows past the
+   bottom instead of the table just stopping short. Targeting one row's
+   height less than 100% leaves enough slack to absorb that. */
 table.compact-table {
+  width: auto;
+  height: calc(100% - 45px);
   margin-top: 4px;
 }
 

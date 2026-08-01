@@ -1,7 +1,10 @@
 // -------------------- CAMPAIGN OVERVIEW --------------------
 // Sits above the Saved Session Data tables: a "campaign titles" table
 // (who holds the highest/lowest campaign total for each tracked stat)
-// plus two pie charts breaking down total D20 rolls per character/NPC.
+// plus two pie charts breaking down total D20 rolls per character/NPC,
+// stacked vertically into one exported image (stackChartsVertically)
+// instead of two side-by-side ones, so they don't squeeze the titles
+// table into a narrow column.
 // Reuses the same fetched Google Sheet session data as sessionData.js
 // (assignCharacterColors, getThemeColor, copyAndSaveImage all live there
 // and are loaded first, so this file can call them directly).
@@ -146,7 +149,7 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
   container.innerHTML = "";
 
   const copyBtn = document.createElement("button");
-  copyBtn.textContent = "📋 Copy/Save Image";
+  copyBtn.textContent = "📋 Save Image";
   copyBtn.style.display = "block";
   copyBtn.style.marginBottom = "8px";
   copyBtn.onclick = () => {
@@ -430,33 +433,50 @@ function drawPieChart({ title, entries, colors }) {
   drawSideLabels(rightSlices, 1);
   drawSideLabels(leftSlices, -1);
 
+  // Logical (unscaled) width/height alongside the canvas, so callers can
+  // composite this onto a larger canvas without re-deriving the size from
+  // a scaled canvas.width/height or an "auto" CSS height.
+  return { canvas, width: canvasWidth, height: canvasHeight };
+}
+
+// Stacks two already-drawn pie-chart canvases vertically into one new
+// canvas — used so both roll-percentage charts export as a single image
+// instead of two, and so the on-screen version takes up one column
+// instead of two side by side (which was squishing the titles table).
+function stackChartsVertically(charts) {
+  const scale = 2;
+  const gap = 16;
+
+  const width = Math.max(...charts.map(c => c.width));
+  const height = charts.reduce((sum, c) => sum + c.height, 0) + gap * (charts.length - 1);
+
+  const bg = getThemeColor("--surfaces", "#1e2329");
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  canvas.style.width = "100%";
+  canvas.style.maxWidth = `${width}px`;
+  canvas.style.height = "auto";
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let y = 0;
+  charts.forEach(chart => {
+    ctx.drawImage(chart.canvas, 0, y * scale, chart.width * scale, chart.height * scale);
+    y += chart.height + gap;
+  });
+
   return canvas;
 }
 
-function renderPieChartCard(container, { title, entries, colors, filename }) {
-  container.innerHTML = "";
-
-  const total = entries.reduce((sum, e) => sum + e.value, 0);
-  if (entries.length === 0 || total <= 0) {
-    container.innerHTML = "<p>No roll data to chart.</p>";
-    return;
-  }
-
-  const canvas = drawPieChart({ title, entries, colors });
-  container.appendChild(canvas);
-
-  const btn = document.createElement("button");
-  btn.textContent = "📋 Copy/Save Image";
-  btn.style.display = "block";
-  btn.style.marginTop = "8px";
-  btn.onclick = () => copyAndSaveImage(canvas, filename);
-  container.appendChild(btn);
-}
-
 function renderRollCharts(charactersData, characterColors) {
-  const npcContainer = document.getElementById("campaign-rolls-chart-npc-container");
-  const pcContainer = document.getElementById("campaign-rolls-chart-pc-container");
-  if (!npcContainer || !pcContainer) return;
+  const container = document.getElementById("campaign-rolls-chart-container");
+  if (!container) return;
+
+  container.innerHTML = "";
 
   const totals = computeCampaignTotals(charactersData);
   const names = Object.keys(charactersData);
@@ -470,19 +490,24 @@ function renderRollCharts(charactersData, characterColors) {
 
   const pcEntries = allEntries.filter(e => !e.name.toUpperCase().includes("NPC"));
 
-  renderPieChartCard(npcContainer, {
-    title: "Percentage of Rolls With NPCs",
-    entries: allEntries,
-    colors: characterColors,
-    filename: "rolls-with-npcs.png"
-  });
+  if (allEntries.length === 0) {
+    container.innerHTML = "<p>No roll data to chart.</p>";
+    return;
+  }
 
-  renderPieChartCard(pcContainer, {
-    title: "Percentage of Rolls",
-    entries: pcEntries,
-    colors: characterColors,
-    filename: "rolls-without-npcs.png"
-  });
+  const withNpcsChart = drawPieChart({ title: "Percentage of Rolls With NPCs", entries: allEntries, colors: characterColors });
+  const withoutNpcsChart = drawPieChart({ title: "Percentage of Rolls", entries: pcEntries, colors: characterColors });
+
+  const combined = stackChartsVertically([withNpcsChart, withoutNpcsChart]);
+
+  const btn = document.createElement("button");
+  btn.textContent = "📋 Save Image";
+  btn.style.display = "block";
+  btn.style.marginBottom = "8px";
+  btn.onclick = () => copyAndSaveImage(combined, "campaign-rolls.png");
+  container.appendChild(btn);
+
+  container.appendChild(combined);
 }
 
 // -------------------- ORCHESTRATION --------------------
@@ -499,8 +524,6 @@ function resetCampaignOverview(message) {
   const titles = document.getElementById("campaign-titles-output");
   if (titles) titles.innerHTML = `<p>${message}</p>`;
 
-  const npcContainer = document.getElementById("campaign-rolls-chart-npc-container");
-  const pcContainer = document.getElementById("campaign-rolls-chart-pc-container");
-  if (npcContainer) npcContainer.innerHTML = "";
-  if (pcContainer) pcContainer.innerHTML = "";
+  const chartContainer = document.getElementById("campaign-rolls-chart-container");
+  if (chartContainer) chartContainer.innerHTML = "";
 }
