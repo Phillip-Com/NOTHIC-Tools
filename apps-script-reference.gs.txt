@@ -15,7 +15,7 @@ const statOrder5e = [
   "timesKilled",
   "natural1s",
   "natural20s",
-  "damageDealt",
+  "totalDamage",
   "totalHealing",
   "moneySpent"
 ];
@@ -33,7 +33,7 @@ const statOrderPathfinder = [
   "timesKilled",
   "natural1s",
   "natural20s",
-  "damageDealt",
+  "totalDamage",
   "totalHealing",
   "moneySpent"
 ];

@@ -11,7 +11,7 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJKezeq6Z3XBzaOpbmwnVJZCHx-zP23MR_yBSp9DGio6aScSC3ZCWUG09z_xm9q7dPig/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw313q2KiZ454Vg-HrSy2UutCvKbf3ZX9xN_x71qZ72CwypSnfPmVwgkqqZbk7XE-lQAA/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
@@ -704,15 +704,11 @@ function renderStatsSummary() {
     const s = gameData.characterStats[name];
     if (!s) return;
 
-    let spellHealing = 0;
-    if (Array.isArray(s.spellHistory)) {
-      s.spellHistory.forEach(spell => {
-        if (spell.extra) spellHealing += parseFloat(spell.extra.healing) || 0;
-      });
-    }
-
-    const combinedDamage = (s.totalDamage || 0) + (s.attackDamage || 0);
-    const combinedHealing = (s.healingDone || 0) + spellHealing;
+    // totalDamage/totalHealing (recalcCharacterStats) already fold in
+    // every source — attacks, misc, spell misc, spell attack/healing —
+    // so they're used directly rather than re-combined here.
+    const combinedDamage = s.totalDamage || 0;
+    const combinedHealing = s.totalHealing || 0;
 
     const summaryText = [
       `=== ${name} ===`,
@@ -3100,6 +3096,7 @@ async function inputAction(characterName, type, label) {
     case "healing": stats.healingDone += Math.round(num); break;
   }
 
+  recalcCharacterStats(characterName);
   showTrackerMessage(`${characterName} ${label}: ${num}`);
   updateStatsAndRender(characterName);
 }
@@ -4663,12 +4660,12 @@ function updateSideStats() {
   }
 
   const s = gameData.characterStats[nameToUse];
-  let spellHealing = 0;
-  if (Array.isArray(s.spellHistory)) {
-    s.spellHistory.forEach(spell => { if (spell.extra) spellHealing += parseFloat(spell.extra.healing) || 0; });
-  }
-  const combinedDamage = (s.totalDamage || 0) + s.attackDamage;
-  const combinedHealing = (s.healingDone || 0) + spellHealing;
+
+  // totalDamage/totalHealing (recalcCharacterStats) already fold in
+  // every source — attacks, misc, spell misc, spell attack/healing —
+  // so they're used directly rather than re-combined here.
+  const combinedDamage = s.totalDamage || 0;
+  const combinedHealing = s.totalHealing || 0;
 
 
   if (getCurrentEdition() === "pathfinder") {
@@ -4807,8 +4804,13 @@ function recalcCharacterStats(characterName) {
     stats.savingThrows++;
   });
 
-  stats.totalDamage = stats.totalNonSpellDamage + stats.totalSpellDamage;
-  stats.totalHealing = stats.totalNonSpellHealing + stats.totalSpellHealing;
+  // totalDamage/totalHealing are the authoritative, complete totals used
+  // both for display and for the Google Sheets sync — they must include
+  // the manually-entered misc fields (attackDamage, healingDone), not
+  // just the roll/spell-derived sub-totals, or synced data silently
+  // drops whatever a DM typed into those fields directly.
+  stats.totalDamage = stats.totalNonSpellDamage + stats.totalSpellDamage + (stats.attackDamage || 0);
+  stats.totalHealing = stats.totalNonSpellHealing + stats.totalSpellHealing + (stats.healingDone || 0);
 }
 
 function formatRolls(rolls) {
@@ -4953,11 +4955,11 @@ function renderEditorStats(characterName) {
   statField("Money Spent:", moneyInput);
 
   const dmgInput = document.createElement("input"); dmgInput.type = "number"; dmgInput.value = stats.attackDamage ?? 0;
-  dmgInput.addEventListener("input", () => { stats.attackDamage = parseFloat(dmgInput.value) || 0; updateSideStats(); });
+  dmgInput.addEventListener("input", () => { stats.attackDamage = parseFloat(dmgInput.value) || 0; recalcCharacterStats(characterName); updateSideStats(); });
   statField("MISC Damage:", dmgInput);
 
   const healInput = document.createElement("input"); healInput.type = "number"; healInput.value = stats.healingDone ?? 0;
-  healInput.addEventListener("input", () => { stats.healingDone = parseFloat(healInput.value) || 0; updateSideStats(); });
+  healInput.addEventListener("input", () => { stats.healingDone = parseFloat(healInput.value) || 0; recalcCharacterStats(characterName); updateSideStats(); });
   statField("MISC Healing:", healInput);
 
   const killedInput = document.createElement("input"); killedInput.type = "number"; killedInput.value = stats.timesKilled ?? 0;
