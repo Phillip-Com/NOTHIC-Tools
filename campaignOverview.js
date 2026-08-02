@@ -22,7 +22,7 @@ const CAMPAIGN_STAT_ROWS = [
   { key: "timesKilled",      label: "Times Killed",      highest: "Oof",                          lowest: "Yah!" },
   { key: "natural1s",        label: "Nat 1",             highest: "That's Rough Buddy",           lowest: "Go Touch Grass" },
   { key: "natural20s",       label: "Nat 20",            highest: "Lucky",                        lowest: "That Sucks" },
-  { key: "damageDealt",      label: "Damage",            highest: "Now That's a Lot of Damage!",  lowest: "Pfft, Weak" },
+  { key: "totalDamage",      label: "Damage",            highest: "Now That's a Lot of Damage!",  lowest: "Pfft, Weak" },
   { key: "totalHealing",     label: "Healing",           highest: "MEDIC!",                       lowest: "What Can I Say Except, I Attack" },
   { key: "moneySpent",       label: "Money Spent",       highest: "Ok Rich",                       lowest: "I'm Not Made of Money" }
 ];
