@@ -644,12 +644,6 @@ window.switchTab = function (tabId) {
   }
 };
 
-function playSoundFromUrl(url, vol) {
-  const audio = new Audio(url);
-  audio.volume = vol;
-  audio.play().catch(err => console.log("Playback failed:", err));
-}
-
 function renderStatsSummary() {
   const grid = document.getElementById("summary-grid");
   if (!grid) return;
@@ -750,17 +744,6 @@ function renderStatsSummary() {
   }
 
   saveGameData();
-}
-
-function triggerEasterEgg() {
-  const img = document.getElementById("mystery-image");
-  if (!img) return;
-  if (Math.random() < 0.001) {
-    if (Math.random() < 0.5) playSoundFromUrl("https://www.myinstants.com/media/sounds/cave21.mp3", 0.5);
-    else playSoundFromUrl("https://www.myinstants.com/media/sounds/cave1_gqB8CwT.mp3", 0.5);
-    const current = parseFloat(img.style.opacity) || 0;
-    img.style.opacity = Math.min(current + 0.05, 1);
-  }
 }
 
 // -------------------- HELPERS --------------------
@@ -2692,7 +2675,6 @@ function openUnifiedActionModal(characterName, type, includeDamage = false) {
 
     const rollLabel = document.createElement("p");
     rollLabel.textContent = "Select D20 Roll:";
-    playSoundFromUrl("https://cdn.pixabay.com/audio/2022/03/20/audio_88eba5c9da.mp3", 0.3);
     container.appendChild(rollLabel);
 
     const rollButtons = document.createElement("div");
@@ -2706,8 +2688,6 @@ function openUnifiedActionModal(characterName, type, includeDamage = false) {
 
       btn.onclick = () => {
         selectedRoll = i;
-        if (i === 1) playSoundFromUrl("https://cdn.pixabay.com/audio/2022/03/10/audio_e4e7943871.mp3", 0.3);
-        if (i === 20) playSoundFromUrl("https://cdn.pixabay.com/audio/2021/08/09/audio_2e957962fc.mp3", 1.0);
         [...rollButtons.children].forEach(b => { b.style.background = "#222"; b.style.color = "#fff"; b.style.transform = "scale(1)"; });
         btn.style.background = "red";
         btn.style.color = "#fff";
@@ -2760,7 +2740,6 @@ function openUnifiedActionModal(characterName, type, includeDamage = false) {
 
     const cancelBtn = document.getElementById("modal-cancel");
     cancelBtn.onclick = () => { hideModal(); resolve(null); };
-    triggerEasterEgg();
   });
 }
 
@@ -3914,7 +3893,6 @@ function renderInitiative() {
 }
 
 async function startCombat() {
-  playSoundFromUrl("https://cdn.pixabay.com/audio/2024/08/07/audio_b41cb4e0ac.mp3", 0.2);
   initiativeOrder = [];
   combatStarted = true;
   updateCombatTabVisibility();
@@ -4237,7 +4215,6 @@ async function handleSpellsCast(name) {
   if (!stats) return;
   const spell = await openCastSpellModal(name, SPELL_DATABASE);
   if (!spell) return;
-  playSoundFromUrl("https://cdn.pixabay.com/audio/2021/08/02/audio_4527d82a75.mp3", 0.3);
   stats.spellHistory.push(spell);
   stats.spellsCast = stats.spellHistory.length;
   recalcCharacterStats(name);
@@ -4247,28 +4224,24 @@ async function handleSpellsCast(name) {
 }
 
 function handleMoneySpent(name) {
-  playSoundFromUrl("https://cdn.pixabay.com/audio/2022/12/17/audio_43e9af63f3.mp3", 0.2);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
   return inputAction(name, "money", "money spent");
 }
 
 function handleDamageTaken(name) {
-  playSoundFromUrl("https://cdn.pixabay.com/audio/2025/08/03/audio_639437072a.mp3", 0.3);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
   return inputAction(name, "damage", "damage");
 }
 
 function handleHealingDone(name) {
-  playSoundFromUrl("https://cdn.pixabay.com/download/audio/2021/08/09/audio_07e661df12.mp3?filename=health-pickup-6860.mp3", 0.4);
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
   return inputAction(name, "healing", "healing");
 }
 
 function handleTimesKilled(name) {
-  playSoundFromUrl("https://us-tuna-sounds-files.voicemod.net/d23c1e88-eb51-448e-8ad1-9abde6e2cad7-1659635683462.mp3", 0.5);
   name = getStatName(name);
   const stats = gameData.characterStats[name];
   if (!stats) { console.warn(`Stats not found for character: ${name}`); return; }
