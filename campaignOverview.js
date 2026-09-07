@@ -1,7 +1,10 @@
 // -------------------- CAMPAIGN OVERVIEW --------------------
 // Sits above the Saved Session Data tables: a "campaign titles" table
 // (who holds the highest/lowest campaign total for each tracked stat)
-// plus two pie charts breaking down total D20 rolls per character/NPC.
+// plus two pie charts breaking down total D20 rolls per character/NPC,
+// stacked vertically into one exported image (stackChartsVertically)
+// instead of two side-by-side ones, so they don't squeeze the titles
+// table into a narrow column.
 // Reuses the same fetched Google Sheet session data as sessionData.js
 // (assignCharacterColors, getThemeColor, copyAndSaveImage all live there
 // and are loaded first, so this file can call them directly).
@@ -19,7 +22,7 @@ const CAMPAIGN_STAT_ROWS = [
   { key: "timesKilled",      label: "Times Killed",      highest: "Oof",                          lowest: "Yah!" },
   { key: "natural1s",        label: "Nat 1",             highest: "That's Rough Buddy",           lowest: "Go Touch Grass" },
   { key: "natural20s",       label: "Nat 20",            highest: "Lucky",                        lowest: "That Sucks" },
-  { key: "damageDealt",      label: "Damage",            highest: "Now That's a Lot of Damage!",  lowest: "Pfft, Weak" },
+  { key: "totalDamage",      label: "Damage",            highest: "Now That's a Lot of Damage!",  lowest: "Pfft, Weak" },
   { key: "totalHealing",     label: "Healing",           highest: "MEDIC!",                       lowest: "What Can I Say Except, I Attack" },
   { key: "moneySpent",       label: "Money Spent",       highest: "Ok Rich",                       lowest: "I'm Not Made of Money" }
 ];
@@ -67,30 +70,58 @@ function computeCampaignTotals(charactersData) {
 
 // -------------------- TITLES TABLE --------------------
 
+// A tied record (two or more characters sharing the highest/lowest
+// total) has no single title-holder, so it's rendered in this neutral
+// color instead of any character's color.
+const TIED_RECORD_COLOR = "#ffffff";
+
 // Reduces each stat down to who holds the highest/lowest campaign total
 // and what that record's joke title is — shared by the DOM table and
-// the exported canvas image so they never drift apart.
+// the exported canvas image so they never drift apart. Ties (multiple
+// characters sharing the extreme value) are flagged rather than
+// arbitrarily picking a "winner".
 function computeCampaignTitleRows(charactersData, characterColors) {
-  const names = Object.keys(charactersData);
+  // NPC sheets never hold a highest/lowest title — only real characters
+  // are eligible, same as the "without NPCs" roll chart.
+  const names = Object.keys(charactersData).filter(name => !name.toUpperCase().includes("NPC"));
   const totals = computeCampaignTotals(charactersData);
   const statRows = CAMPAIGN_STAT_ROWS.concat(
     getCurrentEdition() === "pathfinder" ? CAMPAIGN_STAT_ROWS_PATHFINDER : []
   );
 
   return statRows.map(statRow => {
-    let highestName = names[0], highestValue = -Infinity;
-    let lowestName = names[0], lowestValue = Infinity;
+    const valueFor = (name) => totals[name]?.[statRow.key] ?? 0;
+
+    let highestValue = -Infinity;
+    let lowestValue = Infinity;
 
     names.forEach(name => {
-      const value = totals[name]?.[statRow.key] ?? 0;
-      if (value > highestValue) { highestValue = value; highestName = name; }
-      if (value < lowestValue) { lowestValue = value; lowestName = name; }
+      const value = valueFor(name);
+      if (value > highestValue) highestValue = value;
+      if (value < lowestValue) lowestValue = value;
     });
+
+    const highestNames = names.filter(name => valueFor(name) === highestValue);
+    const lowestNames = names.filter(name => valueFor(name) === lowestValue);
+    const highestTied = highestNames.length > 1;
+    const lowestTied = lowestNames.length > 1;
 
     return {
       label: statRow.label,
-      highest: { text: statRow.highest, name: highestName, value: highestValue, color: characterColors[highestName] },
-      lowest: { text: statRow.lowest, name: lowestName, value: lowestValue, color: characterColors[lowestName] }
+      highest: {
+        text: statRow.highest,
+        names: highestNames,
+        value: highestValue,
+        tied: highestTied,
+        color: highestTied ? TIED_RECORD_COLOR : characterColors[highestNames[0]]
+      },
+      lowest: {
+        text: statRow.lowest,
+        names: lowestNames,
+        value: lowestValue,
+        tied: lowestTied,
+        color: lowestTied ? TIED_RECORD_COLOR : characterColors[lowestNames[0]]
+      }
     };
   });
 }
@@ -130,14 +161,14 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
     highestTd.textContent = row.highest.text;
     highestTd.style.color = row.highest.color;
     highestTd.style.fontWeight = "bold";
-    highestTd.title = `${row.highest.name}: ${row.highest.value}`;
+    highestTd.title = `${row.highest.names.join(", ")}: ${row.highest.value}${row.highest.tied ? " (tied)" : ""}`;
     tr.appendChild(highestTd);
 
     const lowestTd = document.createElement("td");
     lowestTd.textContent = row.lowest.text;
     lowestTd.style.color = row.lowest.color;
     lowestTd.style.fontWeight = "bold";
-    lowestTd.title = `${row.lowest.name}: ${row.lowest.value}`;
+    lowestTd.title = `${row.lowest.names.join(", ")}: ${row.lowest.value}${row.lowest.tied ? " (tied)" : ""}`;
     tr.appendChild(lowestTd);
 
     table.appendChild(tr);
@@ -146,7 +177,7 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
   container.innerHTML = "";
 
   const copyBtn = document.createElement("button");
-  copyBtn.textContent = "📋 Copy/Save Image";
+  copyBtn.textContent = "📋 Save Image";
   copyBtn.style.display = "block";
   copyBtn.style.marginBottom = "8px";
   copyBtn.onclick = () => {
@@ -430,33 +461,50 @@ function drawPieChart({ title, entries, colors }) {
   drawSideLabels(rightSlices, 1);
   drawSideLabels(leftSlices, -1);
 
+  // Logical (unscaled) width/height alongside the canvas, so callers can
+  // composite this onto a larger canvas without re-deriving the size from
+  // a scaled canvas.width/height or an "auto" CSS height.
+  return { canvas, width: canvasWidth, height: canvasHeight };
+}
+
+// Stacks two already-drawn pie-chart canvases vertically into one new
+// canvas — used so both roll-percentage charts export as a single image
+// instead of two, and so the on-screen version takes up one column
+// instead of two side by side (which was squishing the titles table).
+function stackChartsVertically(charts) {
+  const scale = 2;
+  const gap = 16;
+
+  const width = Math.max(...charts.map(c => c.width));
+  const height = charts.reduce((sum, c) => sum + c.height, 0) + gap * (charts.length - 1);
+
+  const bg = getThemeColor("--surfaces", "#1e2329");
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  canvas.style.width = "100%";
+  canvas.style.maxWidth = `${width}px`;
+  canvas.style.height = "auto";
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let y = 0;
+  charts.forEach(chart => {
+    ctx.drawImage(chart.canvas, 0, y * scale, chart.width * scale, chart.height * scale);
+    y += chart.height + gap;
+  });
+
   return canvas;
 }
 
-function renderPieChartCard(container, { title, entries, colors, filename }) {
-  container.innerHTML = "";
-
-  const total = entries.reduce((sum, e) => sum + e.value, 0);
-  if (entries.length === 0 || total <= 0) {
-    container.innerHTML = "<p>No roll data to chart.</p>";
-    return;
-  }
-
-  const canvas = drawPieChart({ title, entries, colors });
-  container.appendChild(canvas);
-
-  const btn = document.createElement("button");
-  btn.textContent = "📋 Copy/Save Image";
-  btn.style.display = "block";
-  btn.style.marginTop = "8px";
-  btn.onclick = () => copyAndSaveImage(canvas, filename);
-  container.appendChild(btn);
-}
-
 function renderRollCharts(charactersData, characterColors) {
-  const npcContainer = document.getElementById("campaign-rolls-chart-npc-container");
-  const pcContainer = document.getElementById("campaign-rolls-chart-pc-container");
-  if (!npcContainer || !pcContainer) return;
+  const container = document.getElementById("campaign-rolls-chart-container");
+  if (!container) return;
+
+  container.innerHTML = "";
 
   const totals = computeCampaignTotals(charactersData);
   const names = Object.keys(charactersData);
@@ -470,19 +518,24 @@ function renderRollCharts(charactersData, characterColors) {
 
   const pcEntries = allEntries.filter(e => !e.name.toUpperCase().includes("NPC"));
 
-  renderPieChartCard(npcContainer, {
-    title: "Percentage of Rolls With NPCs",
-    entries: allEntries,
-    colors: characterColors,
-    filename: "rolls-with-npcs.png"
-  });
+  if (allEntries.length === 0) {
+    container.innerHTML = "<p>No roll data to chart.</p>";
+    return;
+  }
 
-  renderPieChartCard(pcContainer, {
-    title: "Percentage of Rolls",
-    entries: pcEntries,
-    colors: characterColors,
-    filename: "rolls-without-npcs.png"
-  });
+  const withNpcsChart = drawPieChart({ title: "Percentage of Rolls With NPCs", entries: allEntries, colors: characterColors });
+  const withoutNpcsChart = drawPieChart({ title: "Percentage of Rolls", entries: pcEntries, colors: characterColors });
+
+  const combined = stackChartsVertically([withNpcsChart, withoutNpcsChart]);
+
+  const btn = document.createElement("button");
+  btn.textContent = "📋 Save Image";
+  btn.style.display = "block";
+  btn.style.marginBottom = "8px";
+  btn.onclick = () => copyAndSaveImage(combined, "campaign-rolls.png");
+  container.appendChild(btn);
+
+  container.appendChild(combined);
 }
 
 // -------------------- ORCHESTRATION --------------------
@@ -499,8 +552,6 @@ function resetCampaignOverview(message) {
   const titles = document.getElementById("campaign-titles-output");
   if (titles) titles.innerHTML = `<p>${message}</p>`;
 
-  const npcContainer = document.getElementById("campaign-rolls-chart-npc-container");
-  const pcContainer = document.getElementById("campaign-rolls-chart-pc-container");
-  if (npcContainer) npcContainer.innerHTML = "";
-  if (pcContainer) pcContainer.innerHTML = "";
+  const chartContainer = document.getElementById("campaign-rolls-chart-container");
+  if (chartContainer) chartContainer.innerHTML = "";
 }
