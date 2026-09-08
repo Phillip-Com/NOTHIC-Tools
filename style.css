@@ -636,9 +636,18 @@ table.compact-table {
   padding: 16px;
   box-shadow: var(--panel-shadow);
   overflow-y: auto;
+  /* No horizontal scrollbar, ever — content inside (Cast Spell's grid
+     and its inputs/selects) is fixed to shrink with this panel instead
+     of relying on scrolling to reach clipped content. */
+  overflow-x: hidden;
   max-height: calc(100vh - 40px);
   min-width: 0;
   display: none;
+  /* Lets content inside (e.g. the Cast Spell grid) query this panel's
+     actual rendered width instead of the viewport's — the panel's own
+     width comes from the grid track, not its content, so this can't
+     create a circular sizing dependency. */
+  container-type: inline-size;
 }
 
 .tracker-center.modal-active {
@@ -659,6 +668,128 @@ table.compact-table {
 
 .tracker-layout:not(:has(.tracker-center.modal-active)) {
   grid-template-columns: 3.5fr 1fr;
+}
+
+/* ============================================================
+   RESPONSIVE LAYOUT FIXES
+   Below a narrow viewport (or, for the Cast Spell grid, a narrow
+   .tracker-center container), stack the fixed/fr column mixes below
+   into a single column instead of letting them squeeze each other
+   (and overlap/clip) as the window shrinks. Base rules come first so
+   the @media/@container overrides that follow can actually win the
+   cascade at equal specificity.
+   ============================================================ */
+
+/* Character Sheet tab: editor column + Active/Inactive switcher. */
+.sheet-tab-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.sheet-tab-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sheet-tab-right {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--surfaces);
+  padding-left: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Character Sheet tab: skills grid — column count adapts to available
+   width instead of hardcoding 6 columns that can never shrink. */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* Character Sheet tab: saving throws grid — same reasoning as
+   .skills-grid; the old repeat(6, minmax(30px,1fr)) let 6 cards
+   squeeze down to a 30px floor, far too narrow for their content. */
+.save-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* Cast Spell modal: config / attack-save table / spell library.
+   Queries .tracker-center's actual rendered width (see its
+   container-type above), since that column's pixel width already
+   varies with the 3-column tracker-layout ratio, not just the
+   viewport. */
+.spell-cast-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(280px, 1fr) minmax(220px, 300px);
+  gap: 16px;
+  align-items: start;
+  max-height: 75vh;
+}
+
+.spell-cast-col {
+  min-width: 0;
+}
+
+.spell-cast-library {
+  border-left: 1px solid var(--surfaces);
+  padding-left: 12px;
+  overflow: auto;
+  max-height: 70vh;
+}
+
+@media (max-width: 1100px) {
+  .tracker-layout,
+  .tracker-layout:not(:has(.tracker-center.modal-active)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .sheet-tab-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .sheet-tab-left,
+  .sheet-tab-right {
+    min-height: auto;
+    overflow-y: visible;
+  }
+
+  .sheet-tab-right {
+    border-left: none;
+    border-top: 1px solid var(--surfaces);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+@container (max-width: 700px) {
+  .spell-cast-grid {
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+
+  .spell-cast-library {
+    border-left: none;
+    border-top: 1px solid var(--surfaces);
+    padding-left: 0;
+    padding-top: 12px;
+  }
 }
 
 #summary.active ~ * .tracker-center,

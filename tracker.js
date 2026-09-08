@@ -1024,17 +1024,11 @@ function renderSheetTab() {
 
   // ── Two-column layout ──────────────────────────────────────────
   const layout = document.createElement("div");
-  layout.style.cssText = `
-    display: grid;
-    grid-template-columns: 1fr 260px;
-    gap: 16px;
-    height: 100%;
-    min-height: 0;
-  `;
+  layout.className = "sheet-tab-layout";
 
   // ── LEFT COLUMN ────────────────────────────────────────────────
   const leftCol = document.createElement("div");
-  leftCol.style.cssText = `display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;`;
+  leftCol.className = "sheet-tab-left";
 
   // Top bar: Add / Remove buttons
   const topBar = document.createElement("div");
@@ -1085,15 +1079,7 @@ function renderSheetTab() {
 
   // ── RIGHT COLUMN ────────────────────────────────────────────────
   const rightCol = document.createElement("div");
-  rightCol.style.cssText = `
-    display:flex;
-    flex-direction:column;
-    gap:0;
-    border-left:1px solid var(--surfaces);
-    padding-left:12px;
-    min-height:0;
-    overflow-y:auto;
-  `;
+  rightCol.className = "sheet-tab-right";
 
   const rightTitle = document.createElement("div");
   rightTitle.style.cssText = `font-weight:bold;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--secondary-text);padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--surfaces);`;
@@ -1557,12 +1543,7 @@ function buildInlineSheetEditor(name, sheet) {
     if (!sheet.savingThrowProficiencies) sheet.savingThrowProficiencies = {};
 
     const saveGrid = document.createElement("div");
-    saveGrid.style.cssText = `
-display:grid;
-grid-template-columns:repeat(6,minmax(30px,1fr));
-gap:8px;
-align-items:stretch;
-`;
+    saveGrid.className = "save-grid";
 
     ABILITY_KEYS.forEach(key => {
       if (!sheet.savingThrowProficiencies[key]) {
@@ -1584,15 +1565,15 @@ min-width:0;
 `;
 
       const header = document.createElement("div");
-      header.style.cssText = `display:flex;align-items:center;justify-content:space-between;`;
+      header.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;`;
 
       const keyLabel = document.createElement("span");
       keyLabel.textContent = ABILITY_LABELS[key] + " SAVE";
-      keyLabel.style.cssText = `font-weight:bold;font-size:0.9rem;`;
+      keyLabel.style.cssText = `font-weight:bold;font-size:0.9rem;min-width:0;overflow-wrap:anywhere;`;
 
       const totalSpan = document.createElement("span");
       totalSpan.textContent = modStr(total);
-      totalSpan.style.cssText = `font-size:1.1rem;font-weight:bold;color:var(--secondary-accent);`;
+      totalSpan.style.cssText = `font-size:1.1rem;font-weight:bold;color:var(--secondary-accent);flex-shrink:0;`;
 
       header.appendChild(keyLabel);
       header.appendChild(totalSpan);
@@ -1639,14 +1620,14 @@ border-radius:4px;
 
       // Misc bonus
       const miscRow = document.createElement("div");
-      miscRow.style.cssText = `display:flex;align-items:center;gap:6px;`;
+      miscRow.style.cssText = `display:flex;align-items:center;gap:6px;min-width:0;`;
       const miscLabel = document.createElement("label");
       miscLabel.textContent = "Misc:";
-      miscLabel.style.cssText = `font-size:0.8rem;min-width:36px;`;
+      miscLabel.style.cssText = `font-size:0.8rem;min-width:36px;flex-shrink:0;`;
       const miscInp = document.createElement("input");
       miscInp.type = "number";
       miscInp.value = saveData.miscBonus ?? 0;
-      miscInp.style.cssText = `flex:1;font-size:0.8rem;padding:3px 5px;background:var(--background);border:1px solid var(--surfaces);color:var(--primary-text);border-radius:4px;`;
+      miscInp.style.cssText = `flex:1 1 auto;min-width:0;width:100%;box-sizing:border-box;font-size:0.8rem;padding:3px 5px;background:var(--background);border:1px solid var(--surfaces);color:var(--primary-text);border-radius:4px;`;
       miscInp.addEventListener("input", () => {
         saveData.miscBonus = parseInt(miscInp.value) || 0;
         renderSaveSection();
@@ -1700,12 +1681,7 @@ border-radius:4px;
     });
 
     const grid = document.createElement("div");
-    grid.style.cssText = `
-display:grid;
-grid-template-columns:repeat(6,minmax(180px,1fr));
-gap:8px;
-align-items:stretch;
-`;
+    grid.className = "skills-grid";
 
     allSkills.forEach(sk => {
       const skillKey = sk.custom ? sk.id : sk.name;
@@ -1715,18 +1691,19 @@ align-items:stretch;
 
       const card = document.createElement("div");
       card.style.cssText = `
-display:grid;
-grid-template-columns:auto 1fr;
+display:flex;
+flex-direction:column;
 gap:6px;
 padding:8px;
 background:var(--background);
 border:1px solid var(--surfaces);
 border-radius:8px;
 min-width:0;
-align-items:start;
 `;
 
-      // Total modifier badge
+      // Total modifier badge — its own row below the name (see
+      // controlsRow below) so it never competes with the name for
+      // width the way sharing a grid column used to.
       const badge = document.createElement("span");
       badge.textContent = modStr(total);
       badge.style.cssText = `
@@ -1820,6 +1797,7 @@ gap:4px;
         skillLabel.style.cssText = `
     flex:1;
     font-size:0.85rem;
+    overflow-wrap:anywhere;
   `;
 
         skillLabel.innerHTML = `
@@ -1835,14 +1813,14 @@ gap:4px;
       // Prof type select
       const profSel = document.createElement("select");
       profSel.style.cssText = `
-width:100%;
+flex:1 1 70px;
+min-width:0;
 font-size:0.78rem;
 padding:2px 4px;
 background:var(--background);
 border:1px solid var(--surfaces);
 color:var(--primary-text);
 border-radius:4px;
-min-width:0;
 `;
       ["none", "proficient", "expertise"].forEach(opt => {
         const o = document.createElement("option");
@@ -1865,8 +1843,9 @@ min-width:0;
       miscInp.value = skData.miscBonus ?? 0;
       miscInp.title = "Misc bonus";
       miscInp.style.cssText = `
-width:100%;
+flex:0 1 46px;
 min-width:0;
+box-sizing:border-box;
 font-size:0.78rem;
 padding:2px 4px;
 background:var(--background);
@@ -1906,13 +1885,21 @@ text-align:center;
         };
       }
 
-      card.appendChild(badge);
-      card.appendChild(skillWrap);
-      card.appendChild(profSel);
-      card.appendChild(miscInp);
+      // Modifier badge + proficiency + misc bonus live in their own row
+      // below the name, instead of sharing a grid column with it — that
+      // sharing is what let the select's content force the name's
+      // column too narrow.
+      const controlsRow = document.createElement("div");
+      controlsRow.style.cssText = `display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;`;
+      controlsRow.appendChild(badge);
+      controlsRow.appendChild(profSel);
+      controlsRow.appendChild(miscInp);
       if (sk.custom) {
-        card.appendChild(deleteBtn);
+        controlsRow.appendChild(deleteBtn);
       }
+
+      card.appendChild(skillWrap);
+      card.appendChild(controlsRow);
       grid.appendChild(card);
     });
 
@@ -2513,7 +2500,7 @@ text-align:center;
         if (!spell.scaling) {
 
           spell.scaling = {
-            type: "spellSlot",
+            type: "Slot",
             every: 1,
             add: 1
           };
@@ -2611,8 +2598,8 @@ text-align:center;
           labeledField(
             "Scaling Type",
             selectInput(
-              ["spellSlot", "characterLevel", "none"],
-              spell.scaling?.type ?? "spellSlot",
+              ["Slot", "Level", "None"],
+              spell.scaling?.type ?? "Slot",
               v => spell.scaling.type = v
             )
           )
@@ -2829,7 +2816,7 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
     const countInput = document.createElement("input");
     countInput.type = "number";
     countInput.min = 1;
-    countInput.max = 90;
+    countInput.max = 20;
     countInput.value = 1;
     countInput.style.width = "60px";
     container.appendChild(countLabel);
@@ -3166,18 +3153,14 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
     };
 
     const wrapper = document.createElement("div");
-    wrapper.style.cssText = `
-      display:grid;
-      grid-template-columns:320px 1fr 300px;
-      gap:16px;
-      align-items:start;
-      max-height:75vh;
-    `;
+    wrapper.className = "spell-cast-grid";
 
     const left = document.createElement("div");
+    left.className = "spell-cast-col";
     const right = document.createElement("div");
+    right.className = "spell-cast-col";
     const spellLibrary = document.createElement("div");
-    spellLibrary.style.cssText = `border-left:1px solid var(--surfaces);padding-left:12px;overflow:auto;max-height:70vh;`;
+    spellLibrary.className = "spell-cast-col spell-cast-library";
     wrapper.append(left, right, spellLibrary);
 
     const attackSection = document.createElement("div");
@@ -3193,6 +3176,21 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       if (min !== null) input.min = min;
       if (max !== null) input.max = max;
       input.value = obj[key] ?? 0;
+      // These sit directly in a grid column (e.g. buildAttackRow's
+      // 120px 1fr 1fr 1fr) — without an explicit width/min-width, an
+      // unstyled number input keeps its browser-default intrinsic
+      // width and refuses to shrink with the column, overflowing it.
+      input.style.cssText = `
+        width:100%;
+        min-width:0;
+        box-sizing:border-box;
+        padding:4px 6px;
+        background:var(--background);
+        border:1px solid var(--surfaces);
+        color:var(--primary-text);
+        border-radius:4px;
+        font-size:0.9rem;
+      `;
       input.addEventListener("input", () => {
         obj[key] = parseInt(input.value) || 0;
         if (onChange) onChange();
@@ -3262,10 +3260,10 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
         return { attacks: baseAttacks, saves: baseSaves };
       }
       let increments = 0;
-      if (scaling.type === "spellSlot") {
+      if (scaling.type === "Slot") {
         increments = Math.floor(Math.max(0, slotLevel - baseLevel) / (scaling.every || 1));
-      } else if (scaling.type === "characterLevel") {
-        // characterLevel scaling: every N levels above 0
+      } else if (scaling.type === "Level") {
+        // Level scaling: every N levels above 0
         console.log("HIT: LEVEL")
         if (charLevel > 16) {
           increments = 3;
@@ -3309,6 +3307,20 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       label.textContent = `Save ${index + 1}`;
 
       const targetSelect = document.createElement("select");
+      // Same shrink issue as createBoundInput: an unstyled <select>
+      // sizes to its widest character-name option and won't shrink
+      // with its 1.5fr grid column otherwise.
+      targetSelect.style.cssText = `
+        width:100%;
+        min-width:0;
+        box-sizing:border-box;
+        padding:4px 6px;
+        background:var(--background);
+        border:1px solid var(--surfaces);
+        color:var(--primary-text);
+        border-radius:4px;
+        font-size:0.85rem;
+      `;
       const emptyOpt = document.createElement("option");
       emptyOpt.value = ""; emptyOpt.textContent = "-- Select Target --";
       targetSelect.appendChild(emptyOpt);
@@ -3472,8 +3484,8 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       slotLevelInput.value = spell.baseLevel;
       spell.slotLevel = spell.baseLevel;
 
-      // Show/hide slot row: only relevant for spellSlot scaling
-      // (still show for characterLevel — slot level doesn't affect it but keep UI consistent)
+      // Show/hide slot row: only relevant for Slot scaling
+      // (still show for Level — slot level doesn't affect it but keep UI consistent)
       slotLevelRow.style.display = "flex";
 
       if (getCurrentEdition() === "pathfinder") {
@@ -4047,7 +4059,6 @@ function showModal(title, bodyContent, onConfirm = null) {
   const modal = document.getElementById("action-modal");
   const center = document.getElementById("tracker-center");
   const placeholder = document.getElementById("center-placeholder");
-  const trackerLayout = document.querySelector(".tracker-layout");
 
   document.getElementById("modal-title").textContent = title;
   const modalBody = document.getElementById("modal-body");
@@ -4066,7 +4077,6 @@ function showModal(title, bodyContent, onConfirm = null) {
     center.classList.add("modal-active");
     center.style.display = "block";
   }
-  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "400px 1.5fr 413px";
   if (placeholder) placeholder.style.display = "none";
 }
 
@@ -4074,14 +4084,12 @@ function hideModal() {
   const modal = document.getElementById("action-modal");
   const center = document.getElementById("tracker-center");
   const placeholder = document.getElementById("center-placeholder");
-  const trackerLayout = document.querySelector(".tracker-layout");
 
   modal.classList.add("hidden");
   if (center) {
     center.classList.remove("modal-active");
     center.style.display = "none";
   }
-  if (trackerLayout) trackerLayout.style.gridTemplateColumns = "3.5fr 1fr";
   if (placeholder) placeholder.style.display = "block";
 }
 
