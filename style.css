@@ -75,6 +75,53 @@ h1, h2, h3 {
 
 
 /* ============================================================
+   ACTION QUEUE
+   Stacked, independently confirmable roll/input cards in the
+   tracker's center column. Each card is a .panel; these add the
+   queue-specific bits on top.
+   ============================================================ */
+
+.queue-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.queue-card-title {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--primary-accent);
+  color: var(--secondary-text);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.queue-card-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.queue-cancel-btn {
+  opacity: 0.85;
+  border-color: var(--secondary-text);
+}
+
+.queue-cancel-btn:hover {
+  opacity: 1;
+}
+
+.queue-card-flash {
+  animation: queue-card-flash 0.5s ease 2;
+}
+
+@keyframes queue-card-flash {
+  50% { box-shadow: 0 0 0 3px var(--secondary-accent); }
+}
+
+
+/* ============================================================
    BUTTONS
    ============================================================ */
 

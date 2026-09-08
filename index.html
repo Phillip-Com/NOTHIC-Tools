@@ -360,14 +360,18 @@
 
           </div>
 
-          <!-- CENTER: modal zone -->
+          <!-- CENTER: action queue zone -->
           <div id="tracker-center" class="tracker-center">
+            <!-- Legacy single-modal scaffolding (showModal/hideModal) — kept
+                 until every handler is migrated onto the action queue below,
+                 then removed. -->
             <div id="action-modal" class="hidden">
               <h3 id="modal-title"></h3>
               <div id="modal-body"></div>
               <button id="modal-confirm">Confirm</button>
               <button id="modal-cancel">Cancel</button>
             </div>
+            <div id="action-queue"></div>
             <div id="center-placeholder" style="opacity:0.3; font-size:0.9rem; text-align:center; margin-top:40px;">
               Roll actions will appear here
             </div>

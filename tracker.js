@@ -11,6 +11,8 @@ let npcCount = 0;
 let selectedTag = null;
 let reactionMode = false;
 let reactionCharacter = null;
+let actionQueue = [];      // pending roll/input cards, index 0 = newest (unshift on add)
+let queueIdCounter = 0;
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw313q2KiZ454Vg-HrSy2UutCvKbf3ZX9xN_x71qZ72CwypSnfPmVwgkqqZbk7XE-lQAA/exec";
 const ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
 const ABILITY_LABELS = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
@@ -647,16 +649,22 @@ window.switchTab = function (tabId) {
 
 
   if (fullWidthTabs.includes(tabId)) {
-    if (centerPanel) centerPanel.style.display = "none";
+    // No inline centerPanel.style.display override needed here — style.css
+    // already force-hides .tracker-center via
+    // "#summary.active/#character-sheets.active ~ * .tracker-center { display: none !important; }"
+    // regardless of queue state. Setting one here used to leave a stale
+    // inline display:none behind after navigating away, which then
+    // silently beat the action queue's own .modal-active visibility class
+    // once back on a normal tab — the reported "queue vanishes and won't
+    // come back until you queue something new" bug.
     if (sideStats) sideStats.style.display = "none";
     if (trackerLayout) trackerLayout.style.gridTemplateColumns = "1fr";
   } else {
     if (sideStats) sideStats.style.display = "block";
-    // Center only shows when a modal is open, handled by modal-active class
-    if (centerPanel && !centerPanel.classList.contains("modal-active")) {
-      centerPanel.style.display = "none";
-    }
     if (trackerLayout) trackerLayout.style.gridTemplateColumns = "";
+    // Let the action queue decide the center panel's visibility instead of
+    // duplicating (and drifting out of sync with) its own rules here.
+    updateCenterVisibility();
   }
 
   // Render logic
@@ -933,6 +941,7 @@ function blankSheet(name, edition) {
     skillProficiencies,
     skills: [],
     attacks: [],
+    attacksPerTurn: 1,
     spellAttackBonus: 0,
     spells: [],
     active: true,
@@ -977,6 +986,7 @@ function removeCharacter(name) {
   delete gameData.characterStats[name];
   delete gameData.characterSheets[name];
   if (selectedCharacter === name) selectedCharacter = gameData.characters[0] || null;
+  discardQueueItemsForCharacter(name);
   saveGameData("Removed character: " + name);
   renderCharacterButtons();
   renderSheetTab();
@@ -1969,6 +1979,9 @@ text-align:center;
       display:flex;
       justify-content:space-between;
       align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      min-width:0;
     `;
 
     const title = document.createElement("h3");
@@ -1983,6 +1996,39 @@ text-align:center;
       letter-spacing:0.06em;
       flex:1;
     `;
+
+    // Default number of attack rolls prefilled into "Number of Rolls"
+    // when Attack is rolled from the Stats page for this character.
+    const attacksPerTurnWrap = document.createElement("div");
+    attacksPerTurnWrap.style.cssText = `
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      flex-shrink:0;
+    `;
+
+    const attacksPerTurnLabel = document.createElement("label");
+    attacksPerTurnLabel.textContent = "Attacks / Turn";
+    attacksPerTurnLabel.style.cssText = `
+      font-size:0.7rem;
+      color:var(--secondary-text);
+      font-weight:bold;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+      white-space:nowrap;
+    `;
+
+    const attacksPerTurnInput = numInput(
+      sheet.attacksPerTurn ?? 1,
+      v => { sheet.attacksPerTurn = Math.max(1, Math.min(20, v || 1)); },
+      1,
+      20
+    );
+    attacksPerTurnInput.title = "Default number of attack rolls prefilled when rolling Attack from the Stats page.";
+    attacksPerTurnInput.style.width = "60px";
+
+    attacksPerTurnWrap.appendChild(attacksPerTurnLabel);
+    attacksPerTurnWrap.appendChild(attacksPerTurnInput);
 
     const addBtn = document.createElement("button");
     addBtn.textContent = "+ Add Attack";
@@ -2003,6 +2049,7 @@ text-align:center;
     };
 
     header.appendChild(title);
+    header.appendChild(attacksPerTurnWrap);
     header.appendChild(addBtn);
 
     section.appendChild(header);
@@ -2694,80 +2741,6 @@ window.createSheetForCharacter = createSheetForCharacter;
 window.toggleCharacterActive = toggleCharacterActive;
 
 // -------------------- D20 & INPUT --------------------
-function openUnifiedActionModal(characterName, type, includeDamage = false) {
-  return new Promise(resolve => {
-    const container = document.createElement("div");
-
-    const rollLabel = document.createElement("p");
-    rollLabel.textContent = "Select D20 Roll:";
-    container.appendChild(rollLabel);
-
-    const rollButtons = document.createElement("div");
-    rollButtons.style.cssText = `display:flex;flex-wrap:wrap;gap:4px;`;
-
-    let selectedRoll = null;
-    for (let i = 1; i <= 20; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      btn.style.cssText = `width:36px;height:36px;border-radius:6px;border:1px solid #666;background:#222;color:#fff;cursor:pointer;display:flex;justify-content:center;align-items:center;transition:all 0.15s ease;`;
-
-      btn.onclick = () => {
-        selectedRoll = i;
-        [...rollButtons.children].forEach(b => { b.style.background = "#222"; b.style.color = "#fff"; b.style.transform = "scale(1)"; });
-        btn.style.background = "red";
-        btn.style.color = "#fff";
-        btn.style.transform = "scale(1.1)";
-      };
-      rollButtons.appendChild(btn);
-    }
-    container.appendChild(rollButtons);
-
-    const modLabel = document.createElement("label");
-    modLabel.textContent = "Modifier:";
-    const modInput = document.createElement("input");
-    modInput.type = "number";
-    modInput.style.width = "60px";
-    modInput.classList.add("roll-mod-input");
-    let defaultModifier = 0;
-
-    if (type.startsWith("Initiative")) {
-      defaultModifier =
-        gameData.characterSheets?.[
-          characterName
-        ]?.initiative ?? 0;
-    }
-
-    modInput.value = defaultModifier;
-    modInput.style.cssText = `margin-left:6px;width:100px;`;
-    container.appendChild(document.createElement("br"));
-    container.appendChild(modLabel);
-    container.appendChild(modInput);
-
-    let dmgInput = null;
-    if (includeDamage) {
-      const dmgLabel = document.createElement("label");
-      dmgLabel.textContent = "Damage:";
-      dmgInput = document.createElement("input");
-      dmgInput.type = "number";
-      dmgInput.value = "0";
-      dmgInput.style.cssText = `margin-left:6px;width:100px;`;
-      container.appendChild(document.createElement("br"));
-      container.appendChild(dmgLabel);
-      container.appendChild(dmgInput);
-    }
-
-    showModal(`Perform ${type} Roll`, container, () => {
-      if (selectedRoll === null) { alert("Please select a D20 roll before confirming."); return; }
-      const modifier = parseInt(modInput.value) || 0;
-      const damage = dmgInput ? parseInt(dmgInput.value) || 0 : 0;
-      resolve({ roll: selectedRoll, modifier, damage });
-    });
-
-    const cancelBtn = document.getElementById("modal-cancel");
-    cancelBtn.onclick = () => { hideModal(); resolve(null); };
-  });
-}
-
 async function openMultiRollModal(characterName, type, includeDamage = false) {
   return new Promise(resolve => {
     const modButtonContainer = document.createElement("div");
@@ -2817,7 +2790,12 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
     countInput.type = "number";
     countInput.min = 1;
     countInput.max = 20;
-    countInput.value = 1;
+    // Attack rolls default to the character sheet's "Attacks / Turn"
+    // value instead of always starting at 1 — clamped defensively in
+    // case the stored value predates that field or was hand-edited.
+    countInput.value = type === "Attack"
+      ? Math.max(1, Math.min(20, gameData.characterSheets?.[characterName]?.attacksPerTurn || 1))
+      : 1;
     countInput.style.width = "60px";
     container.appendChild(countLabel);
     container.appendChild(countInput);
@@ -3037,108 +3015,210 @@ async function openMultiRollModal(characterName, type, includeDamage = false) {
   });
 }
 
-async function inputAction(characterName, type, label) {
-  if (!characterName) return;
-  const stats = gameData.characterStats[characterName];
-  if (!stats) return;
+// -------------------- QUEUE: MULTI-ROLL CARD (Attack/Ability/Save/Concentration/Initiative) --------------------
+// Shared queue-card body for the five multi-row dice-roll actions.
+// Mirrors openMultiRollModal's body construction, minus its optional
+// character-select branch (queue callers always pass an explicit
+// characterName) and its showModal()/Promise wrapper (getResults()
+// pulls the current values on demand instead of resolving once).
+// openMultiRollModal itself stays exactly as-is — it's still used by
+// the Combat tab's "Add Initiative" and bulk-roll-initiative flows,
+// which DO need its character-select branch.
+function buildMultiRollCardBody(characterName, type, includeDamage) {
+  const modButtonContainer = document.createElement("div");
+  modButtonContainer.style.cssText = `
+    display:grid;
+    grid-auto-flow:column;
+    grid-template-rows:repeat(6, auto);
+    gap:6px;
+    margin-bottom:12px;
+    width:100%;
+    align-items:start;
+  `;
 
-  if (type === "money") {
-    const coins = await openMoneyModal(`${characterName} — ${label}`, `Enter coins spent:`);
-    if (!coins) return;
-    const goldValue = (coins.cp / 100) + (coins.sp / 10) + (coins.ep / 2) + coins.gp + (coins.pp * 10);
-    const total = parseFloat(goldValue.toFixed(2));
-    stats.moneySpent = parseFloat((stats.moneySpent + total).toFixed(2));
-    showTrackerMessage(`${characterName} ${label}: ${total} gp`);
-    updateStatsAndRender(characterName);
-    return;
+  const container = document.createElement("div");
+
+  const typeLabel = document.createElement("p");
+  typeLabel.textContent = `Enter number of ${type} rolls and set values:`;
+  container.appendChild(typeLabel);
+  container.appendChild(modButtonContainer);
+
+  const countLabel = document.createElement("label");
+  countLabel.textContent = "Number of Rolls:";
+  const countInput = document.createElement("input");
+  countInput.type = "number";
+  countInput.min = 1;
+  countInput.max = 20;
+  // Attack rolls default to the character sheet's "Attacks / Turn"
+  // value instead of always starting at 1 — clamped defensively in
+  // case the stored value predates that field or was hand-edited.
+  countInput.value = type === "Attack"
+    ? Math.max(1, Math.min(20, gameData.characterSheets?.[characterName]?.attacksPerTurn || 1))
+    : 1;
+  countInput.style.width = "60px";
+  container.appendChild(countLabel);
+  container.appendChild(countInput);
+  container.appendChild(document.createElement("hr"));
+
+  const rollsContainer = document.createElement("div");
+  rollsContainer.style.cssText = `
+    display:grid;
+    grid-gap:10px;
+    justify-content:center`;
+  container.appendChild(rollsContainer);
+
+  const maxPerColumn = 10;
+  const rowHeight = 36;
+
+  function buildHeaderRow() {
+    const headerRow = document.createElement("div");
+    headerRow.style.cssText = `display:grid;grid-template-columns:60px 60px${includeDamage ? " 60px" : ""};font-weight:bold;margin-bottom:4px;height:${rowHeight}px;align-items:center;`;
+    ["D20", "Mod", ...(includeDamage ? ["Dmg"] : [])].forEach(text => {
+      const d = document.createElement("div");
+      d.textContent = text;
+      d.style.textAlign = "center";
+      headerRow.appendChild(d);
+    });
+    return headerRow;
   }
 
-  const step = type === "money" ? 0.01 : 1;
-  const num = await openNumberModal(`${characterName} — ${label}`, `Enter amount of ${label}:`, step);
-  if (num === null) return;
+  function buildModifierGroups() {
+    const sheet = gameData.characterSheets?.[characterName];
+    if (!sheet) return {};
 
-  switch (type) {
-    case "damage": stats.attackDamage += Math.round(num); break;
-    case "healing": stats.healingDone += Math.round(num); break;
+    const groups = {};
+    function addMod(label, value) {
+      if (value === undefined || value === null) return;
+      const key = Number(value);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(label);
+    }
+
+    switch (type) {
+      case "Attack":
+        (sheet.attacks || []).forEach(atk => addMod(atk.name, computeAttackTotal(sheet, atk)));
+        break;
+      case "Save":
+        ABILITY_KEYS.forEach(key => addMod(`${ABILITY_LABELS[key]} Save`, computeSaveTotal(sheet, key)));
+        break;
+      case "Ability": {
+        const allSkills = [...DND5E_SKILLS, ...(sheet.customSkills || [])];
+        allSkills.forEach(sk => {
+          const skillKey = sk.custom ? sk.id : sk.name;
+          addMod(sk.name, computeSkillTotal(sheet, skillKey, sk.ability));
+        });
+        break;
+      }
+      case "Initiative":
+        addMod("Initiative", sheet.initiative ?? 0);
+        break;
+    }
+    return groups;
   }
 
-  recalcCharacterStats(characterName);
-  showTrackerMessage(`${characterName} ${label}: ${num}`);
-  updateStatsAndRender(characterName);
-}
+  function renderModifierButtons() {
+    modButtonContainer.innerHTML = "";
+    const groups = buildModifierGroups();
+    Object.entries(groups).forEach(([mod, labels]) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = `${mod >= 0 ? "+" : ""}${mod} (${labels.join(", ")})`;
+      btn.style.cssText = `
+        width:100%;
+        text-align:left;
+        padding:8px 10px;
+        border-radius:6px;
+        cursor:pointer;
+        border:1px solid var(--primary-accent);
+        background:var(--surface-color);
+        color:var(--primary-text);
+        font-size:0.85rem;
+        overflow-wrap:anywhere;
+      `;
+      btn.addEventListener("click", () => {
+        rollsContainer.querySelectorAll(".roll-mod-input").forEach(input => { input.value = Number(mod); });
+      });
+      modButtonContainer.appendChild(btn);
+    });
+  }
 
-function openMoneyModal(title, prompt) {
-  return new Promise(resolve => {
-    const container = document.createElement("div");
-    const label = document.createElement("label");
-    label.textContent = prompt;
-    container.appendChild(label);
-    container.appendChild(document.createElement("br"));
-
-    const coins = [
-      { key: "cp", label: "Copper (cp)" },
-      { key: "sp", label: "Silver (sp)" },
-      { key: "ep", label: "Electrum (ep)" },
-      { key: "gp", label: "Gold (gp)" },
-      { key: "pp", label: "Platinum (pp)" }
-    ];
-
-    const inputs = {};
-    coins.forEach(c => {
-      const row = document.createElement("div");
-      row.style.marginTop = "6px";
-      const l = document.createElement("label");
-      l.textContent = c.label + ": ";
-      const input = document.createElement("input");
-      input.type = "number"; input.step = 1; input.min = 0; input.value = "";
-      input.style.width = "80px";
-      input.addEventListener("input", () => { input.value = Math.max(0, Math.round(input.value || 0)); });
-      inputs[c.key] = input;
-      row.appendChild(l);
-      row.appendChild(input);
-      container.appendChild(row);
+  function rebuildRows() {
+    const currentValues = [];
+    rollsContainer.querySelectorAll("div").forEach(colDiv => {
+      [...colDiv.children].slice(1).forEach(row => {
+        const inputs = [...row.querySelectorAll("input")];
+        currentValues.push(inputs.map(input => input.value));
+      });
     });
 
-    showModal(title, container, () => {
-      const result = {};
-      for (const key in inputs) { const val = parseInt(inputs[key].value); result[key] = isNaN(val) ? 0 : val; }
-      hideModal();
-      resolve(result);
-    });
+    rollsContainer.innerHTML = "";
+    const numRolls = parseInt(countInput.value) || 1;
+    const numColumns = Math.ceil(numRolls / maxPerColumn);
+    rollsContainer.style.gridTemplateColumns = `repeat(${numColumns}, auto)`;
 
-    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
-  });
+    for (let col = 0; col < numColumns; col++) {
+      const columnDiv = document.createElement("div");
+      columnDiv.style.cssText = `display:grid;row-gap:6px;align-content:start;`;
+      columnDiv.appendChild(buildHeaderRow());
+
+      for (let i = col * maxPerColumn; i < Math.min((col + 1) * maxPerColumn, numRolls); i++) {
+        const inputRow = document.createElement("div");
+        inputRow.style.cssText = `display:grid;grid-template-columns:60px 60px${includeDamage ? " 60px" : ""};gap:6px;height:${rowHeight}px;align-items:center;`;
+
+        const d20Input = document.createElement("input");
+        d20Input.type = "number"; d20Input.min = 1; d20Input.max = 20; d20Input.style.width = "60px";
+        const modInput = document.createElement("input");
+        modInput.type = "number";
+        modInput.style.width = "60px";
+        modInput.classList.add("roll-mod-input");
+        const dmgInput = includeDamage ? document.createElement("input") : null;
+        if (dmgInput) { dmgInput.type = "number"; dmgInput.style.width = "60px"; }
+
+        let sheetMod = 0;
+        if (type === "Initiative") {
+          sheetMod = gameData.characterSheets?.[characterName]?.initiative ?? 0;
+        }
+
+        const saved = currentValues[i] || [];
+        d20Input.value = saved[0] ?? 1;
+        modInput.value = saved[1] ?? sheetMod;
+        if (dmgInput) dmgInput.value = saved[2] ?? 0;
+
+        inputRow.append(d20Input, modInput);
+        if (dmgInput) inputRow.appendChild(dmgInput);
+        columnDiv.appendChild(inputRow);
+      }
+      rollsContainer.appendChild(columnDiv);
+    }
+  }
+
+  renderModifierButtons();
+  rebuildRows();
+  countInput.addEventListener("input", rebuildRows);
+
+  const getResults = () => {
+    const results = [];
+    [...rollsContainer.children].forEach(colDiv => {
+      [...colDiv.children].slice(1).forEach(row => {
+        const inputs = [...row.querySelectorAll("input")];
+        const roll = parseInt(inputs[0].value) || 1;
+        const modifier = parseInt(inputs[1].value) || 0;
+        const damage = includeDamage ? parseInt(inputs[2].value) || 0 : 0;
+        results.push({ roll, modifier, damage });
+      });
+    });
+    return results;
+  };
+
+  return { container, getResults };
 }
 
-function openNumberModal(title, prompt, step = 0) {
-  return new Promise(resolve => {
-    const container = document.createElement("div");
-    const label = document.createElement("label");
-    label.textContent = prompt;
-    container.appendChild(label);
-
-    const input = document.createElement("input");
-    input.type = "number"; input.step = step; input.value = step;
-    input.style.marginLeft = "6px";
-    if (step === 1) input.addEventListener("input", () => { input.value = Math.round(input.value); });
-
-    container.appendChild(document.createElement("br"));
-    container.appendChild(input);
-
-    showModal(title, container, () => {
-      const value = parseFloat(input.value);
-      if (isNaN(value)) { alert("Please enter a valid number."); return; }
-      hideModal();
-      resolve(value);
-    });
-
-    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
-  });
-}
-
-function openCastSpellModal(characterName, SPELL_DATABASE) {
-  return new Promise(resolve => {
-
+// Builds the Cast Spell queue-card body. Was openCastSpellModal (a
+// Promise/showModal wrapper around this same construction) — it had
+// exactly one caller (handleSpellsCast), so this was converted in
+// place rather than kept alongside a duplicate, unlike
+// openMultiRollModal which still has other live callers.
+function buildSpellCardBody(characterName) {
     const spell = {
       name: "",
       selectedSpell: null,
@@ -3329,28 +3409,20 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
         targetSelect.appendChild(opt);
       });
 
+      // Staging only — sv.target is just recorded on this in-memory
+      // save entry here. Linking it into the target's own stats
+      // (savesFromSpells) happens once, at confirm time, in
+      // applySpell(). Doing that live (as this used to) meant an
+      // unconfirmed, still-pending spell card could already be
+      // affecting another character's stats panel, with no cleanup if
+      // the card was later canceled — a bug that got materially worse
+      // once cards can sit pending indefinitely in a stacked queue.
       function updateTarget(newTarget) {
-        const oldTarget = sv.target;
-        if (oldTarget && oldTarget !== newTarget) {
-          const oldStats = gameData.characterStats?.[oldTarget];
-          if (oldStats?.savesFromSpells) {
-            oldStats.savesFromSpells = oldStats.savesFromSpells.filter(s => s !== sv);
-            recalcCharacterStats(oldTarget);
-          }
-        }
-        if (newTarget && newTarget !== casterName) {
-          const tStats = gameData.characterStats?.[newTarget];
-          if (!tStats.savesFromSpells) tStats.savesFromSpells = [];
-          if (!tStats.savesFromSpells.includes(sv)) tStats.savesFromSpells.push(sv);
-        }
         sv.target = newTarget;
-        if (casterName) recalcCharacterStats(casterName);
-        if (newTarget) recalcCharacterStats(newTarget);
-        updateSideStats();
       }
 
-      const roll = createBoundInput(sv, "roll", 1, 20, () => { if (sv.target) recalcCharacterStats(sv.target); updateSideStats(); });
-      const mod = createBoundInput(sv, "modifier", null, null, () => { if (sv.target) recalcCharacterStats(sv.target); updateSideStats(); });
+      const roll = createBoundInput(sv, "roll", 1, 20);
+      const mod = createBoundInput(sv, "modifier");
 
       function updateSaveModifier() {
         if (!sv.target) return;
@@ -3363,7 +3435,6 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       targetSelect.addEventListener("change", () => {
         updateTarget(targetSelect.value || null);
         updateSaveModifier();
-        if (sv.target) { recalcCharacterStats(sv.target); updateSideStats(); }
       });
       if (sv.target) { targetSelect.value = sv.target; updateSaveModifier(); }
 
@@ -3595,14 +3666,14 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
       spell.saveType = saveTypeSelect.value;
       spell.saves.forEach(save => {
         save.saveType = spell.saveType;
+        // Recompute the displayed modifier only — the target's actual
+        // stats aren't touched until confirm (see buildSaveRow).
         if (save.target) {
           const targetSheet = gameData.characterSheets?.[save.target];
           if (targetSheet) save.modifier = computeSaveTotal(targetSheet, save.saveType);
-          recalcCharacterStats(save.target);
         }
       });
       syncSaves(spell.saves.length);
-      updateSideStats();
     });
     saveTypeRow.append(saveTypeLabel, saveTypeSelect);
     left.appendChild(saveTypeRow);
@@ -3622,13 +3693,13 @@ function openCastSpellModal(characterName, SPELL_DATABASE) {
 
     renderSpellLibrary();
 
-    showModal(`Cast Spell — ${characterName}`, wrapper, () => {
-      spell.name = spell.name || "New Spell";
-      resolve(spell);
-    });
-
-    document.getElementById("modal-cancel").onclick = () => { hideModal(); resolve(null); };
-  });
+    return {
+      container: wrapper,
+      getSpell: () => {
+        spell.name = spell.name || "New Spell";
+        return spell;
+      }
+    };
 }
 
 function updateStatsAndRender(characterName) {
@@ -4055,10 +4126,30 @@ function exitReactionMode() {
 }
 
 // -------------------- MODAL HELPERS --------------------
-function showModal(title, bodyContent, onConfirm = null) {
-  const modal = document.getElementById("action-modal");
+// (Legacy — every remaining caller here is mid-migration onto the
+// action queue below. Deleted once none are left; see ACTION QUEUE.)
+
+// Both this legacy modal and the action queue share one #tracker-center
+// panel, so visibility must consider whichever of the two is active —
+// otherwise confirming/canceling a queue card while a legacy modal is
+// still open (or vice versa) would wrongly hide the other.
+function updateCenterVisibility() {
   const center = document.getElementById("tracker-center");
   const placeholder = document.getElementById("center-placeholder");
+  const modal = document.getElementById("action-modal");
+
+  const modalOpen = !!modal && !modal.classList.contains("hidden");
+  const hasActiveContent = modalOpen || actionQueue.length > 0;
+
+  if (center) {
+    center.classList.toggle("modal-active", hasActiveContent);
+    center.style.display = ""; // let the .modal-active CSS rule decide, not an inline override
+  }
+  if (placeholder) placeholder.style.display = hasActiveContent ? "none" : "block";
+}
+
+function showModal(title, bodyContent, onConfirm = null) {
+  const modal = document.getElementById("action-modal");
 
   document.getElementById("modal-title").textContent = title;
   const modalBody = document.getElementById("modal-body");
@@ -4073,24 +4164,116 @@ function showModal(title, bodyContent, onConfirm = null) {
   document.getElementById("modal-cancel").onclick = hideModal;
 
   modal.classList.remove("hidden");
-  if (center) {
-    center.classList.add("modal-active");
-    center.style.display = "block";
-  }
-  if (placeholder) placeholder.style.display = "none";
+  updateCenterVisibility();
 }
 
 function hideModal() {
   const modal = document.getElementById("action-modal");
-  const center = document.getElementById("tracker-center");
-  const placeholder = document.getElementById("center-placeholder");
-
   modal.classList.add("hidden");
-  if (center) {
-    center.classList.remove("modal-active");
-    center.style.display = "none";
+  updateCenterVisibility();
+}
+
+// -------------------- ACTION QUEUE --------------------
+// Replaces the single-modal-at-a-time flow above (showModal/hideModal)
+// with a persistent, stackable queue of independent input cards — one
+// per pending roll/input, newest on top — each confirmed or canceled
+// on its own without disturbing the others. Handlers are migrated onto
+// this incrementally; showModal/hideModal stay in place until every
+// caller has moved over, then get deleted.
+
+// Finds a pending item for the same action+character (used to avoid
+// duplicate cards when an action button is clicked again).
+function findQueueItem(actionType, characterName) {
+  return actionQueue.find(i => i.actionType === actionType && i.characterName === characterName);
+}
+
+// buildFn(characterName) must return { actionType, characterName, title, bodyEl, getResult, onConfirm }.
+function enqueueOrFocusAction(actionType, characterName, buildFn) {
+  const existing = findQueueItem(actionType, characterName);
+  if (existing) {
+    focusQueueItem(existing.id);
+    return;
   }
-  if (placeholder) placeholder.style.display = "block";
+
+  const item = buildFn(characterName);
+  item.id = ++queueIdCounter;
+  actionQueue.unshift(item);
+  renderActionQueue();
+}
+
+function focusQueueItem(id) {
+  const el = document.querySelector(`.queue-card[data-queue-id="${id}"]`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("queue-card-flash");
+  void el.offsetWidth; // restart the animation even if it just played
+  el.classList.add("queue-card-flash");
+}
+
+function removeQueueItem(id) {
+  actionQueue = actionQueue.filter(i => i.id !== id);
+  renderActionQueue();
+}
+
+function confirmQueueItem(id) {
+  const item = actionQueue.find(i => i.id === id);
+  if (!item) return;
+
+  if (!gameData.characterStats[item.characterName]) {
+    showTrackerMessage(`${item.characterName} no longer exists — discarding pending ${item.actionType}.`);
+    removeQueueItem(id);
+    return;
+  }
+
+  const result = item.getResult();
+  if (result === null) return; // invalid input — getResult already alerted, leave the card up
+
+  item.onConfirm(result);
+  removeQueueItem(id);
+}
+
+function renderActionQueue() {
+  const container = document.getElementById("action-queue");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  actionQueue.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "panel queue-card";
+    card.dataset.queueId = item.id;
+
+    const title = document.createElement("h3");
+    title.className = "queue-card-title";
+    title.textContent = item.title;
+
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "queue-card-actions";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "Confirm";
+    confirmBtn.onclick = () => confirmQueueItem(item.id);
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.className = "queue-cancel-btn";
+    cancelBtn.onclick = () => removeQueueItem(item.id);
+
+    actionsRow.append(confirmBtn, cancelBtn);
+    card.append(title, item.bodyEl, actionsRow);
+    container.appendChild(card);
+  });
+
+  updateCenterVisibility();
+}
+
+// Removes any pending cards belonging to a character that no longer
+// exists (called from removeCharacter) so stale cards don't linger.
+function discardQueueItemsForCharacter(characterName) {
+  const hadAny = actionQueue.some(i => i.characterName === characterName);
+  if (!hadAny) return;
+  actionQueue = actionQueue.filter(i => i.characterName !== characterName);
+  renderActionQueue();
 }
 
 function getCurrentTurnCharacter() {
@@ -4128,27 +4311,6 @@ async function loadSpellDatabase() {
   return SPELL_DATABASE;
 }
 
-async function performSingleAttack(name, options = { logGlobal: false }) {
-  const stats = gameData.characterStats[name];
-  if (!stats) return null;
-  const result = await openUnifiedActionModal(name, "attack", true);
-  if (!result) return null;
-  const { roll, modifier, damage } = result;
-  const moddedRoll = roll + modifier;
-  critChecker(name, roll);
-  if (options.logGlobal) {
-    const attackEntry = { roll, modifier, damage, moddedRoll };
-    stats.totalD20Rolls.push(roll);
-    stats.totalModD20Rolls.push({ roll, modifier });
-    stats.attackRolls.push(attackEntry);
-    stats.attacksMade++;
-    recalcCharacterStats(name);
-    updateStatsAndRender(name);
-  }
-  showTrackerMessage(buildDisplayString(name, "attack", { roll, modifier, moddedRoll, damage }));
-  return { roll, modifier, moddedRoll, damage };
-}
-
 function critChecker(characterName, roll) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
@@ -4170,11 +4332,21 @@ function buildDisplayString(characterName, type, result) {
 }
 
 // -------------------- ACTION HANDLERS --------------------
-async function handleAttack(characterName) {
+function buildMultiRollCard(actionType, characterName, type, includeDamage, onConfirm) {
+  const { container, getResults } = buildMultiRollCardBody(characterName, type, includeDamage);
+  return {
+    actionType,
+    characterName,
+    title: `Perform ${type} Rolls — ${characterName}`,
+    bodyEl: container,
+    getResult: getResults,
+    onConfirm: (rolls) => onConfirm(characterName, rolls)
+  };
+}
+
+function applyAttackRolls(characterName, rolls) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const rolls = await openMultiRollModal(characterName, "Attack", true);
-  if (!rolls) return;
   for (const { roll, modifier, damage } of rolls) {
     const moddedRoll = roll + modifier;
     critChecker(characterName, roll);
@@ -4188,11 +4360,15 @@ async function handleAttack(characterName) {
   updateStatsAndRender(characterName);
 }
 
-async function handleAbility(characterName) {
+function handleAttack(characterName) {
+  if (!gameData.characterStats[characterName]) return;
+  enqueueOrFocusAction("Attack", characterName,
+    name => buildMultiRollCard("Attack", name, "Attack", true, applyAttackRolls));
+}
+
+function applyAbilityRolls(characterName, rolls) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const rolls = await openMultiRollModal(characterName, "Ability", false);
-  if (!rolls) return;
   for (const { roll, modifier } of rolls) {
     const moddedRoll = roll + modifier;
     stats.totalD20Rolls.push(roll);
@@ -4205,11 +4381,15 @@ async function handleAbility(characterName) {
   updateStatsAndRender(characterName);
 }
 
-async function handleSave(characterName) {
+function handleAbility(characterName) {
+  if (!gameData.characterStats[characterName]) return;
+  enqueueOrFocusAction("Ability", characterName,
+    name => buildMultiRollCard("Ability", name, "Ability", false, applyAbilityRolls));
+}
+
+function applySaveRolls(characterName, rolls) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const rolls = await openMultiRollModal(characterName, "Save", false);
-  if (!rolls) return;
   for (const { roll, modifier } of rolls) {
     const moddedRoll = roll + modifier;
     stats.totalD20Rolls.push(roll);
@@ -4222,11 +4402,15 @@ async function handleSave(characterName) {
   updateStatsAndRender(characterName);
 }
 
-async function handleConcentration(characterName) {
+function handleSave(characterName) {
+  if (!gameData.characterStats[characterName]) return;
+  enqueueOrFocusAction("Save", characterName,
+    name => buildMultiRollCard("Save", name, "Save", false, applySaveRolls));
+}
+
+function applyConcentrationRolls(characterName, rolls) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const rolls = await openMultiRollModal(characterName, "Concentration", false);
-  if (!rolls) return;
   for (const { roll, modifier } of rolls) {
     const moddedRoll = roll + modifier;
     stats.totalD20Rolls.push(roll);
@@ -4239,11 +4423,15 @@ async function handleConcentration(characterName) {
   updateStatsAndRender(characterName);
 }
 
-async function handleInitiative(characterName) {
+function handleConcentration(characterName) {
+  if (!gameData.characterStats[characterName]) return;
+  enqueueOrFocusAction("Concentration", characterName,
+    name => buildMultiRollCard("Concentration", name, "Concentration", false, applyConcentrationRolls));
+}
+
+function applyInitiativeRolls(characterName, rolls) {
   const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const rolls = await openMultiRollModal(characterName, "Initiative", false);
-  if (!rolls) return;
   for (const { roll, modifier } of rolls) {
     const moddedRoll = roll + modifier;
     stats.totalD20Rolls.push(roll);
@@ -4256,36 +4444,209 @@ async function handleInitiative(characterName) {
   updateStatsAndRender(characterName);
 }
 
-async function handleSpellsCast(name) {
-  name = getStatName(name);
-  const stats = gameData.characterStats[name];
+function handleInitiative(characterName) {
+  if (!gameData.characterStats[characterName]) return;
+  enqueueOrFocusAction("Initiative", characterName,
+    name => buildMultiRollCard("Initiative", name, "Initiative", false, applyInitiativeRolls));
+}
+
+function applySpell(characterName, spell) {
+  const stats = gameData.characterStats[characterName];
   if (!stats) return;
-  const spell = await openCastSpellModal(name, SPELL_DATABASE);
-  if (!spell) return;
+
+  // Link each save's target into their own savesFromSpells now, at
+  // confirm time (see buildSaveRow's updateTarget for why this can't
+  // happen live while the card is still pending). Self-targeted saves
+  // are already covered by the caster's own recalc below, via
+  // stats.spellHistory.
+  const affectedTargets = new Set();
+  spell.saves.forEach(sv => {
+    if (!sv.target || sv.target === characterName) return;
+    const targetStats = gameData.characterStats[sv.target];
+    if (!targetStats) return;
+    if (!targetStats.savesFromSpells) targetStats.savesFromSpells = [];
+    if (!targetStats.savesFromSpells.includes(sv)) targetStats.savesFromSpells.push(sv);
+    affectedTargets.add(sv.target);
+  });
+
   stats.spellHistory.push(spell);
   stats.spellsCast = stats.spellHistory.length;
-  recalcCharacterStats(name);
-  renderSpellEditor(name);
-  updateSideStats();
-  updateStatsAndRender(name);
+  recalcCharacterStats(characterName);
+  affectedTargets.forEach(target => recalcCharacterStats(target));
+  renderSpellEditor(characterName);
+  updateStatsAndRender(characterName);
+}
+
+function buildSpellCard(characterName) {
+  const { container, getSpell } = buildSpellCardBody(characterName);
+  return {
+    actionType: "Spell",
+    characterName,
+    title: `Cast Spell — ${characterName}`,
+    bodyEl: container,
+    getResult: getSpell,
+    onConfirm: (spell) => applySpell(characterName, spell)
+  };
+}
+
+function handleSpellsCast(name) {
+  name = getStatName(name);
+  if (!gameData.characterStats[name]) return;
+  enqueueOrFocusAction("Spell", name, buildSpellCard);
+}
+
+// -------------------- QUEUE: MONEY SPENT CARD --------------------
+// Same 5-coin-denomination body as the old openMoneyModal, minus the
+// showModal() call.
+function buildMoneyCardBody() {
+  const container = document.createElement("div");
+  const label = document.createElement("label");
+  label.textContent = "Enter coins spent:";
+  container.appendChild(label);
+  container.appendChild(document.createElement("br"));
+
+  const coinDefs = [
+    { key: "cp", label: "Copper (cp)" },
+    { key: "sp", label: "Silver (sp)" },
+    { key: "ep", label: "Electrum (ep)" },
+    { key: "gp", label: "Gold (gp)" },
+    { key: "pp", label: "Platinum (pp)" }
+  ];
+
+  const inputs = {};
+  coinDefs.forEach(c => {
+    const row = document.createElement("div");
+    row.style.marginTop = "6px";
+    const l = document.createElement("label");
+    l.textContent = c.label + ": ";
+    const input = document.createElement("input");
+    input.type = "number"; input.step = 1; input.min = 0; input.value = "";
+    input.style.width = "80px";
+    input.addEventListener("input", () => { input.value = Math.max(0, Math.round(input.value || 0)); });
+    inputs[c.key] = input;
+    row.appendChild(l);
+    row.appendChild(input);
+    container.appendChild(row);
+  });
+
+  const getResult = () => {
+    const result = {};
+    for (const key in inputs) { const val = parseInt(inputs[key].value); result[key] = isNaN(val) ? 0 : val; }
+    return result;
+  };
+
+  return { container, getResult };
+}
+
+function applyMoneySpent(characterName, coins) {
+  const stats = gameData.characterStats[characterName];
+  if (!stats) return;
+  const goldValue = (coins.cp / 100) + (coins.sp / 10) + (coins.ep / 2) + coins.gp + (coins.pp * 10);
+  const total = parseFloat(goldValue.toFixed(2));
+  stats.moneySpent = parseFloat((stats.moneySpent + total).toFixed(2));
+  showTrackerMessage(`${characterName} money spent: ${total} gp`);
+  updateStatsAndRender(characterName);
+}
+
+function buildMoneyCard(characterName) {
+  const { container, getResult } = buildMoneyCardBody();
+  return {
+    actionType: "Money Spent",
+    characterName,
+    title: `${characterName} — money spent`,
+    bodyEl: container,
+    getResult,
+    onConfirm: (coins) => applyMoneySpent(characterName, coins)
+  };
 }
 
 function handleMoneySpent(name) {
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  return inputAction(name, "money", "money spent");
+  enqueueOrFocusAction("Money Spent", name, buildMoneyCard);
+}
+
+// -------------------- QUEUE: SIMPLE NUMBER CARDS (Damage / Heal) --------------------
+// Shared body-builder for the two free-form single-number actions —
+// same shape as the old openNumberModal(title, prompt, step=1) body,
+// minus the showModal() call.
+function buildSimpleNumberCard(label) {
+  const container = document.createElement("div");
+  const promptLabel = document.createElement("label");
+  promptLabel.textContent = `Enter amount of ${label}:`;
+  container.appendChild(promptLabel);
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = 1;
+  input.value = 1;
+  input.style.marginLeft = "6px";
+  input.addEventListener("input", () => { input.value = Math.round(input.value); });
+
+  container.appendChild(document.createElement("br"));
+  container.appendChild(input);
+
+  const getResult = () => {
+    const value = parseFloat(input.value);
+    if (isNaN(value)) { alert("Please enter a valid number."); return null; }
+    return value;
+  };
+
+  return { container, getResult };
+}
+
+function applyDamage(characterName, amount) {
+  const stats = gameData.characterStats[characterName];
+  if (!stats) return;
+  stats.attackDamage += Math.round(amount);
+  recalcCharacterStats(characterName);
+  showTrackerMessage(`${characterName} damage: ${amount}`);
+  updateStatsAndRender(characterName);
+}
+
+function buildDamageCard(characterName) {
+  const { container, getResult } = buildSimpleNumberCard("damage");
+  return {
+    actionType: "Damage",
+    characterName,
+    title: `${characterName} — damage`,
+    bodyEl: container,
+    getResult,
+    onConfirm: (amount) => applyDamage(characterName, amount)
+  };
 }
 
 function handleDamageTaken(name) {
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  return inputAction(name, "damage", "damage");
+  enqueueOrFocusAction("Damage", name, buildDamageCard);
+}
+
+function applyHealing(characterName, amount) {
+  const stats = gameData.characterStats[characterName];
+  if (!stats) return;
+  stats.healingDone += Math.round(amount);
+  recalcCharacterStats(characterName);
+  showTrackerMessage(`${characterName} healing: ${amount}`);
+  updateStatsAndRender(characterName);
+}
+
+function buildHealCard(characterName) {
+  const { container, getResult } = buildSimpleNumberCard("healing");
+  return {
+    actionType: "Heal",
+    characterName,
+    title: `${characterName} — healing`,
+    bodyEl: container,
+    getResult,
+    onConfirm: (amount) => applyHealing(characterName, amount)
+  };
 }
 
 function handleHealingDone(name) {
   name = getStatName(name);
   if (!gameData.characterStats[name]) return;
-  return inputAction(name, "healing", "healing");
+  enqueueOrFocusAction("Heal", name, buildHealCard);
 }
 
 function handleTimesKilled(name) {
@@ -4615,6 +4976,15 @@ function linkSaveToTarget(sv, casterName, spellName, newTarget) {
 }
 
 function updateSideStats() {
+  // Persist first, unconditionally — this used to sit at the bottom of
+  // the function, after two early returns (missing panel element, no
+  // resolvable selected character). Every roll handler relies on this
+  // call as its actual save trigger, so gating it behind the side
+  // panel's display state meant a confirmed roll could stay correct in
+  // memory but silently never reach localStorage if no character
+  // happened to be selected at that moment.
+  saveGameData();
+
   const panel = document.getElementById("stats-display-content");
   if (!panel) return;
 
@@ -4684,8 +5054,6 @@ function updateSideStats() {
       <p>Money Spent: ${s.moneySpent.toFixed(2)}</p>
     `;
   }
-
-  saveGameData();
 }
 
 function recalcCharacterStats(characterName) {
