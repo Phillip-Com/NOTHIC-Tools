@@ -1013,6 +1013,20 @@ table.compact-table {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
+}
+
+/* Long roll lists (e.g. "Total D20 Rolls: 45 = 3 + 20 + 7 + ...") used to
+   wrap onto multiple lines within the card; this rule was lost in an
+   earlier CSS variable rename, leaving <pre>'s browser-default
+   white-space:pre (never wraps) in effect and letting long lines overflow
+   the card edge instead of looping back down. */
+.summary-card pre {
+  font-family: monospace;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
 }
 
 

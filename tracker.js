@@ -4014,33 +4014,66 @@ function renderInitiative() {
   });
 }
 
-async function startCombat() {
+// Distinct actionType from the Stats page's plain "Initiative" action
+// (which only sets stats.initiative) — this one adds full turn-order
+// entries, so the two must never be deduped against each other.
+function applyCombatInitiativeRolls(characterName, rolls) {
+  const stats = gameData.characterStats[characterName];
+  if (!stats) return;
+  if (!stats.initiativeRolls) stats.initiativeRolls = [];
+
+  rolls.forEach(({ roll, modifier }) => {
+    const total = roll + modifier;
+    const tag = crypto.randomUUID();
+    const npcNum = stats.initiativeRolls.filter(r => r.isVisibleInOrder).length + 1;
+    stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `${characterName} ${npcNum}`, source: characterName, npcIndex: npcNum });
+    critChecker(characterName, roll);
+  });
+
+  // renderInitiative() rebuilds initiativeOrder from scratch by scanning
+  // every character's initiativeRolls — safe (and necessary) to re-run
+  // after each individual character's card is confirmed, in whatever
+  // order that happens, rather than needing to wait for all of them.
+  currentTurnIndex = 0;
+  renderInitiative();
+  updateSideStats();
+  updateTurnButtons();
+}
+
+function buildCombatInitiativeCard(characterName) {
+  const { container, getResults } = buildMultiRollCardBody(characterName, "Initiative", false);
+  return {
+    actionType: "Combat Initiative",
+    characterName,
+    title: `Combat Initiative — ${characterName}`,
+    bodyEl: container,
+    getResult: getResults,
+    onConfirm: (rolls) => applyCombatInitiativeRolls(characterName, rolls)
+  };
+}
+
+function startCombat() {
   initiativeOrder = [];
   combatStarted = true;
   updateCombatTabVisibility();
 
-  for (const pc of getCompatibleActiveCharacters()) {
+  // Queue every active character's initiative roll at once instead of
+  // prompting for them one at a time in a fixed order — each can be
+  // filled in and confirmed independently, in any order.
+  getCompatibleActiveCharacters().forEach(pc => {
     const stats = gameData.characterStats[pc];
-    if (!stats) continue;
+    if (!stats) return;
     stats.isActiveInCombat = true;
     if (!stats.initiativeRolls) stats.initiativeRolls = [];
 
-    const results = await openMultiRollModal(pc, "Initiative", false);
-    if (!results?.length) continue;
-    results.forEach(({ roll, modifier }, i) => {
-      const total = roll + modifier;
-      const tag = crypto.randomUUID();
-      const npcNum = stats.initiativeRolls.filter(r => r.isVisibleInOrder).length + 1;
-      stats.initiativeRolls.push({ roll, modifier, total, isVisibleInOrder: true, tag, displayName: `${pc} ${npcNum}`, source: `${pc}`, npcIndex: npcNum });
-      critChecker(pc, roll);
-    });
-  }
+    enqueueOrFocusAction("Combat Initiative", pc, buildCombatInitiativeCard);
+  });
 
   currentTurnIndex = 0;
   renderInitiative();
   updateSideStats();
   updateTurnButtons();
-  showTrackerMessage("Combat started!");
+  showTrackerMessage("Combat started! Roll initiative for each character.");
   updateCombatTabVisibility();
   switchTab("combat");
 }
