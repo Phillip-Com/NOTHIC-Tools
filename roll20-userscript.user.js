@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Stat Tracker - Roll20 Relay
 // @namespace    stat-tracker-roll20-relay
-// @version      0.9.0
+// @version      0.8.0
 // @description  Watches Roll20 chat for dice rolls and relays them to a local Stat Tracker relay server.
 // @match        https://app.roll20.net/*
 // @match        https://*.roll20.net/*
@@ -41,11 +41,11 @@
   // Relay" entries and disable/delete all but one). Every fix so far has
   // relied on being able to tell these apart, so please quote this exact
   // line back if something still looks wrong.
-  console.log("[roll20-relay] SCRIPT VERSION 0.9.0 loaded");
+  console.log("[roll20-relay] SCRIPT VERSION 0.8.0 loaded");
 
   // -------------------- CONFIG --------------------
 
-  const RELAY_URL = "https://127.0.0.1:8787/ingest";
+  const RELAY_URL = "http://127.0.0.1:8787/ingest";
 
   // Start here. While true, every parsed chat message is logged to the
   // console (F12 -> Console) instead of being sent to the relay — use

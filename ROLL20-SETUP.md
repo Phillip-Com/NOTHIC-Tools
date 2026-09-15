@@ -8,64 +8,35 @@ anywhere else.
 This is a first pass. The two files most likely to need adjusting after you
 try it against a real game are called out below.
 
-## Why the relay is HTTPS, not plain HTTP
-
-Confirmed against a real, extensively-debugged report: when the tracker
-itself is loaded over `https://` (as GitHub Pages always serves it), Chrome
-refuses to `fetch()` a plain `http://` endpoint on your own machine at all —
-not a permission prompt you can grant, not a CORS header you can add, a hard
-block. Verified this directly: a raw `fetch("http://127.0.0.1:8787/health")`
-typed straight into the console, with none of this project's own code
-involved, failed identically. The only real fix is for the relay to also be
-`https://`, so it's HTTPS-to-HTTPS the whole way — that restriction only
-applies to HTTPS pages reaching *non-HTTPS* endpoints.
-
-Live Server (below) never hit this at all, because it serves over plain
-`http://127.0.0.1:<port>` too — loopback talking to loopback has never been
-restricted this way, HTTPS relay or not.
-
-## Generating the HTTPS certificate (one-time, per machine)
-
-The relay needs a certificate to serve HTTPS. A self-signed one is enough —
-it never leaves your machine, so there's no certificate authority to pay for
-or verify against. Run this once, in the tracker's folder (Git Bash /
-WSL / macOS / Linux terminal — needs `openssl`, which ships with Git for
-Windows):
-
-```
-openssl req -x509 -newkey rsa:2048 -keyout roll20-relay-key.pem -out roll20-relay-cert.pem -days 3650 -nodes -subj "//CN=127.0.0.1" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
-```
-
-(The leading `//` before `CN=` — not a typo — works around a Git-Bash-on-Windows
-quirk where a single `/CN=...` gets misread as a file path. On macOS/Linux/WSL
-a single `/CN=...` is fine either way.)
-
-This creates `roll20-relay-key.pem` and `roll20-relay-cert.pem` next to
-`roll20-relay-server.js`, valid for 10 years. **Never commit these** — each
-machine should generate its own (already covered by `.gitignore`). The relay
-refuses to start with a clear error if they're missing.
-
-### Trusting the certificate in your browser (one-time)
-
-A self-signed cert isn't backed by a certificate authority, so browsers show
-a security warning for it by default. Easiest fix — **Chrome/Edge**: visit
-`chrome://flags/#allow-insecure-localhost`, set it to **Enabled**, relaunch
-the browser. This tells Chrome to trust any certificate for `localhost`/
-`127.0.0.1` specifically, permanently, with no per-session warning.
-
-Without that flag, you'd instead need to open `https://127.0.0.1:8787/health`
-directly in a tab once (with the relay running) and click through the "Your
-connection is not private" warning (Advanced → Proceed) — this only grants
-trust in that one browser profile, and may need repeating if the cert is ever
-regenerated.
-
 ## Recommended for calibration/testing: VS Code's "Live Server"
 
 If you have the Live Server extension, right-click `index.html` → "Open with
 Live Server" instead of using your GitHub-hosted copy while you're setting
-this up. Once you've confirmed the parsing looks right (the `DEBUG_LOG_ONLY`
-step further down), switch back to however you normally host it — the same
-HTTPS relay setup above works identically from either.
+this up. Live Server serves over plain `http://127.0.0.1:<port>`, and Chrome's
+Local Network Access permission gate (see below) currently only applies to
+requests from a *public* origin to a local one — loopback talking to loopback
+is exempt. So testing this way means no permission prompts, no mixed-content
+questions, nothing to grant — it should just work. Once you've confirmed the
+parsing looks right (the `DEBUG_LOG_ONLY` step further down), switch back to
+however you normally host it.
+
+## If you host the tracker on GitHub Pages (HTTPS)
+
+The relay server is plain `http://`, not `https://`. If the tracker itself is
+loaded over `https://` (as GitHub Pages always serves it), Chrome has a
+"Local Network Access" security check that covers this exact situation — a
+public HTTPS site talking to something on your local machine — and it will
+show a one-time permission prompt like *"[site] wants to access devices on
+your local network"* the first time `roll20-bridge.js` tries to reach the
+relay. **This is expected — click Allow.** It's not an error, and it's not
+optional to skip (the fetch won't work until you grant it). This should only
+need to happen once per browser, though I haven't been able to verify the
+exact persistence behavior firsthand. Firefox doesn't currently enforce this
+the same way, so you likely won't see it there.
+
+If the prompt never appears and requests just silently fail instead, check
+your browser's site settings for the tracker's URL — there may be a
+"Local network access" permission listed there you can toggle directly.
 
 ## Pieces involved
 
@@ -113,10 +84,8 @@ relay server isn't running, so this is safe to leave in permanently.
    ```
    Leave this window open for the session. You should see:
    ```
-   [roll20-relay] listening on https://127.0.0.1:8787
+   [roll20-relay] listening on http://127.0.0.1:8787
    ```
-   (If it exits immediately with a message about missing `.pem` files
-   instead, you haven't generated the certificate yet — see above.)
 2. Open the tracker in your browser as usual.
 3. Open your Roll20 game in another tab.
 4. Roll dice as normal in Roll20. Matched rolls should appear in the tracker's
@@ -180,18 +149,7 @@ it's surfaced for you to decide instead of silently filed somewhere wrong.
   the Roll20 tab's console for `[roll20-relay]` error lines).
 - **Relay terminal shows ingested rolls but the tracker never picks them up**:
   confirm `roll20-bridge.js` is actually loaded (check the tracker page's
-  own console — not the Roll20 tab's — for its `SCRIPT VERSION ... loaded`
-  line and any errors) and that `index.html` has the `<script>` line added.
-- **Tracker console shows a CORS error or "poll failed — relay unreachable"**:
-  almost always means the browser doesn't trust the relay's certificate yet —
-  see "Trusting the certificate in your browser" above. Test with a raw
-  `fetch("https://127.0.0.1:8787/health").then(r=>r.json()).then(console.log)`
-  typed into that same tab's console; if that alone fails, it's a certificate
-  trust issue, not a bug in this project's code.
-- **Relay exits immediately on startup with a message about missing
-  `.pem` files**: you haven't generated the certificate yet — see
-  "Generating the HTTPS certificate" above.
+  console for errors) and that `index.html` has the `<script>` line added.
 - **Port 8787 already in use**: change `PORT` at the top of
-  `roll20-relay-server.js`, and `ROLL20_RELAY_URL`/`RELAY_URL` at the top of
-  `roll20-bridge.js` and `roll20-userscript.user.js` to match (keep the
-  `https://` scheme in all three).
+  `roll20-relay-server.js`, and `ROLL20_RELAY_URL` at the top of both
+  `roll20-userscript.user.js` and `roll20-bridge.js` to match.
