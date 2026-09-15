@@ -15,7 +15,7 @@
 // applyInitiativeRolls, handlerMap, showTrackerMessage. Load this file after
 // tracker.js so all of those already exist.
 
-const ROLL20_RELAY_URL = "http://127.0.0.1:8787";
+const ROLL20_RELAY_URL = "https://127.0.0.1:8787";
 const ROLL20_POLL_INTERVAL_MS = 1500;
 
 // Unmistakable version banner, printed on THIS page (the tracker tab) —
@@ -25,7 +25,7 @@ const ROLL20_POLL_INTERVAL_MS = 1500;
 // If you don't see this exact line in the tracker tab's console after a
 // reload, this file is stale/not loaded — check for it here, not on the
 // Roll20 tab.
-console.log("[roll20-bridge] SCRIPT VERSION 0.10.0 loaded");
+console.log("[roll20-bridge] SCRIPT VERSION 0.11.0 loaded");
 
 // Roll20-side classification guesses that map onto the queue's five
 // multi-roll action types — these are the only ones that support

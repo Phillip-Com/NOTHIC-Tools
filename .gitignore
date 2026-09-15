@@ -1,0 +1,6 @@
+# Self-signed cert for the local Roll20 relay server (roll20-relay-server.js).
+# Generated per-machine via ROLL20-SETUP.md — never shared/committed, since
+# it's a private key (harmless if leaked since it only ever serves
+# 127.0.0.1, but there's no reason to publish it either).
+roll20-relay-key.pem
+roll20-relay-cert.pem

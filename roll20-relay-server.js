@@ -8,16 +8,41 @@
 //                                                        |
 //   tracker tab <--(fetch GET /pending, polled)---------+
 //
-// Zero dependencies — only Node's built-in `http` module. Run with:
+// Zero npm dependencies — only Node's built-in `https`/`fs` modules. Run with:
 //   node roll20-relay-server.js
+//
+// Serves HTTPS with a self-signed cert (see ROLL20-SETUP.md for the
+// one-time `openssl` command that generates roll20-relay-cert.pem/
+// roll20-relay-key.pem — not committed to the repo, generate your own).
+// Plain HTTP isn't enough: when the tracker itself is loaded over HTTPS
+// from a public origin (e.g. a GitHub Pages deployment, as opposed to a
+// same-machine Live Server), Chrome refuses to fetch an HTTP endpoint at
+// all — confirmed against a real report where the exact same relay/
+// headers worked fine from Live Server (loopback-to-loopback, exempt
+// from that restriction) but failed on every attempt from GitHub Pages,
+// including a raw fetch() typed directly into the console with none of
+// this script's own code involved. HTTPS-to-HTTPS has no such
+// restriction, hence this server being HTTPS too, even though it only
+// ever talks to your own machine.
 //
 // No npm install needed, no config file — see PORT below if 8787 is
 // already in use on your machine.
 
-const http = require("http");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
 
 const PORT = 8787;
 const HOST = "127.0.0.1"; // localhost only — never exposed beyond this machine
+
+const CERT_PATH = path.join(__dirname, "roll20-relay-cert.pem");
+const KEY_PATH = path.join(__dirname, "roll20-relay-key.pem");
+
+if (!fs.existsSync(CERT_PATH) || !fs.existsSync(KEY_PATH)) {
+  console.error("[roll20-relay] Missing roll20-relay-cert.pem / roll20-relay-key.pem.");
+  console.error("[roll20-relay] Generate them once — see the \"Generating the HTTPS certificate\" section in ROLL20-SETUP.md.");
+  process.exit(1);
+}
 
 let pendingRolls = [];
 
@@ -67,7 +92,10 @@ function readBody(req) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
+const server = https.createServer({
+  cert: fs.readFileSync(CERT_PATH),
+  key: fs.readFileSync(KEY_PATH)
+}, async (req, res) => {
   // Preflight — GM_xmlhttpRequest itself doesn't trigger CORS preflight
   // (it's a privileged API, not subject to the same-origin policy), but
   // a plain browser fetch() from the tracker page might for some request
@@ -136,8 +164,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`[roll20-relay] listening on http://${HOST}:${PORT}`);
-  console.log(`[roll20-relay] Roll20 userscript should POST to http://${HOST}:${PORT}/ingest`);
-  console.log(`[roll20-relay] tracker page should poll GET http://${HOST}:${PORT}/pending`);
+  console.log(`[roll20-relay] listening on https://${HOST}:${PORT}`);
+  console.log(`[roll20-relay] Roll20 userscript should POST to https://${HOST}:${PORT}/ingest`);
+  console.log(`[roll20-relay] tracker page should poll GET https://${HOST}:${PORT}/pending`);
   console.log(`[roll20-relay] Ctrl+C to stop.`);
 });
