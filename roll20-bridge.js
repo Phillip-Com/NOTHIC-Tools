@@ -25,7 +25,7 @@ const ROLL20_POLL_INTERVAL_MS = 1500;
 // If you don't see this exact line in the tracker tab's console after a
 // reload, this file is stale/not loaded — check for it here, not on the
 // Roll20 tab.
-console.log("[roll20-bridge] SCRIPT VERSION 0.9.0 loaded");
+console.log("[roll20-bridge] SCRIPT VERSION 0.10.0 loaded");
 
 // Roll20-side classification guesses that map onto the queue's five
 // multi-roll action types — these are the only ones that support
@@ -414,32 +414,28 @@ let roll20Worker = null;
 // tracker until switching back to this tab, which "woke up" the stalled
 // interval and flushed the backlog all at once. A dedicated Worker's own
 // timers are NOT subject to that same background-tab throttling (it's
-// tied to page visibility, and a worker isn't "a page"), so the actual
-// fetch-on-an-interval loop runs there instead — this thread only
-// receives the already-fetched rolls via postMessage and ingests them
-// exactly as pollRoll20Relay always has.
+// tied to page visibility, and a worker isn't "a page").
+//
+// The Worker's ONLY job is that unthrottled timer — it does NOT do the
+// actual fetch itself. Confirmed against a real report (the GitHub Pages
+// deployment specifically, where the tracker's HTTPS origin talking to
+// the local http://127.0.0.1 relay needs Chrome's separate Local Network
+// Access permission) that fetches made FROM INSIDE a Worker failed with
+// a CORS error there, while the exact same relay/headers work fine from
+// Live Server (loopback-to-loopback, which doesn't need that permission
+// at all) — a Worker has no page UI to show that permission prompt in.
+// Keeping every actual fetch on the main thread sidesteps that
+// entirely, while still getting the timer's throttling immunity.
 function startWorkerPolling() {
   const workerSrc = `
     self.onmessage = (e) => {
       if (e.data.type !== "start") return;
-      const { url, intervalMs } = e.data;
-      const poll = () => {
-        fetch(url + "/pending")
-          .then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
-          .then(data => self.postMessage({ type: "rolls", rolls: data.rolls || [] }))
-          .catch(() => self.postMessage({ type: "offline" }));
-      };
-      poll();
-      setInterval(poll, intervalMs);
+      setInterval(() => self.postMessage({ type: "tick" }), e.data.intervalMs);
     };
   `;
   const worker = new Worker(URL.createObjectURL(new Blob([workerSrc], { type: "application/javascript" })));
   worker.onmessage = e => {
-    if (e.data.type === "rolls") handlePolledRolls(e.data.rolls);
-    else if (e.data.type === "offline") {
-      if (roll20RelayOnline !== false) console.log(`[roll20-bridge] poll failed @ ${new Date().toISOString()} — relay unreachable from worker.`);
-      roll20RelayOnline = false;
-    }
+    if (e.data.type === "tick") pollRoll20Relay(); // the actual fetch — main thread, every tick
   };
   worker.onerror = err => {
     console.error("[roll20-bridge] polling worker failed, falling back to main-thread polling (subject to background-tab throttling):", err);
@@ -447,8 +443,9 @@ function startWorkerPolling() {
     roll20Worker = null;
     startMainThreadPolling();
   };
-  worker.postMessage({ type: "start", url: ROLL20_RELAY_URL, intervalMs: ROLL20_POLL_INTERVAL_MS });
-  console.log("[roll20-bridge] polling via a Web Worker (not subject to background-tab throttling).");
+  worker.postMessage({ type: "start", intervalMs: ROLL20_POLL_INTERVAL_MS });
+  console.log("[roll20-bridge] polling on an unthrottled Worker timer (fetches still run on the main thread).");
+  pollRoll20Relay(); // don't wait for the first interval tick
   return worker;
 }
 
@@ -460,20 +457,6 @@ function startMainThreadPolling() {
 
 function startRoll20Bridge() {
   if (roll20PollTimer || roll20Worker) return; // already running
-
-  // A one-time priming request made directly by THIS page, before
-  // polling gets handed off to the Worker below — confirmed against a
-  // real report where the tracker's own script loaded and the Worker
-  // started fine on the GitHub Pages deployment, but every poll failed
-  // with "relay unreachable" there specifically (Live Server, loopback
-  // talking to loopback, never hit this at all). When the tracker is
-  // served over HTTPS from a public origin, Chrome gates a fetch to a
-  // local address (127.0.0.1) behind a "wants to access devices on your
-  // local network" permission — and that prompt is page UI, which a
-  // Worker has no way to show at all. Making this first request from the
-  // page itself gives the browser a chance to ask; its own result here
-  // doesn't matter; the goal is just prompting.
-  fetch(`${ROLL20_RELAY_URL}/health`).catch(() => {});
 
   if (typeof Worker !== "undefined") {
     roll20Worker = startWorkerPolling();
