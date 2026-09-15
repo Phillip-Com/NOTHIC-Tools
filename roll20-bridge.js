@@ -25,7 +25,7 @@ const ROLL20_POLL_INTERVAL_MS = 1500;
 // If you don't see this exact line in the tracker tab's console after a
 // reload, this file is stale/not loaded — check for it here, not on the
 // Roll20 tab.
-console.log("[roll20-bridge] SCRIPT VERSION 0.8.0 loaded");
+console.log("[roll20-bridge] SCRIPT VERSION 0.9.0 loaded");
 
 // Roll20-side classification guesses that map onto the queue's five
 // multi-roll action types — these are the only ones that support
@@ -460,6 +460,21 @@ function startMainThreadPolling() {
 
 function startRoll20Bridge() {
   if (roll20PollTimer || roll20Worker) return; // already running
+
+  // A one-time priming request made directly by THIS page, before
+  // polling gets handed off to the Worker below — confirmed against a
+  // real report where the tracker's own script loaded and the Worker
+  // started fine on the GitHub Pages deployment, but every poll failed
+  // with "relay unreachable" there specifically (Live Server, loopback
+  // talking to loopback, never hit this at all). When the tracker is
+  // served over HTTPS from a public origin, Chrome gates a fetch to a
+  // local address (127.0.0.1) behind a "wants to access devices on your
+  // local network" permission — and that prompt is page UI, which a
+  // Worker has no way to show at all. Making this first request from the
+  // page itself gives the browser a chance to ask; its own result here
+  // doesn't matter; the goal is just prompting.
+  fetch(`${ROLL20_RELAY_URL}/health`).catch(() => {});
+
   if (typeof Worker !== "undefined") {
     roll20Worker = startWorkerPolling();
   } else {

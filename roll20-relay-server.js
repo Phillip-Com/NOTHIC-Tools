@@ -31,7 +31,15 @@ function sendJson(res, status, body) {
     // headers to be allowed to read the response at all.
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
+    // Chrome's Private/Local Network Access check requires a server
+    // hosting on a private address (this one, 127.0.0.1) to explicitly
+    // opt in before a page on a PUBLIC origin (e.g. the GitHub Pages
+    // deployment, as opposed to a same-machine Live Server) is allowed
+    // to fetch it at all — without this, Chrome can reject the request
+    // outright before the browser's own "local network access" prompt
+    // ever gets a chance to appear.
+    "Access-Control-Allow-Private-Network": "true"
   });
   res.end(payload);
 }
@@ -60,7 +68,10 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
+      "Access-Control-Allow-Headers": "Content-Type",
+      // See the matching comment in sendJson — required for the
+      // preflight itself to succeed from a public-origin page.
+      "Access-Control-Allow-Private-Network": "true"
     });
     res.end();
     return;
