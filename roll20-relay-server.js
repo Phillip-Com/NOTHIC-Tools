@@ -21,25 +21,33 @@ const HOST = "127.0.0.1"; // localhost only — never exposed beyond this machin
 
 let pendingRolls = [];
 
-function sendJson(res, status, body) {
+// A wildcard `Access-Control-Allow-Origin: *` is what CORS normally
+// recommends for a permissive, no-credentials endpoint like this one —
+// but Chrome's Private Network Access check (needed the moment the
+// tracker is loaded over HTTPS from a public origin, e.g. GitHub Pages,
+// rather than loopback-to-loopback via Live Server) appears not to honor
+// a wildcard the same way it does an exact origin match, mirroring the
+// same restriction credentialed CORS requests already have. Echoing the
+// REQUESTING origin back explicitly is a strict improvement over `*`
+// regardless — every real request actually has one.
+function corsHeaders(req) {
+  return {
+    "Access-Control-Allow-Origin": req.headers.origin || "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Private-Network": "true",
+    // Required alongside a non-wildcard Allow-Origin so caches/proxies
+    // don't serve one origin's CORS response to a different origin.
+    "Vary": "Origin"
+  };
+}
+
+function sendJson(req, res, status, body) {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     "Content-Type": "application/json",
     "Content-Length": Buffer.byteLength(payload),
-    // Permissive CORS: the tracker page's own fetch() is cross-origin
-    // relative to this server (different port), so it needs these
-    // headers to be allowed to read the response at all.
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    // Chrome's Private/Local Network Access check requires a server
-    // hosting on a private address (this one, 127.0.0.1) to explicitly
-    // opt in before a page on a PUBLIC origin (e.g. the GitHub Pages
-    // deployment, as opposed to a same-machine Live Server) is allowed
-    // to fetch it at all — without this, Chrome can reject the request
-    // outright before the browser's own "local network access" prompt
-    // ever gets a chance to appear.
-    "Access-Control-Allow-Private-Network": "true"
+    ...corsHeaders(req)
   });
   res.end(payload);
 }
@@ -65,20 +73,13 @@ const server = http.createServer(async (req, res) => {
   // a plain browser fetch() from the tracker page might for some request
   // shapes, so this is handled defensively either way.
   if (req.method === "OPTIONS") {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      // See the matching comment in sendJson — required for the
-      // preflight itself to succeed from a public-origin page.
-      "Access-Control-Allow-Private-Network": "true"
-    });
+    res.writeHead(204, corsHeaders(req));
     res.end();
     return;
   }
 
   if (req.method === "GET" && req.url === "/health") {
-    sendJson(res, 200, { status: "ok", pending: pendingRolls.length });
+    sendJson(req, res, 200, { status: "ok", pending: pendingRolls.length });
     return;
   }
 
@@ -87,7 +88,7 @@ const server = http.createServer(async (req, res) => {
     // and won't be sent again on the next poll.
     const drained = pendingRolls;
     pendingRolls = [];
-    sendJson(res, 200, { rolls: drained });
+    sendJson(req, res, 200, { rolls: drained });
     return;
   }
 
@@ -97,7 +98,7 @@ const server = http.createServer(async (req, res) => {
       const evt = JSON.parse(raw);
 
       if (!evt || typeof evt.characterName !== "string" || !evt.characterName.trim()) {
-        sendJson(res, 400, { status: "error", message: "characterName is required" });
+        sendJson(req, res, 400, { status: "error", message: "characterName is required" });
         return;
       }
 
@@ -123,15 +124,15 @@ const server = http.createServer(async (req, res) => {
       pendingRolls.push(stored);
       console.log(`[roll20-relay] ingested: ${stored.characterName} — ${stored.actionTypeGuess} — roll=${stored.roll} mod=${stored.modifier}` +
         (stored.damage !== undefined ? ` dmg=${stored.damage}` : ""));
-      sendJson(res, 200, { status: "ok" });
+      sendJson(req, res, 200, { status: "ok" });
     } catch (err) {
       console.error("[roll20-relay] failed to parse /ingest body:", err.message);
-      sendJson(res, 400, { status: "error", message: "Invalid JSON body" });
+      sendJson(req, res, 400, { status: "error", message: "Invalid JSON body" });
     }
     return;
   }
 
-  sendJson(res, 404, { status: "error", message: "Not found" });
+  sendJson(req, res, 404, { status: "error", message: "Not found" });
 });
 
 server.listen(PORT, HOST, () => {
