@@ -3143,8 +3143,12 @@ function buildMultiRollCardBody(characterName, type, includeDamage) {
   }
 
   function rebuildRows() {
+    // Direct children only (the column divs) — querySelectorAll("div")
+    // would also match every header-row and input-row div nested inside
+    // them, corrupting this snapshot with spurious empty entries and
+    // scrambling which saved values land in which row after a resize.
     const currentValues = [];
-    rollsContainer.querySelectorAll("div").forEach(colDiv => {
+    [...rollsContainer.children].forEach(colDiv => {
       [...colDiv.children].slice(1).forEach(row => {
         const inputs = [...row.querySelectorAll("input")];
         currentValues.push(inputs.map(input => input.value));
@@ -3210,7 +3214,47 @@ function buildMultiRollCardBody(characterName, type, includeDamage) {
     return results;
   };
 
-  return { container, getResults };
+  // Appends one more row, pre-filled with an externally-sourced roll
+  // (e.g. from the Roll20 bridge), onto an ALREADY-BUILT card — used
+  // instead of enqueueOrFocusAction when a matching card is already
+  // pending, so a second incoming roll for the same character+action
+  // lands as an extra row rather than a duplicate card. Purely
+  // additive: nothing about the manual-entry flow changes if this is
+  // never called.
+  const addExternalRoll = ({ roll, modifier } = {}) => {
+    const currentCount = parseInt(countInput.value) || 1;
+    countInput.value = currentCount + 1;
+    rebuildRows();
+
+    const allRows = [];
+    [...rollsContainer.children].forEach(colDiv => {
+      [...colDiv.children].slice(1).forEach(row => allRows.push(row));
+    });
+    const newRow = allRows[allRows.length - 1];
+    if (!newRow) return;
+    const inputs = [...newRow.querySelectorAll("input")];
+    if (roll !== undefined && roll !== null) inputs[0].value = roll;
+    if (modifier !== undefined && modifier !== null) inputs[1].value = modifier;
+  };
+
+  // Fills in the Dmg column of whichever row is currently LAST — used by
+  // the Roll20 bridge to attach a damage roll (always a separate chat
+  // message from the attack roll itself, with no structural link back to
+  // it) onto the attack row it most likely belongs to. No-op for card
+  // types without a damage column.
+  const setLastRowDamage = (damage) => {
+    if (!includeDamage || damage === undefined || damage === null) return;
+    const allRows = [];
+    [...rollsContainer.children].forEach(colDiv => {
+      [...colDiv.children].slice(1).forEach(row => allRows.push(row));
+    });
+    const lastRow = allRows[allRows.length - 1];
+    if (!lastRow) return;
+    const inputs = [...lastRow.querySelectorAll("input")];
+    if (inputs[2]) inputs[2].value = damage;
+  };
+
+  return { container, getResults, addExternalRoll, setLastRowDamage };
 }
 
 // Builds the Cast Spell queue-card body. Was openCastSpellModal (a
@@ -4366,13 +4410,15 @@ function buildDisplayString(characterName, type, result) {
 
 // -------------------- ACTION HANDLERS --------------------
 function buildMultiRollCard(actionType, characterName, type, includeDamage, onConfirm) {
-  const { container, getResults } = buildMultiRollCardBody(characterName, type, includeDamage);
+  const { container, getResults, addExternalRoll, setLastRowDamage } = buildMultiRollCardBody(characterName, type, includeDamage);
   return {
     actionType,
     characterName,
     title: `Perform ${type} Rolls — ${characterName}`,
     bodyEl: container,
     getResult: getResults,
+    addExternalRoll,
+    setLastRowDamage,
     onConfirm: (rolls) => onConfirm(characterName, rolls)
   };
 }
