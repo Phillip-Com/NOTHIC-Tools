@@ -96,12 +96,22 @@ const server = http.createServer(async (req, res) => {
         roll: Number.isFinite(evt.roll) ? evt.roll : null,
         modifier: Number.isFinite(evt.modifier) ? evt.modifier : 0,
         total: Number.isFinite(evt.total) ? evt.total : null,
+        // Only ever sent by the userscript for a combined NPC
+        // attack+damage roll — omitted (not just 0) for everything else,
+        // so the tracker can tell "no damage on this roll" apart from
+        // "this roll doesn't carry a damage value at all".
+        damage: Number.isFinite(evt.damage) ? evt.damage : undefined,
+        // Every plausible name candidate the userscript found (not just
+        // the primary one), so the tracker can still match a real
+        // character if the FIRST candidate isn't the right one.
+        nameCandidates: Array.isArray(evt.nameCandidates) ? evt.nameCandidates.filter(n => typeof n === "string") : undefined,
         rawText: typeof evt.rawText === "string" ? evt.rawText.slice(0, 500) : "",
         receivedAt: Date.now()
       };
 
       pendingRolls.push(stored);
-      console.log(`[roll20-relay] ingested: ${stored.characterName} — ${stored.actionTypeGuess} — roll=${stored.roll} mod=${stored.modifier}`);
+      console.log(`[roll20-relay] ingested: ${stored.characterName} — ${stored.actionTypeGuess} — roll=${stored.roll} mod=${stored.modifier}` +
+        (stored.damage !== undefined ? ` dmg=${stored.damage}` : ""));
       sendJson(res, 200, { status: "ok" });
     } catch (err) {
       console.error("[roll20-relay] failed to parse /ingest body:", err.message);
