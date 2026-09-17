@@ -3221,7 +3221,7 @@ function buildMultiRollCardBody(characterName, type, includeDamage) {
   // lands as an extra row rather than a duplicate card. Purely
   // additive: nothing about the manual-entry flow changes if this is
   // never called.
-  const addExternalRoll = ({ roll, modifier, damage } = {}) => {
+  const addExternalRoll = ({ roll, modifier } = {}) => {
     const currentCount = parseInt(countInput.value) || 1;
     countInput.value = currentCount + 1;
     rebuildRows();
@@ -3235,7 +3235,6 @@ function buildMultiRollCardBody(characterName, type, includeDamage) {
     const inputs = [...newRow.querySelectorAll("input")];
     if (roll !== undefined && roll !== null) inputs[0].value = roll;
     if (modifier !== undefined && modifier !== null) inputs[1].value = modifier;
-    if (includeDamage && damage !== undefined && damage !== null && inputs[2]) inputs[2].value = damage;
   };
 
   // Fills in the Dmg column of whichever row is currently LAST — used by
