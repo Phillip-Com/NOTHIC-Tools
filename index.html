@@ -360,14 +360,18 @@
 
           </div>
 
-          <!-- CENTER: modal zone -->
+          <!-- CENTER: action queue zone -->
           <div id="tracker-center" class="tracker-center">
+            <!-- Legacy single-modal scaffolding (showModal/hideModal) — kept
+                 until every handler is migrated onto the action queue below,
+                 then removed. -->
             <div id="action-modal" class="hidden">
               <h3 id="modal-title"></h3>
               <div id="modal-body"></div>
               <button id="modal-confirm">Confirm</button>
               <button id="modal-cancel">Cancel</button>
             </div>
+            <div id="action-queue"></div>
             <div id="center-placeholder" style="opacity:0.3; font-size:0.9rem; text-align:center; margin-top:40px;">
               Roll actions will appear here
             </div>
@@ -407,12 +411,7 @@
             </div>
           </div>
         </div>
-
       </div>
-
-      <img id="mystery-image" src="https://www.nicepng.com/png/full/191-1911020_herobrine-herobrine-minecraft.png"
-        style="position:fixed; bottom:20px; right:600px; width:100px; opacity:0; transition:opacity 30s ease;">
-
     </div>
 
     <!-- ⭐ TAB 4: NPC GENERATOR -->
@@ -1098,6 +1097,7 @@
   <!-- Load JS files at the bottom, order matters -->
   <script src="dataManager.js"></script>
   <script src="tracker.js"></script>
+  <script src="roll20-bridge.js"></script>
   <script src="sessionData.js"></script>
   <script src="campaignOverview.js"></script>
   <script src="npc.js"></script>
