@@ -1424,19 +1424,36 @@ function buildInlineSheetEditor(name, sheet) {
       total += Math.floor((sheet.proficiencyBonus ?? 2) / 2);
     }
 
+    // Misc bonus (feats, items, etc.) stacks on top of the derived value.
+    total += sheet.initiativeBonus ?? 0;
+
     return total;
   }
 
   sheet.initiative = computeInitiative(sheet);
 
-  const initModInp = numInput(
-    sheet.initiative,
-    v => sheet.initiative = v,
-    -10,
-    20
-  );
+  // Read-only: shows the full initiative total (DEX mod + Jack of All
+  // Trades + misc bonus). Edit the misc bonus input below instead —
+  // typing directly here used to get overwritten with just the DEX mod
+  // the next time anything recalculated.
+  const initModInp = numInput(sheet.initiative, () => {}, -20, 40);
+  initModInp.readOnly = true;
+  initModInp.style.opacity = "0.75";
+  initModInp.title = "Total initiative (DEX mod + misc bonus). Edit the Initiative Bonus field to change it.";
+  topGrid.appendChild(topField("Initiative Total", initModInp));
 
-  topGrid.appendChild(topField("Initiative Mod", initModInp));
+  const initBonusInp = numInput(
+    sheet.initiativeBonus ?? 0,
+    v => {
+      sheet.initiativeBonus = v;
+      sheet.initiative = computeInitiative(sheet);
+      initModInp.value = sheet.initiative;
+    },
+    -20,
+    40
+  );
+  initBonusInp.title = "Misc initiative bonus, added on top of DEX mod";
+  topGrid.appendChild(topField("Initiative Bonus", initBonusInp));
 
   // ── Spellcasting ──
   const castingAbilitySelect = selectInput(
