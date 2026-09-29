@@ -1,22 +1,30 @@
 // -------------------- ROLL20 BRIDGE (opt-in, not loaded by default) --------------------
-// Polls roll20-relay-server.js for rolls the Roll20 userscript captured, and
-// feeds them into the existing action queue exactly as if you'd clicked the
-// action button and typed the roll in yourself — pre-filled, never
-// auto-confirmed. You still click Confirm.
+// Turns rolls captured by the Roll20 userscript (roll20-userscript.user.js)
+// into pre-filled (never auto-confirmed) action-queue cards — exactly as if
+// you'd clicked the action button and typed the roll in yourself. You still
+// click Confirm.
 //
 // To enable: add this line to index.html, AFTER tracker.js:
 //   <script src="roll20-bridge.js"></script>
-// Requires roll20-relay-server.js running (`node roll20-relay-server.js`)
-// and the Roll20 userscript installed and active in your Roll20 tab.
+// Requires the SAME userscript (roll20-userscript.user.js) to be installed
+// and active in BOTH your Roll20 tab AND this tracker tab — it's a single
+// script covering both domains via Tampermonkey's cross-domain GM storage,
+// there's no separate relay server or local process to run anymore. See
+// ROLL20-SETUP.md.
 //
-// Depends on globals defined in tracker.js: gameData, actionQueue,
-// findQueueItem, enqueueOrFocusAction, focusQueueItem, buildMultiRollCard,
-// applyAttackRolls/applyAbilityRolls/applySaveRolls/applyConcentrationRolls/
-// applyInitiativeRolls, handlerMap, showTrackerMessage. Load this file after
-// tracker.js so all of those already exist.
+// This file only defines ingestRoll20Event(evt) and the matching/tray UI
+// around it — nothing here fetches or polls anything. The userscript's
+// tracker-side half calls window.ingestRoll20Event(evt) directly (via
+// unsafeWindow) whenever it drains a new roll out of GM storage.
+//
+// Depends on globals defined in tracker.js: gameData, getActiveCharacters,
+// actionQueue, findQueueItem, enqueueOrFocusAction, focusQueueItem,
+// buildMultiRollCard, applyAttackRolls/applyAbilityRolls/applySaveRolls/
+// applyConcentrationRolls/applyInitiativeRolls, handlerMap,
+// showTrackerMessage. Load this file after tracker.js so all of those
+// already exist.
 
-const ROLL20_RELAY_URL = "http://127.0.0.1:8787";
-const ROLL20_POLL_INTERVAL_MS = 1500;
+console.log("[roll20-bridge] SCRIPT VERSION 0.9.0 loaded (GM-storage transport, no relay server)");
 
 // Roll20-side classification guesses that map onto the queue's five
 // multi-roll action types — these are the only ones that support
@@ -45,19 +53,20 @@ const ROLL20_BUILDERS = {
 };
 
 let roll20UnmatchedRolls = [];
-let roll20PollTimer = null;
-let roll20RelayOnline = null; // null = unknown yet, true/false once checked
 
 // -------------------- NAME MATCHING --------------------
 
-// Exact (case/whitespace-insensitive) match only, deliberately — a wrong
-// fuzzy match would silently attribute a roll to the wrong character,
-// which is worse than routing it to the Unmatched tray for a human to
-// resolve in two clicks.
+// Exact (case/whitespace-insensitive) match against ACTIVE characters
+// ONLY, deliberately on both counts: a wrong fuzzy match would silently
+// attribute a roll to the wrong character (worse than not matching at
+// all), and a name that happens to match a character who's been
+// benched/marked inactive shouldn't get silently attributed to them
+// either — see resolveRoll20TrayDefault below for what happens to a roll
+// that doesn't match anyone currently active.
 function resolveRoll20Character(rawName) {
-  if (!rawName || !gameData?.characters) return null;
+  if (!rawName) return null;
   const normalized = rawName.trim().toLowerCase();
-  return gameData.characters.find(c => c.trim().toLowerCase() === normalized) || null;
+  return getActiveCharacters().find(c => c.trim().toLowerCase() === normalized) || null;
 }
 
 // The userscript can't tell which line of a roll message is the actual
@@ -74,6 +83,23 @@ function resolveRoll20CharacterFromEvent(evt) {
     if (match) return match;
   }
   return null;
+}
+
+// What the Unmatched tray's character dropdown should default to for a
+// roll that couldn't be silently applied (no active exact-name match at
+// all — including a name that matches someone who's since been marked
+// inactive, which must NEVER auto-apply — or an unclassifiable action
+// type): the real active match if there is one, else the "NPC" pool if
+// THAT'S active (this app's existing convention for pooling
+// unidentified combatants, already used for Initiative), else null if
+// there's nothing sensible to even suggest. This is purely a starting
+// point for the dropdown — Route still has to be clicked, same as any
+// other entry (see renderRoll20UnmatchedTray). ingestRoll20Event
+// discards the roll outright when this returns null, rather than
+// surfacing it in the tray with no sensible default at all.
+function resolveRoll20TrayDefault(characterName) {
+  if (characterName) return characterName;
+  return getActiveCharacters().includes("NPC") ? "NPC" : null;
 }
 
 // -------------------- INGEST --------------------
@@ -94,6 +120,10 @@ let pendingAttackDamageTarget = null; // { characterName, expiresAt }
 const ATTACK_DAMAGE_WINDOW_MS = 20000;
 
 function ingestRoll20Event(evt) {
+  // Active-only exact-name match (see resolveRoll20Character) — a name
+  // matching someone who's since been marked inactive comes back null
+  // here, same as a name matching nobody at all, so it can never be
+  // silently applied to them.
   const characterName = resolveRoll20CharacterFromEvent(evt);
   const actionType = ROLL20_ACTION_MAP[(evt.actionTypeGuess || "").toLowerCase()];
 
@@ -114,21 +144,37 @@ function ingestRoll20Event(evt) {
     // unrelated unknown roll instead.
   }
 
-  if (!characterName || !actionType) {
-    roll20UnmatchedRolls.push({ ...evt, _id: `unmatched-${Date.now()}-${Math.random().toString(36).slice(2)}` });
-    renderRoll20UnmatchedTray();
+  if (characterName && actionType) {
+    applyRoll20Roll(characterName, actionType, evt);
+
+    // Some NPC attack rolls arrive with their damage already known (the
+    // combined attack+damage template — see the userscript's
+    // extractNpcFullAttackRoll) — no need for the same-character
+    // guessing heuristic in that case, and leaving it armed would risk a
+    // LATER, genuinely unrelated roll overwriting an already-correct
+    // value.
+    if (actionType === "Attack" && evt.damage === undefined) {
+      pendingAttackDamageTarget = { characterName, expiresAt: Date.now() + ATTACK_DAMAGE_WINDOW_MS };
+    }
     return;
   }
 
-  applyRoll20Roll(characterName, actionType, evt);
+  // Either the name didn't match anyone currently active, or we don't
+  // know what kind of roll this was — either way a human needs to
+  // confirm before anything gets applied. Goes to the Unmatched tray
+  // with a sensible default pre-selected if there is one (a real match,
+  // or the NPC pool); if there's genuinely nothing to suggest, it's
+  // discarded rather than left cluttering the tray with a character
+  // question nobody can answer.
+  const trayDefault = resolveRoll20TrayDefault(characterName);
+  if (!trayDefault) return;
 
-  if (actionType === "Attack") {
-    pendingAttackDamageTarget = { characterName, expiresAt: Date.now() + ATTACK_DAMAGE_WINDOW_MS };
-  }
+  roll20UnmatchedRolls.push({ ...evt, _resolvedCharacterName: trayDefault, _id: `unmatched-${Date.now()}-${Math.random().toString(36).slice(2)}` });
+  renderRoll20UnmatchedTray();
 }
 
 function applyRoll20Roll(characterName, actionType, evt) {
-  const rollValue = { roll: evt.roll ?? 1, modifier: evt.modifier ?? 0 };
+  const rollValue = { roll: evt.roll ?? 1, modifier: evt.modifier ?? 0, damage: evt.damage };
   const existing = findQueueItem(actionType, characterName);
 
   if (existing && existing.addExternalRoll) {
@@ -160,10 +206,14 @@ function applyRoll20Roll(characterName, actionType, evt) {
     }
     // Re-query — rebuildRows() above may have replaced the row elements.
     const numberInputs = [...created.bodyEl.querySelectorAll("input")].filter(i => i.type === "number");
-    // numberInputs[0] is the "Number of Rolls" count input; [1]/[2] are
-    // the first row's D20/Modifier fields.
+    // numberInputs[0] is the "Number of Rolls" count input; [1]/[2]/[3]
+    // are the first row's D20/Modifier/Damage fields (Damage only exists
+    // for Attack cards).
     if (numberInputs[1]) numberInputs[1].value = rollValue.roll;
     if (numberInputs[2]) numberInputs[2].value = rollValue.modifier;
+    if (actionType === "Attack" && rollValue.damage !== undefined && numberInputs[3]) {
+      numberInputs[3].value = rollValue.damage;
+    }
   }
   showTrackerMessage(`Roll20: queued a new ${actionType} card for ${characterName}, pre-filled — confirm when ready.`);
 }
@@ -200,15 +250,37 @@ function ensureRoll20TrayContainer() {
   let tray = document.getElementById("roll20-unmatched-tray");
   if (tray) return tray;
 
-  const center = document.getElementById("tracker-center");
-  if (!center) return null;
-
   tray = document.createElement("div");
   tray.id = "roll20-unmatched-tray";
   tray.className = "panel";
-  tray.style.cssText = "margin-bottom:15px;display:none;";
-  // Insert above the action queue so it's the first thing you see.
-  center.insertBefore(tray, center.firstChild);
+  // Plain document flow, not a floating overlay — an earlier version
+  // used `position:fixed`, which sat on top of other buttons/modals
+  // instead of alongside them. And deliberately NOT nested inside
+  // .tracker-left / #tracker-center / #side-stats — a CSS rule
+  // force-hides #tracker-center (and switchTab() explicitly hides
+  // #side-stats) while the Character Sheets or Summary tab is active
+  // (reasonable for those two, but wrong here: confirmed as the actual
+  // cause of a real report — Roll20 rolls, especially NPC ones you
+  // might be looking up on the Character Sheets tab while the DM runs
+  // that NPC's turn, kept building up correctly in memory the whole
+  // time but stayed completely invisible until switching back to
+  // Combat/Stats revealed the entire backlog at once).
+  //
+  // Inserted instead as a sibling immediately BEFORE .tracker-layout —
+  // that grid (holding all three of the above) is itself never hidden
+  // by switchTab(), only its individual children are, so a sibling of
+  // it stays visible across every tracker sub-tab without needing any
+  // fixed/floating positioning at all.
+  tray.style.cssText = "margin:0 0 16px;max-height:40vh;overflow-y:auto;display:none;";
+
+  const layout = document.querySelector(".tracker-layout");
+  if (layout && layout.parentNode) {
+    layout.parentNode.insertBefore(tray, layout);
+  } else {
+    // Layout not found (shouldn't normally happen) — still show it
+    // somewhere rather than silently failing to render at all.
+    document.body.appendChild(tray);
+  }
   return tray;
 }
 
@@ -244,21 +316,21 @@ function renderRoll20UnmatchedTray() {
     blankChar.value = "";
     blankChar.textContent = "-- Character --";
     charSelect.appendChild(blankChar);
-    const matchedCharacter = resolveRoll20CharacterFromEvent(entry);
-    // No confident match against the real roster — if you've set up an
-    // "NPC" character (this app's existing convention for pooling
-    // unidentified combatants' stats together, already used for
-    // Initiative), default the dropdown to it instead of leaving the
-    // selection blank. This only changes what's pre-selected — Route
-    // still has to be clicked, same as any other entry, so a name that
-    // was actually meant for a real player character (e.g. a typo) can
-    // still be caught and corrected before anything is applied.
-    const defaultToNpc = !matchedCharacter && (gameData?.characters || []).includes("NPC");
-    (gameData?.characters || []).forEach(name => {
+    // An entry only ever reaches this tray once its character question
+    // is already answered (see ingestRoll20Event / resolveRoll20TrayDefault
+    // — a name matching nobody active gets resolved to the NPC pool or
+    // discarded outright before this point), so _resolvedCharacterName
+    // is always a valid active character here — just pre-select it.
+    // Only characters currently marked active (the same "Set Active" /
+    // "Set Inactive" toggle already used everywhere else in the app) are
+    // offered at all — a retired/benched character shouldn't be a
+    // routing target for a roll that just happened live.
+    const activeCharacters = getActiveCharacters();
+    activeCharacters.forEach(name => {
       const opt = document.createElement("option");
       opt.value = name;
       opt.textContent = name;
-      if (matchedCharacter === name || (defaultToNpc && name === "NPC")) opt.selected = true;
+      if (entry._resolvedCharacterName === name) opt.selected = true;
       charSelect.appendChild(opt);
     });
     row.appendChild(charSelect);
@@ -293,46 +365,3 @@ function renderRoll20UnmatchedTray() {
     tray.appendChild(row);
   });
 }
-
-// -------------------- POLLING --------------------
-
-async function pollRoll20Relay() {
-  let data;
-  try {
-    const res = await fetch(`${ROLL20_RELAY_URL}/pending`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
-    roll20RelayOnline = true;
-  } catch (err) {
-    // Relay not running yet, or not running at all — quietly stay
-    // offline rather than spamming errors every 1.5s. See
-    // isRoll20RelayOnline() if you want to surface this in the UI.
-    roll20RelayOnline = false;
-    return;
-  }
-
-  // Deliberately OUTSIDE the network try/catch above: a bug while
-  // ingesting one roll must not get silently swallowed as "relay
-  // offline" (indistinguishable, otherwise) — log it and keep
-  // processing the rest of the batch.
-  (data.rolls || []).forEach(evt => {
-    try {
-      ingestRoll20Event(evt);
-    } catch (err) {
-      console.error("[roll20-bridge] failed to ingest a roll:", err, evt);
-    }
-  });
-}
-
-function startRoll20Bridge() {
-  if (roll20PollTimer) return; // already running
-  roll20PollTimer = setInterval(pollRoll20Relay, ROLL20_POLL_INTERVAL_MS);
-  pollRoll20Relay(); // don't wait for the first interval tick
-}
-
-function stopRoll20Bridge() {
-  if (roll20PollTimer) clearInterval(roll20PollTimer);
-  roll20PollTimer = null;
-}
-
-document.addEventListener("DOMContentLoaded", startRoll20Bridge);
