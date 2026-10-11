@@ -391,6 +391,79 @@ async function copyAndSaveImage(canvas, filename) {
   URL.revokeObjectURL(url);
 }
 
+// -------------------- BULK IMAGE EXPORT --------------------
+
+// Canvas-building jobs collected as the Saved Session Data tab renders —
+// reused by the "Save Stat Images" button so a bulk save exports exactly
+// what's currently on screen (built fresh at save time via `build()`, so
+// it still reflects the current theme) without re-fetching anything.
+// Cleared whenever the tab has nothing to show (no campaign selected,
+// campaign deleted, load failure).
+window.statImageJobs = { players: [], titles: null, rollChart: null };
+
+function resetStatImageJobs() {
+  window.statImageJobs.players = [];
+  window.statImageJobs.titles = null;
+  window.statImageJobs.rollChart = null;
+}
+
+// Strips characters that aren't safe in a Windows/macOS filename.
+function sanitizeFilenamePart(str) {
+  return String(str).replace(/[\\/:*?"<>|]/g, "_").trim();
+}
+
+// Writes one canvas to <dirHandle>/<filename>, creating the file or
+// overwriting it if one by that name already exists.
+async function writeCanvasToDirectory(dirHandle, filename, canvas) {
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error(`Failed to generate image data for "${filename}".`);
+
+  const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
+// Downloads every stat image currently available on the tab (each
+// player's session table, the NPC table, the campaign titles table, and
+// the roll-percentage charts) into one folder the user picks, overwriting
+// any existing file of the same name.
+async function saveAllStatImages() {
+  if (!window.showDirectoryPicker) {
+    alert('Your browser doesn\'t support saving directly to a folder. Use the individual "Save Image" buttons instead.');
+    return;
+  }
+
+  const jobs = [
+    ...window.statImageJobs.players,
+    ...(window.statImageJobs.titles ? [window.statImageJobs.titles] : []),
+    ...(window.statImageJobs.rollChart ? [window.statImageJobs.rollChart] : [])
+  ];
+
+  if (jobs.length === 0) {
+    alert("No stat images to save yet. Select a campaign with data first.");
+    return;
+  }
+
+  let dirHandle;
+  try {
+    dirHandle = await window.showDirectoryPicker();
+  } catch (err) {
+    if (err.name !== "AbortError") alert(`Couldn't open a folder: ${err.message}`);
+    return;
+  }
+
+  try {
+    for (const job of jobs) {
+      await writeCanvasToDirectory(dirHandle, job.filename, job.build());
+    }
+    alert(`Saved ${jobs.length} image${jobs.length === 1 ? "" : "s"} to the selected folder.`);
+  } catch (err) {
+    console.error(err);
+    alert(`Failed to save images: ${err.message}`);
+  }
+}
+
 // -------------------- DISPLAY --------------------
 
 // Only show sheet tabs whose name matches an actual character in the
@@ -431,10 +504,14 @@ function renderSessionData(charactersData) {
   const names = Object.keys(charactersData);
   if (names.length === 0) {
     output.innerHTML = "<p>No session data found for this campaign.</p>";
+    window.statImageJobs.players = [];
     return;
   }
 
   const characterColors = assignCharacterColors(names);
+
+  window.statImageJobs.players = [];
+  let playerNumber = 0;
 
   names.forEach(name => {
     const { totals, columnLabels, sessions: rawSessions } = charactersData[name] || {};
@@ -442,6 +519,7 @@ function renderSessionData(charactersData) {
     if (sessions.length === 0) return;
 
     const color = characterColors[name];
+    const isNPC = name.toUpperCase().includes("NPC");
 
     const card = document.createElement("div");
     card.className = "panel";
@@ -485,6 +563,23 @@ function renderSessionData(charactersData) {
       copyAndSaveImage(canvas, `${name}-sessions.png`);
     };
     cardHeader.appendChild(copyBtn);
+
+    let bulkFilename;
+    if (isNPC) {
+      bulkFilename = "NPC_Stats.png";
+    } else {
+      playerNumber++;
+      bulkFilename = `${playerNumber}_${sanitizeFilenamePart(name)}_Stats.png`;
+    }
+    window.statImageJobs.players.push({
+      filename: bulkFilename,
+      build: () => buildTableCanvas({
+        accentColor: color,
+        headers: tableHeaders,
+        totalsRow: totalsRowValues,
+        rows: tableRows
+      })
+    });
 
     card.appendChild(cardHeader);
 
@@ -586,6 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("new-campaign-btn")?.addEventListener("click", window.saveCampaign);
   document.getElementById("delete-campaign-btn")?.addEventListener("click", window.deleteCampaign);
   document.getElementById("refresh-session-data-btn")?.addEventListener("click", loadActiveCampaignData);
+  document.getElementById("save-stat-images-btn")?.addEventListener("click", saveAllStatImages);
 
   document.getElementById("campaign-select")?.addEventListener("change", (e) => {
     ensureSessionDataDefaults();

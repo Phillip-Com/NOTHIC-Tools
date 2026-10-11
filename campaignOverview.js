@@ -133,6 +133,7 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
   const names = Object.keys(charactersData);
   if (names.length === 0) {
     container.innerHTML = "<p>No session data found for this campaign.</p>";
+    window.statImageJobs.titles = null;
     return;
   }
 
@@ -187,6 +188,11 @@ function renderCampaignTitlesTable(charactersData, characterColors) {
   container.appendChild(copyBtn);
 
   container.appendChild(table);
+
+  window.statImageJobs.titles = {
+    filename: "Stats_Overview.png",
+    build: () => buildTitlesTableCanvas(titleRows)
+  };
 }
 
 // Draws the campaign titles table onto a canvas (same visual language as
@@ -520,6 +526,7 @@ function renderRollCharts(charactersData, characterColors) {
 
   if (allEntries.length === 0) {
     container.innerHTML = "<p>No roll data to chart.</p>";
+    window.statImageJobs.rollChart = null;
     return;
   }
 
@@ -536,6 +543,11 @@ function renderRollCharts(charactersData, characterColors) {
   container.appendChild(btn);
 
   container.appendChild(combined);
+
+  window.statImageJobs.rollChart = {
+    filename: "Roll % Charts.png",
+    build: () => combined
+  };
 }
 
 // -------------------- ORCHESTRATION --------------------
@@ -554,4 +566,9 @@ function resetCampaignOverview(message) {
 
   const chartContainer = document.getElementById("campaign-rolls-chart-container");
   if (chartContainer) chartContainer.innerHTML = "";
+
+  // Covers callers that reset the tab without re-rendering (no campaign
+  // selected, campaign deleted, load failure) — renderSessionData and
+  // renderCampaignOverview re-populate these on a successful load.
+  resetStatImageJobs();
 }
