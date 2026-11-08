@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Stat Tracker - Roll20 Bridge
 // @namespace    stat-tracker-roll20-relay
-// @version      1.2.0
+// @version      1.2.1
 // @description  Watches Roll20 chat for dice rolls and pre-fills the Stat Tracker's action queue — no relay server, no hosting, no certificates. Uses Tampermonkey's own cross-domain storage to carry rolls from your Roll20 tab straight to your tracker tab (GitHub Pages or local).
 // @match        https://app.roll20.net/*
 // @match        https://*.roll20.net/*
@@ -13,6 +13,7 @@
 // @grant        GM_addValueChangeListener
 // @grant        unsafeWindow
 // @run-at       document-idle
+// @noframes
 // ==/UserScript==
 
 /*
@@ -58,7 +59,7 @@
   // copy of this script (or a second, older copy is also enabled — check
   // the Tampermonkey dashboard for duplicate "Stat Tracker - Roll20
   // Bridge" entries and disable/delete all but one).
-  console.log(`[roll20-bridge] SCRIPT VERSION 1.2.0 loaded on ${location.hostname} (${IS_ROLL20 ? "Roll20 watcher" : "tracker drainer"} mode)`);
+  console.log(`[roll20-bridge] SCRIPT VERSION 1.2.1 loaded on ${location.hostname} (${IS_ROLL20 ? "Roll20 watcher" : "tracker drainer"} mode)`);
 
   // -------------------- SHARED CONFIG --------------------
 
@@ -72,6 +73,17 @@
   // silently dropped on drain instead of surprising you with a roll from
   // last session.
   const MAX_QUEUE_AGE_MS = 10 * 60 * 1000; // 10 minutes
+
+  // Always returns an array. Anything else stored under the key (an older
+  // format, a JSON string, null) counts as an empty queue, so neither side
+  // can crash on it.
+  function readQueue() {
+    let value = GM_getValue(QUEUE_KEY, []);
+    if (typeof value === "string") {
+      try { value = JSON.parse(value); } catch (_) { value = []; }
+    }
+    return Array.isArray(value) ? value : [];
+  }
 
   if (IS_ROLL20) {
     runRoll20Watcher();
@@ -665,19 +677,58 @@
       // other here — only a second BROWSER TAB writing concurrently could,
       // which isn't a setup this bridge supports (one Roll20 tab at a
       // time).
-      const queue = GM_getValue(QUEUE_KEY, []);
-      queue.push({ ...payload, _qid: `${Date.now()}-${Math.random().toString(36).slice(2)}`, _queuedAt: Date.now() });
-      GM_setValue(QUEUE_KEY, queue);
+      //
+      // Whatever's stored under the key is treated as untrusted: an older
+      // script version (or a manual edit in the Tampermonkey storage tab)
+      // can leave a non-array there, which would make queue.push throw.
+      // Stale entries are pruned here too, so the queue can't grow without
+      // limit while the tracker tab is closed.
+      const now = Date.now();
+      let queue;
+      try {
+        queue = readQueue();
+      } catch (err) {
+        console.error("[roll20-bridge] couldn't read the queue from Tampermonkey storage; starting a fresh one.", err);
+        queue = [];
+      }
+      queue = queue.filter(e => e && now - (e._queuedAt || 0) <= MAX_QUEUE_AGE_MS);
+      queue.push({ ...payload, _qid: `${now}-${Math.random().toString(36).slice(2)}`, _queuedAt: now });
+      try {
+        GM_setValue(QUEUE_KEY, queue);
+      } catch (err) {
+        console.error("[roll20-bridge] couldn't write the queue to Tampermonkey storage. Roll not sent:", err, payload);
+        return;
+      }
       console.log(`[roll20-bridge] queued for tracker: ${payload.characterName} — ${payload.actionTypeGuess} — roll=${payload.roll} mod=${payload.modifier}`);
     }
 
     // -------------------- WATCH CHAT --------------------
 
+    // The game itself loads at app.roll20.net/editor/. Every other
+    // *.roll20.net page (campaign list, character vault, marketplace,
+    // forums) has no chat at all, so the watcher doesn't run there.
+    // Without this check those pages repeated the "couldn't find
+    // #textchat" warning every 2s forever.
+    // On the game page the chat can take a while to build, so this waits
+    // quietly: one note at the first miss, then a single warning if it
+    // still isn't there after CHAT_WAIT_MAX_MS.
+    const CHAT_RETRY_MS = 2000;
+    const CHAT_WAIT_MAX_MS = 120000;
+    const chatWaitStartedAt = Date.now();
+    let chatWaitNoted = false;
+
     function watchChat() {
       const chat = document.querySelector(CHAT_CONTAINER_SELECTOR);
       if (!chat) {
-        console.warn(`[roll20-bridge] couldn't find ${CHAT_CONTAINER_SELECTOR} — is this the game page? Retrying in 2s.`);
-        setTimeout(watchChat, 2000);
+        if (Date.now() - chatWaitStartedAt > CHAT_WAIT_MAX_MS) {
+          console.warn(`[roll20-bridge] gave up waiting for ${CHAT_CONTAINER_SELECTOR} after ${CHAT_WAIT_MAX_MS / 1000}s. Reload the game page to try again.`);
+          return;
+        }
+        if (!chatWaitNoted) {
+          chatWaitNoted = true;
+          console.log(`[roll20-bridge] waiting for ${CHAT_CONTAINER_SELECTOR} to load...`);
+        }
+        setTimeout(watchChat, CHAT_RETRY_MS);
         return;
       }
 
@@ -793,9 +844,28 @@
           for (const node of mutation.addedNodes) {
             if (node.nodeType !== 1) continue; // element nodes only
             for (const msgEl of collectMessageElements(node)) {
+              // One malformed or unexpected message must not throw out of
+              // the observer callback, or every other message in this batch
+              // would be skipped as well. Failures are logged with the
+              // message's HTML so the parser can be fixed for that shape.
+              try {
+                handleMessage(msgEl);
+              } catch (err) {
+                console.error("[roll20-bridge] failed to process a chat message (skipped). Please copy this error and the HTML below:", err, "\n" + (msgEl.outerHTML || "").slice(0, 4000));
+              }
+            }
+          }
+        }
+        // Only a batch that actually contained an undecodable-id message
+        // starts/extends the fallback quiet countdown — idle time, or a
+        // batch full of normal decodable messages, must never be mistaken
+        // for "the fallback-relevant burst just finished".
+        if (!fallbackHistoryLoaded && sawUndecodableMessageThisBatch) pushBackHistoryQuietDeadline();
+
+        function handleMessage(msgEl) {
               const messageId = msgEl.getAttribute && msgEl.getAttribute("data-messageid");
               if (messageId) {
-                if (seenMessageIds.has(messageId)) continue;
+                if (seenMessageIds.has(messageId)) return;
                 seenMessageIds.add(messageId);
               }
 
@@ -814,7 +884,7 @@
               const isHistorical = createdAtMs !== null
                 ? createdAtMs < historyCutoffMs
                 : !fallbackHistoryLoaded;
-              if (isHistorical) continue;
+              if (isHistorical) return;
 
               const parsed = parseMessage(msgEl);
               if (parsed) {
@@ -827,19 +897,16 @@
                 // neither.
                 lastKnownSpeakerName = parsed.characterName;
               }
-            }
-          }
         }
-        // Only a batch that actually contained an undecodable-id message
-        // starts/extends the fallback quiet countdown — idle time, or a
-        // batch full of normal decodable messages, must never be mistaken
-        // for "the fallback-relevant burst just finished".
-        if (!fallbackHistoryLoaded && sawUndecodableMessageThisBatch) pushBackHistoryQuietDeadline();
       });
 
       observer.observe(chat, { childList: true, subtree: true });
     }
 
+    if (!location.pathname.startsWith("/editor")) {
+      console.log(`[roll20-bridge] ${location.pathname} isn't a Roll20 game page (/editor/); not watching chat here.`);
+      return;
+    }
     watchChat();
   }
 
@@ -857,11 +924,12 @@
       if (draining) return;
       draining = true;
       try {
-        const queue = GM_getValue(QUEUE_KEY, []);
+        const queue = readQueue();
         if (!queue.length) return;
 
         const now = Date.now();
         for (const evt of queue) {
+          if (!evt || typeof evt !== "object") continue;
           if (processedIds.has(evt._qid)) continue;
           processedIds.add(evt._qid);
 
